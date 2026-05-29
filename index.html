@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>శ్రీ దివ్య స్తోత్రములు</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1S66GLXJJ4"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-1S66GLXJJ4');
+    </script>
     <style>
         :root {
             --gold: #d4a843;
@@ -2778,6 +2786,8 @@ function openReader(type) {
     document.getElementById('readerPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
     document.getElementById('headerActions').style.display = 'none';
+    gaEvent('screen_view', { screen_name: 'Reader: ' + type });
+    gaEvent('open_stotram', { stotram: type });
 
     const ts = document.getElementById('readerTitleSection');
     ts.className = 'reader-title-section ' + cfg.theme;
@@ -2815,6 +2825,7 @@ function goHome() {
     document.getElementById('headerActions').style.display = 'flex';
     document.getElementById('readerDeityBg').innerHTML = '';
     currentType = null;
+    gaEvent('screen_view', { screen_name: 'Home' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -2883,6 +2894,7 @@ function openSearch() {
     if (!searchIndex.length) searchIndex = buildSearchIndex();
     document.getElementById('searchOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
+    gaEvent('screen_view', { screen_name: 'Search' });
     runSearch('');
     setTimeout(() => document.getElementById('searchInput').focus(), 100);
 }
@@ -2983,6 +2995,7 @@ function openTrack() {
     document.getElementById('trackPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
     document.getElementById('headerActions').style.display = 'none';
+    gaEvent('screen_view', { screen_name: 'Track' });
     buildMonths();
     renderMonths();
     renderMokkulu();
@@ -3112,6 +3125,7 @@ function renderDaySheet() {
 function bumpPradakshina(delta) {
     const d = track.days[activeDay];
     d.pradakshina = Math.max(0, (d.pradakshina || 0) + delta);
+    if (delta > 0) gaEvent('pradakshina_count');
     saveTrack(); renderDaySheet();
 }
 function addJapa(name) {
@@ -3148,6 +3162,7 @@ function addMokku() {
     const reminderDate = dateEl.value || null;
     track.mokkulu.push({ id: Date.now() + '' + Math.floor(performance.now()), text, reminderDate, done: false });
     if (reminderDate) requestNotifyPermission();
+    gaEvent('add_mokku', { has_reminder: !!reminderDate });
     saveTrack();
     textEl.value = ''; dateEl.value = '';
     renderMokkulu();
@@ -3232,6 +3247,7 @@ function exportBackup() {
         a.click();
         a.remove();
         URL.revokeObjectURL(url);
+        gaEvent('backup_export');
     } catch (e) {
         alert('❌ బ్యాకప్ తీసుకోవడంలో సమస్య వచ్చింది.');
     }
@@ -3363,7 +3379,18 @@ function submitFeedback() {
     // thank-you
     document.getElementById('fbForm').style.display = 'none';
     document.getElementById('fbThanks').style.display = 'block';
+    gaEvent('feedback_submit');
     setTimeout(closeFeedback, 2200);
+}
+
+/* ============================================================
+   ANALYTICS (GA4) — anonymous usage. Single-page app, so we
+   fire a screen_view as the user moves between views, plus a
+   few key action events. Named gaEvent to avoid clashing with
+   the `track` pooja-data variable.
+============================================================ */
+function gaEvent(name, params) {
+    try { if (window.gtag) gtag('event', name, params || {}); } catch (e) {}
 }
 
 createParticles();
