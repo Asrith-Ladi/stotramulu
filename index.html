@@ -973,13 +973,67 @@
     </div>
 </div>
 
-<!-- ============ JAPAMALA PAGE (embeds the 3D mala from /mala/) ============ -->
-<!-- The 3D mala is a separate heavy build; it is loaded in an iframe ONLY when
-     this page is opened (see openJapamala in assets/japamala.js), so the home
-     page stays light. -->
-<div class="japamala-page" id="japamalaPage">
-    <iframe id="malaFrame" class="mala-frame" title="జపమాల - 108 Bead Counter"
-            allow="fullscreen; vibrate" loading="lazy"></iframe>
+<!-- Shared japamala gradient defs (kept in an always-present 0-size svg so the
+     gradients resolve for whichever mala SVG is visible — they fail if defined
+     inside a display:none stage). -->
+<svg class="jm-defs" width="0" height="0" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+        <radialGradient id="gWood1" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#caa06a"/><stop offset="0.5" stop-color="#8a5a2e"/><stop offset="1" stop-color="#41260f"/></radialGradient>
+        <radialGradient id="gWood2" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#a97b46"/><stop offset="0.5" stop-color="#6b4423"/><stop offset="1" stop-color="#301c0d"/></radialGradient>
+        <radialGradient id="gWood3" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#b98a52"/><stop offset="0.5" stop-color="#7a4f28"/><stop offset="1" stop-color="#3a2210"/></radialGradient>
+        <radialGradient id="gMarker" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#f0a17a"/><stop offset="0.5" stop-color="#b23a2a"/><stop offset="1" stop-color="#5f130a"/></radialGradient>
+        <radialGradient id="gGuru" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#ff8a6a"/><stop offset="0.5" stop-color="#c0281a"/><stop offset="1" stop-color="#5f0d06"/></radialGradient>
+        <radialGradient id="gGuruTop" cx="0.35" cy="0.3" r="0.85"><stop offset="0" stop-color="#ffe9a8"/><stop offset="1" stop-color="#b8860b"/></radialGradient>
+        <radialGradient id="gGold" cx="0.36" cy="0.3" r="0.8"><stop offset="0" stop-color="#fff0c4"/><stop offset="0.45" stop-color="#e8c25c"/><stop offset="1" stop-color="#9a6f28"/></radialGradient>
+        <radialGradient id="gFocus" cx="0.5" cy="0.5" r="0.5"><stop offset="0" stop-color="rgba(255,214,120,0.38)"/><stop offset="0.6" stop-color="rgba(212,168,67,0.14)"/><stop offset="1" stop-color="rgba(212,168,67,0)"/></radialGradient>
+    </defs>
+</svg>
+
+<!-- ============ JAPAMALA PAGE (two looks: pull-strand + full mala) ============ -->
+<div class="japamala-page" id="japamalaPage" onclick="bumpJapa()">
+    <div class="jm-head">📿 జపమాల</div>
+    <div class="jm-modes">
+        <button class="jm-mode-btn" data-mode="flow" onclick="event.stopPropagation(); setJmMode('flow')">మాల · Flow</button>
+        <button class="jm-mode-btn" data-mode="strand" onclick="event.stopPropagation(); setJmMode('strand')">దండ · Pull</button>
+        <button class="jm-mode-btn" data-mode="full" onclick="event.stopPropagation(); setJmMode('full')">వలయం · Full</button>
+    </div>
+    <div class="jm-count-top"><span id="jmCount">0</span><span class="jm-of"> / 108</span></div>
+    <div class="jm-rounds" id="jmRounds"></div>
+
+    <!-- LOOK 1: vertical scrolling strand (pull one bead at a time) -->
+    <div class="jm-stage" id="jmStageStrand">
+        <svg id="jmSvg" class="jm-svg" viewBox="0 0 300 520" preserveAspectRatio="xMidYMid meet" aria-label="జపమాల 108 బీడ్ కౌంటర్">
+            <line class="jm-thread" x1="150" y1="6" x2="150" y2="452"/>
+            <ellipse class="jm-focus" cx="150" cy="236" rx="62" ry="44" fill="url(#gFocus)"/>
+            <g id="jmBeads"></g>
+            <g id="jmGuru"></g>
+        </svg>
+    </div>
+
+    <!-- LOOK 2: complete mala (full 108-bead loop) — reuses the gradients above -->
+    <div class="jm-stage" id="jmStageFull" style="display:none">
+        <svg id="jmSvgFull" class="jm-svg jm-svg-full" viewBox="0 0 320 430" preserveAspectRatio="xMidYMid meet" aria-label="పూర్తి మాల">
+            <ellipse id="jmFullThread" class="jm-thread" cx="160" cy="188" rx="120" ry="150" fill="none"/>
+            <g id="jmFullBeads"></g>
+            <g id="jmFullGuru"></g>
+        </svg>
+    </div>
+
+    <!-- LOOK 3: complete mala with beads flowing right→left through a fixed top point -->
+    <div class="jm-stage" id="jmStageFlow" style="display:none">
+        <svg id="jmSvgFlow" class="jm-svg jm-svg-flow" viewBox="0 0 340 430" preserveAspectRatio="xMidYMid meet" aria-label="మాల">
+            <ellipse class="jm-thread" cx="170" cy="194" rx="128" ry="150" fill="none"/>
+            <ellipse class="jm-focus" cx="170" cy="44" rx="34" ry="26" fill="url(#gFocus)"/>
+            <g id="jmFlowBeads"></g>
+            <g id="jmFlowGuru"></g>
+        </svg>
+    </div>
+
+    <div class="jm-controls">
+        <button class="jm-btn-reset" onclick="event.stopPropagation(); resetJapa()" title="రీసెట్" aria-label="Reset">↻</button>
+        <button class="jm-btn-count" onclick="event.stopPropagation(); bumpJapa()">COUNT</button>
+    </div>
+    <div class="jm-hint">📿 ఎక్కడైనా నొక్కండి · Space · ఒక్కో పూస లాగండి</div>
 </div>
 
 <!-- ============ FEEDBACK MODAL ============ -->
