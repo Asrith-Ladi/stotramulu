@@ -838,9 +838,105 @@ html, body { overflow-x: hidden; max-width: 100%; }
    Beads are re-styled per tap, never re-created, so animation
    stays cheap on older phones (only .active bead animates).
 ============================================================ */
-.japamala-page { display: none; }
+.japamala-page { display: none; max-width: 560px; margin: 0 auto; padding: 20px 16px 90px; text-align: center; position: relative; z-index: 1; }
 .japamala-page.active { display: block; animation: fadeInUp 0.6s ease; }
-.mala-frame { display: block; width: 100%; border: 0; background: #120a07; }
+
+/* ---- Vertical scrolling japamala (2D SVG, no WebGL) ---- */
+.jm-head {
+    font-size: 24px; letter-spacing: 2px; margin-bottom: 2px;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmerText 6s linear infinite;
+}
+/* two-look toggle */
+.jm-modes { display: flex; gap: 8px; justify-content: center; margin: 8px 0 8px; }
+.jm-mode-btn {
+    padding: 7px 16px; border-radius: 30px; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    color: var(--gold-light); background: rgba(212,168,67,0.10);
+    border: 1px solid rgba(212,168,67,0.28); transition: all 0.2s ease;
+}
+.jm-mode-btn.active {
+    color: #2a1808; border-color: var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+}
+
+.jm-count-top { line-height: 1; margin: 10px 0 2px; }
+.jm-count-top #jmCount {
+    font-size: 56px; font-weight: 800; letter-spacing: -1px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold) 60%, #9a6f28);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    font-variant-numeric: tabular-nums;
+}
+.jm-count-top .jm-of { font-size: 18px; color: var(--gold-light); opacity: 0.5; letter-spacing: 1px; }
+.jm-rounds { font-size: 12.5px; color: var(--gold-light); opacity: 0.8; min-height: 16px; letter-spacing: 1px; }
+
+/* temple-ambience stage holding the tall strand */
+.jm-stage {
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    margin: 6px auto 0; border-radius: 20px;
+    background: radial-gradient(60% 42% at 50% 45%, rgba(120,70,20,0.28), rgba(30,16,8,0.0) 70%);
+}
+.jm-svg { width: min(78vw, 300px); height: auto; display: block; margin: 0 auto;
+    overflow: visible; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+
+/* silk thread + fixed focus glow */
+.jm-thread { stroke: rgba(150,110,55,0.5); stroke-width: 1.4; }
+.jm-focus { animation: jmFocusPulse 3.2s ease-in-out infinite; }
+@keyframes jmFocusPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
+
+/* beads (positioned/scaled per frame by JS) */
+.jm-bead { transition: none; }
+.jm-bead.cur circle { stroke: rgba(255,235,180,0.9); stroke-width: 1.1;
+    filter: drop-shadow(0 0 5px rgba(255,223,133,0.9)); }
+
+/* LOOK 2: full-loop beads */
+.jm-svg-full { width: min(84vw, 320px); }
+.jm-fbead { transition: fill 0.25s ease; transform-box: fill-box; transform-origin: center; }
+.jm-fbead.cur { stroke: rgba(255,235,180,0.95); stroke-width: 1; filter: drop-shadow(0 0 5px rgba(255,223,133,0.95)); }
+.jm-fbead.pop { animation: jmPop 0.3s ease; }
+@keyframes jmPop { 40% { transform: scale(1.9); } }
+.jm-full-count { fill: url(#gGold); font-size: 44px; font-weight: 800;
+    font-family: -apple-system, system-ui, sans-serif; }
+.jm-full-of { fill: var(--gold-light); font-size: 13px; letter-spacing: 3px; opacity: 0.55; }
+
+/* LOOK 3: flowing complete mala */
+.jm-svg-flow { width: min(88vw, 340px); }
+.jm-flowbead circle { transition: fill 0.25s ease; }
+.jm-flowbead.cur circle { stroke: rgba(255,235,180,0.95); stroke-width: 1;
+    filter: drop-shadow(0 0 5px rgba(255,223,133,0.95)); }
+
+/* guru tassel */
+.jm-tassel-thread { fill: none; stroke: #caa24a; stroke-width: 1.8; stroke-linecap: round; opacity: 0.9; }
+
+.jm-svg.celebrate { animation: jmGlow 0.9s ease; }
+@keyframes jmGlow { 40% { filter: drop-shadow(0 0 24px rgba(255,223,133,0.85)); } }
+
+.jm-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 14px; }
+.jm-btn-count {
+    width: 96px; height: 96px; border-radius: 50%; cursor: pointer;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; color: #2a1808;
+    border: 1px solid var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold) 55%, var(--gold-bright));
+    box-shadow: 0 8px 24px rgba(212,168,67,0.35), inset 0 2px 5px rgba(255,255,255,0.3);
+    transition: transform 0.12s ease;
+}
+.jm-btn-count:active { transform: scale(0.93); }
+.jm-btn-reset {
+    width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+    font-size: 20px; color: var(--gold-light);
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(212,168,67,0.3);
+    transition: transform 0.12s ease;
+}
+.jm-btn-reset:active { transform: scale(0.9); }
+.jm-hint { font-size: 12.5px; letter-spacing: 1px; opacity: 0.45; margin-top: 16px; }
+
+/* completion confetti (no library) */
+.jm-confetti {
+    position: fixed; top: -20px; width: 9px; height: 14px; border-radius: 2px;
+    z-index: 700; pointer-events: none; animation: jmFall linear forwards;
+}
+@keyframes jmFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0.15; } }
 
 .mala-style-switch { display: flex; gap: 10px; justify-content: center; margin-bottom: 18px; }
 .mala-style-btn {
