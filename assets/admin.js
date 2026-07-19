@@ -11,7 +11,7 @@
 ============================================================ */
 (function () {
   // 🔑 PASTE YOUR FIREBASE UID HERE (Firebase console → Authentication → Users → your row → copy "User UID")
-  const ADMIN_UID = "REPLACE_WITH_YOUR_UID";
+  const ADMIN_UID = "2FTLtv2LmWU7VTpdH8AfXeJ9pRU2";
 
   // theme → deity svg + accent + icon (mirrors the built-in cards)
   const THEMES = {
