@@ -954,6 +954,15 @@
         <div class="mokku-list" id="mokkuList"></div>
     </div>
 
+    <!-- Cloud backup (optional Google sign-in) -->
+    <div class="track-card">
+        <div class="track-card-title">☁️ అన్ని ఫోన్‌లలో సేవ్ చేయండి</div>
+        <div id="cloudAuthBox" class="cloud-auth"></div>
+        <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
+            సైన్ ఇన్ చేస్తే మీ ప్రదక్షిణలు, జపమాల &amp; మొక్కులు ఆన్‌లైన్‌లో సురక్షితంగా ఉంటాయి — కొత్త ఫోన్‌లో అవే తిరిగి వస్తాయి. సైన్ ఇన్ ఐచ్ఛికం; లేకపోతే ఈ పరికరంలోనే ఉంటాయి.
+        </div>
+    </div>
+
     <!-- Backup / Restore (Option A — file on the user's device) -->
     <div class="track-card">
         <div class="track-card-title">💾 బ్యాకప్ &amp; రీస్టోర్</div>
@@ -1119,5 +1128,11 @@
 
 <script src="assets/app.js"></script>
 <script src="assets/japamala.js"></script>
+
+<!-- Firebase (compat SDK via CDN — no build step) + optional cloud backup -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="assets/cloud.js"></script>
 </body>
 </html>

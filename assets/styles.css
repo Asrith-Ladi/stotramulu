@@ -1261,6 +1261,21 @@ html, body { overflow-x: hidden; max-width: 100%; }
     box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
 }
 
+/* cloud backup (sign-in) */
+.cloud-auth { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.cloud-auth .track-btn { flex: none; }
+.cloud-signed { color: var(--cream); font-size: 15px; line-height: 1.5; }
+.cloud-signed b { color: var(--gold-light); }
+.cloud-sub { font-size: 12.5px; opacity: 0.6; margin-top: 3px; }
+.cloud-toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,18,10,0.95); color: var(--cream); border: 1px solid rgba(212,168,67,0.4);
+    padding: 12px 20px; border-radius: 30px; font-size: 14px; z-index: 900;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+.cloud-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
 /* ---- Feedback modal ---- */
 .feedback-overlay {
     position: fixed; inset: 0; z-index: 550; display: none;

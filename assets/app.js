@@ -481,6 +481,22 @@ function loadTrack() {
 }
 function saveTrack() {
     try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
+    // if signed in, cloud.js registers this hook to also back up to Firestore (debounced)
+    if (window.__cloudSync) window.__cloudSync();
+}
+// accessors used by assets/cloud.js (optional cloud backup)
+function getTrack() { return track; }
+function setTrack(next) {
+    track = next || { days: {}, mokkulu: [] };
+    try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
+    // refresh whatever view is open so restored data shows immediately
+    try {
+        if (typeof renderMonths === 'function' && document.getElementById('trackPage').classList.contains('active')) {
+            buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
+        }
+        if (typeof renderHomePradakshina === 'function') renderHomePradakshina();
+        if (typeof renderCount === 'function') renderCount();
+    } catch (e) {}
 }
 
 const teMonths = ['జనవరి','ఫిబ్రవరి','మార్చి','ఏప్రిల్','మే','జూన్','జూలై','ఆగస్టు','సెప్టెంబర్','అక్టోబర్','నవంబర్','డిసెంబర్'];
