@@ -1,5 +1,4 @@
-
-   /*
+/*
  * Worker entry point for the stotramulu site (Cloudflare "Workers + static
  * assets" model).
  *
@@ -117,4 +116,3 @@ function json(obj, status = 200) {
     headers: { "Content-Type": "application/json" },
   });
 }
-
