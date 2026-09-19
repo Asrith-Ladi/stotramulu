@@ -326,10 +326,13 @@ function bumpJapa() {
     renderCount();
 }
 
-function resetJapa() {
+// NOTE: named resetJapamala (not resetJapa) — app.js already defines a global
+// resetJapa(i) for the day-sheet japa rows, and this file loads after it.
+async function resetJapamala() {
     const jm = ensureJapamalaData();
     if (!jm.total) return;
-    if (!confirm('జపమాల count 0కి తిరిగి సెట్ చేయాలా? / Reset japamala to 0?')) return;
+    if (!await siteConfirm('జపమాల count 0కి తిరిగి సెట్ చేయాలా?\n\nReset japamala to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     jm.total = 0;
     gaEvent('japamala_reset');
     saveTrack();

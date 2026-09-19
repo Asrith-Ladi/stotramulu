@@ -11,12 +11,12 @@
 ============================================================ */
 (function () {
   const firebaseConfig = {
-    apiKey: "AIzaSyBu1K5VwZwEM-LawWk-85fmrQ1xjV98JPs",
-    authDomain: "stotram-b713f.firebaseapp.com",
-    projectId: "stotram-b713f",
-    storageBucket: "stotram-b713f.firebasestorage.app",
-    messagingSenderId: "1050506540734",
-    appId: "1:1050506540734:web:9371916e07100310ff90ef",
+    apiKey: "AIzaSyCDwmjKvg-4XFra1NevTX4wW8BGsUzzQtU",
+    authDomain: "stotramulu-eddf4.firebaseapp.com",
+    projectId: "stotramulu-eddf4",
+    storageBucket: "stotramulu-eddf4.firebasestorage.app",
+    messagingSenderId: "692972588346",
+    appId: "1:692972588346:web:fd28b65084582ddd011403",
   };
 
   if (typeof firebase === 'undefined') {
@@ -35,7 +35,7 @@
   function signIn() {
     auth.signInWithPopup(provider).catch((err) => {
       console.warn('[cloud] sign-in failed', err);
-      alert('సైన్ ఇన్ కాలేదు / Sign-in failed:\n' + (err && err.message ? err.message : err));
+      siteAlert('సైన్ ఇన్ కాలేదు / Sign-in failed:\n' + (err && err.message ? err.message : err));
     });
   }
   function signOutUser() { auth.signOut(); }

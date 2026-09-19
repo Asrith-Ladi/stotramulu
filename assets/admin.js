@@ -11,7 +11,14 @@
 ============================================================ */
 (function () {
   // 🔑 PASTE YOUR FIREBASE UID HERE (Firebase console → Authentication → Users → your row → copy "User UID")
-  const ADMIN_UID = "2FTLtv2LmWU7VTpdH8AfXeJ9pRU2";
+  const ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
+
+  // 🌐 Image→text OCR endpoint. This is a Cloudflare **Pages Function** that
+  //    ships with the site (see functions/api/ocr.js), so it's same-origin —
+  //    no separate Worker, no CORS. Just set the GEMINI_API_KEY secret on the
+  //    Pages project. (Locally via python http.server there is no function, so
+  //    OCR only works on the deployed site.)
+  const OCR_ENDPOINT = "/api/ocr";
 
   // theme → deity svg + accent + icon (mirrors the built-in cards)
   const THEMES = {
@@ -145,6 +152,8 @@
       '<div class="admin-box">' +
       '<div class="admin-head"><h2>➕ స్తోత్రం</h2><button class="search-close-btn" onclick="closeAdmin()">✕</button></div>' +
       '<input type="hidden" id="adEditKey">' +
+      // existing stotras first, so edit/delete is visible without scrolling
+      '<div class="ad-existing" id="adExisting"></div>' +
       '<label class="ad-label">శీర్షిక / Title *</label><input class="ad-in" id="adTitle" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">' +
       '<label class="ad-label">Subtitle (English)</label><input class="ad-in" id="adSubtitle" placeholder="Sri Subrahmanya Ashtottaram">' +
       '<div class="ad-row"><div><label class="ad-label">థీమ్ / Theme</label><select class="ad-in" id="adTheme">' + opts + '</select></div>' +
@@ -153,11 +162,13 @@
       '<label class="ad-label">సంక్షిప్త వివరణ / Short description</label><input class="ad-in" id="adDesc" placeholder="కార్డుపై కనిపించే చిన్న వాక్యం">' +
       '<label class="ad-label">ఉద్భవం / Origin (ఐచ్ఛికం)</label><textarea class="ad-in ad-area" id="adOrigin" rows="2"></textarea>' +
       '<label class="ad-label">శ్లోకాలు / Slokams * <span class="ad-hint">— ఒక్కో శ్లోకం మధ్య ఖాళీ లైన్ వదలండి (blank line between verses)</span></label>' +
+      '<div class="ad-ocr"><input type="file" id="adImages" accept="image/*" multiple>' +
+      '<button type="button" class="track-btn ad-ocr-btn" onclick="ocrExtract()">🖼️ చిత్రం నుండి తీసుకోండి</button>' +
+      '<span class="ad-ocr-status" id="adOcrStatus"></span></div>' +
       '<textarea class="ad-in ad-area" id="adSlokams" rows="8" placeholder="మొదటి శ్లోకం…\n\nరెండవ శ్లోకం…"></textarea>' +
       '<label class="ad-check"><input type="checkbox" id="adPub" checked> ప్రచురించు (Publish — అందరికీ కనిపిస్తుంది)</label>' +
       '<div class="ad-err" id="adErr"></div>' +
       '<div class="ad-actions"><button class="track-btn" onclick="closeAdmin()">రద్దు</button><button class="track-btn primary" onclick="saveStotram()">సేవ్ చేయండి</button></div>' +
-      '<div class="ad-existing" id="adExisting"></div>' +
       '</div>';
     document.body.appendChild(ov);
     ov.addEventListener('click', (e) => { if (e.target === ov) closeAdmin(); });
@@ -257,18 +268,63 @@
   }
 
   async function deleteStotram(key) {
-    if (!confirm('ఈ స్తోత్రం తొలగించాలా? / Delete this stotram?')) return;
+    const title = (stotramConfig[key] && stotramConfig[key].title) || '';
+    const ok = await siteConfirm(
+      'ఈ స్తోత్రం తొలగించాలా?' + (title ? '\n\n' + title : '') + '\n\nDelete this stotram?',
+      { okLabel: 'తొలగించు / Delete', danger: true }
+    );
+    if (!ok) return;
     try { await fs().collection('stotras').doc(key).delete(); await loadCloudStotras(); renderExistingList(); }
-    catch (e) { alert('❌ తొలగించలేకపోయాం: ' + (e && e.message ? e.message : e)); }
+    catch (e) { siteAlert('❌ తొలగించలేకపోయాం: ' + (e && e.message ? e.message : e)); }
   }
 
   function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return h; }
+
+  /* ---------- image → text OCR (via Cloudflare Worker) ---------- */
+  function fileToB64(f) {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result).split(',')[1]);   // strip the data: prefix
+      r.onerror = rej;
+      r.readAsDataURL(f);
+    });
+  }
+  async function ocrExtract() {
+    const status = document.getElementById('adOcrStatus');
+    const files = document.getElementById('adImages').files;
+    if (!OCR_ENDPOINT || OCR_ENDPOINT.indexOf('REPLACE') >= 0) { status.textContent = '⚙️ OCR ఇంకా సెటప్ కాలేదు'; return; }
+    if (!files || !files.length) { status.textContent = '⚠️ ముందు చిత్రం ఎంచుకోండి'; return; }
+    const user = window.firebase && firebase.auth().currentUser;
+    if (!user) { status.textContent = '⚠️ సైన్ ఇన్ అవ్వండి'; return; }
+    status.textContent = '⏳ చిత్రం చదువుతోంది…';
+    try {
+      const token = await user.getIdToken();
+      const images = [];
+      for (const f of files) images.push({ mime: f.type || 'image/jpeg', data: await fileToB64(f) });
+      const res = await fetch(OCR_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ images }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || ('HTTP ' + res.status));
+      const text = (body.text || '').trim();
+      if (!text) throw new Error('ఖాళీ ఫలితం — స్పష్టమైన చిత్రం ప్రయత్నించండి');
+      const box = document.getElementById('adSlokams');
+      box.value = box.value.trim() ? (box.value.trim() + '\n\n' + text) : text;
+      status.textContent = '✅ వచ్చింది — దయచేసి చిత్రంతో సరిచూసుకోండి';
+    } catch (e) {
+      console.warn('[ocr] failed', e);
+      status.textContent = '❌ ' + (e && e.message ? e.message : e);
+    }
+  }
 
   // expose for inline handlers
   window.openAdmin = openAdmin;
   window.closeAdmin = closeAdmin;
   window.adminCatChange = adminCatChange;
   window.saveStotram = saveStotram;
+  window.ocrExtract = ocrExtract;
 
   // kick off Phase 2 load
   if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', loadCloudStotras);

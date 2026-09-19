@@ -346,7 +346,7 @@ function startReaderVoice() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const btn = document.getElementById('readerMicBtn');
     if (!SR) {
-        alert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.');
+        siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.');
         return;
     }
     const inp = document.getElementById('readerSearchInput');
@@ -366,7 +366,7 @@ function startReaderVoice() {
     rec.onerror = (e) => {
         btn && btn.classList.remove('listening');
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
-            alert('🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
+            siteAlert('🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
     };
     try { rec.start(); btn && btn.classList.add('listening'); } catch (e) { /* already running */ }
 }
@@ -734,6 +734,60 @@ function deleteMokku(id) {
 function escapeHtml(s) {
     return s.replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 }
+
+/* ============================================================
+   siteConfirm — an in-app confirmation dialog, styled like the rest
+   of the site, instead of the browser's plain "localhost says…" box.
+   Returns a Promise that resolves true (confirmed) or false (cancelled).
+   Big buttons + clear wording for our 40+ audience.
+       if (await siteConfirm('తొలగించాలా?', { danger: true })) { … }
+============================================================ */
+function siteConfirm(message, opts) {
+    opts = opts || {};
+    const okLabel = opts.okLabel || 'సరే / OK';
+    const cancelLabel = opts.cancelLabel || 'రద్దు / Cancel';
+    return new Promise((resolve) => {
+        const ov = document.createElement('div');
+        ov.className = 'sc-overlay';
+        ov.innerHTML =
+            '<div class="sc-box" role="dialog" aria-modal="true">' +
+            '<div class="sc-msg">' + escapeHtml(String(message)) + '</div>' +
+            '<div class="sc-actions">' +
+            (opts.hideCancel ? '' : '<button class="sc-btn" data-no>' + escapeHtml(cancelLabel) + '</button>') +
+            '<button class="sc-btn ' + (opts.danger ? 'danger' : 'primary') + '" data-yes>' + escapeHtml(okLabel) + '</button>' +
+            '</div></div>';
+
+        let done = false;
+        function finish(val) {
+            if (done) return;
+            done = true;
+            document.removeEventListener('keydown', onKey);
+            ov.classList.remove('show');
+            setTimeout(() => ov.remove(), 180);
+            resolve(val);
+        }
+        function onKey(e) {
+            if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+            else if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+        }
+
+        ov.querySelector('[data-no]') && (ov.querySelector('[data-no]').onclick = () => finish(false));
+        ov.querySelector('[data-yes]').onclick = () => finish(true);
+        ov.addEventListener('click', (e) => { if (e.target === ov) finish(false); });
+        document.addEventListener('keydown', onKey);
+
+        document.body.appendChild(ov);
+        requestAnimationFrame(() => ov.classList.add('show'));
+        ov.querySelector('[data-yes]').focus();
+    });
+}
+
+// Single-button message box (replaces alert()). Returns a Promise so callers
+// can await it, but ignoring the result is fine too.
+function siteAlert(message, opts) {
+    opts = opts || {};
+    return siteConfirm(message, { okLabel: opts.okLabel || 'సరే / OK', hideCancel: true });
+}
 function requestNotifyPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
@@ -775,7 +829,7 @@ function exportBackup() {
         URL.revokeObjectURL(url);
         gaEvent('backup_export');
     } catch (e) {
-        alert('❌ బ్యాకప్ తీసుకోవడంలో సమస్య వచ్చింది.');
+        siteAlert('❌ బ్యాకప్ తీసుకోవడంలో సమస్య వచ్చింది.');
     }
 }
 function triggerRestore() {
@@ -785,17 +839,18 @@ function handleRestoreFile(input) {
     const file = input.files && input.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
         try {
             const data = JSON.parse(e.target.result);
             if (!data || typeof data !== 'object' || (!('days' in data) && !('mokkulu' in data))) throw new Error('bad');
-            if (!confirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?')) { input.value = ''; return; }
+            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?\n\nReplace current data with this backup?',
+                { okLabel: 'పునరుద్ధరించు / Restore', danger: true })) { input.value = ''; return; }
             track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [] };
             saveTrack();
             buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
-            alert('✅ బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది.');
+            siteAlert('✅ బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది.');
         } catch (err) {
-            alert('❌ ఇది సరైన బ్యాకప్ ఫైల్ కాదు.');
+            siteAlert('❌ ఇది సరైన బ్యాకప్ ఫైల్ కాదు.');
         }
         input.value = '';
     };
@@ -835,7 +890,7 @@ function resetFeedbackBox() {
 // Generic voice-to-field helper (used by each 🎤 button)
 function listenInto(inputId, btn, append) {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { alert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.'); return; }
+    if (!SR) { siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.'); return; }
     const rec = new SR();
     rec.lang = 'te-IN';
     rec.interimResults = false;
@@ -986,38 +1041,42 @@ function bumpStotramParayana(delta) {
     renderStotramCounter();
 }
 
-function resetHomePradakshina() {
+async function resetHomePradakshina() {
     const d = track.days[homeSelectedDate];
     if (!d || !d.pradakshina) return;
-    if (!confirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా? / Reset pradakshina to 0?')) return;
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'home', date: homeSelectedDate });
     saveTrack();
     renderHomePradakshina();
 }
-function resetStotramParayana() {
+async function resetStotramParayana() {
     if (!currentType) return;
     const d = track.days[stotramSelectedDate];
     if (!d || !d.parayana || !d.parayana[currentType]) return;
-    if (!confirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా? / Reset parayana to 0?')) return;
+    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset parayana to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.parayana[currentType] = 0;
     gaEvent('parayana_reset', { stotram: currentType, date: stotramSelectedDate });
     saveTrack();
     renderStotramCounter();
 }
-function resetDayPradakshina() {
+async function resetDayPradakshina() {
     const d = track.days[activeDay];
     if (!d || !d.pradakshina) return;
-    if (!confirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా? / Reset pradakshina to 0?')) return;
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'day-sheet', date: activeDay });
     saveTrack();
     renderDaySheet();
 }
-function resetJapa(i) {
+async function resetJapa(i) {
     const j = track.days[activeDay].japa[i];
     if (!j || !j.count) return;
-    if (!confirm(j.name + ' count 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?')) return;
+    if (!await siteConfirm(j.name + '\n\ncount 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     j.count = 0;
     gaEvent('japa_reset', { name: j.name, date: activeDay });
     saveTrack();
