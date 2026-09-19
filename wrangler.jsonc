@@ -1,0 +1,29 @@
+/**
+ * Cloudflare Workers config for the stotramulu site.
+ *
+ * Deploy:  npx wrangler deploy
+ *
+ * Layout this expects:
+ *   public/   → the website (index.html, assets/, data/) served as static files
+ *   src/      → the Worker, which only handles POST /api/ocr
+ *
+ * NOTE: never put the Gemini key here — this file is committed. Add it as a
+ * Secret instead (dashboard → Settings → Variables and Secrets → Secret, or
+ * `npx wrangler secret put GEMINI_API_KEY`). Secrets survive deploys.
+ */
+{
+  "name": "stotramulu",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-01",
+
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // /api/ocr must reach the Worker even though it isn't a file on disk.
+    "run_worker_first": ["/api/*"]
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}
