@@ -22,7 +22,13 @@ const ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
 // Public Firebase web API key (already public in the site's own config) — used
 // only to ask Google to validate the caller's login token. NOT the Gemini key.
 const FIREBASE_API_KEY = "AIzaSyCDwmjKvg-4XFra1NevTX4wW8BGsUzzQtU";
-const MODEL = "gemini-2.0-flash";
+
+// Model is overridable without a code change: add a plaintext variable named
+// GEMINI_MODEL in the dashboard (Settings → Runtime variables) to try another
+// one, e.g. a "pro" tier if Telugu accuracy needs improving.
+// Google retires models periodically — if you see "model is no longer
+// available", put the name from that error message into GEMINI_MODEL.
+const DEFAULT_MODEL = "gemini-3.6-flash";
 
 const PROMPT =
   "You are given image(s) of a Hindu devotional stotram printed in Telugu script " +
@@ -75,8 +81,9 @@ async function handleOcr(request, env) {
   for (const im of images) {
     parts.push({ inline_data: { mime_type: im.mime || "image/jpeg", data: im.data } });
   }
+  const model = env.GEMINI_MODEL || DEFAULT_MODEL;
   const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${env.GEMINI_API_KEY}`;
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
 
   let res, body;
   try {
