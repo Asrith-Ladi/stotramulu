@@ -1681,3 +1681,26 @@ body {
     .today-day { font-size: 18px; }
     .today-tile { max-width: 168px; font-size: 14px; }
 }
+
+/* ============================================================
+   READ MARK — tap a slokam to highlight it as already read.
+   Keeps the text fully legible; the marker is the tinted panel,
+   the gold edge and a ✓ in the corner.
+============================================================ */
+.slokam-block { cursor: pointer; }
+.slokam-block.read {
+    background: linear-gradient(135deg, rgba(212,168,67,0.16) 0%, rgba(30,20,12,0.6) 100%);
+    border-color: rgba(212,168,67,0.5);
+}
+.slokam-block.read::after { opacity: 1; }          /* the existing gold left edge */
+.slokam-block.read .slokam-number {
+    box-shadow: 0 0 0 2px rgba(255,223,133,0.35), 0 2px 8px rgba(212,168,67,0.3);
+}
+.slokam-block.read::before {                        /* ✓ in the top-right corner */
+    content: '✓';
+    left: auto; right: 14px; top: 14px; height: auto; width: auto;
+    background: none; font-size: 17px; font-weight: 700;
+    color: var(--gold-bright); text-shadow: 0 0 10px rgba(255,223,133,0.6);
+    line-height: 1;
+}
+.read-clear-btn { flex: none; }

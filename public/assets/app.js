@@ -87,16 +87,52 @@ function renderSlokams(data, type) {
     const c = document.getElementById('slokamContainer');
     c.innerHTML = '';
     const meaningSet = (type && meanings[type]) || {};
+    const read = readSet(type);
     data.forEach((item, idx) => {
         const meaning = meaningSet[idx];
         const meaningHtml = meaning
             ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
             : '';
         const b = document.createElement('div');
-        b.className = 'slokam-block';
+        b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
+        b.dataset.idx = idx;
+        b.onclick = () => toggleSlokamRead(idx, b);
         b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${meaningHtml}`;
         c.appendChild(b);
     });
+}
+
+/* ============================================================
+   READ MARKS — tap a slokam to highlight it as already read, so an
+   interruption never loses your place. Stored per stotram inside the
+   shared `track` object, so it survives a reload and rides the cloud
+   backup to other devices.
+============================================================ */
+function readSet(type) {
+    const list = (track.reading && track.reading[type]) || [];
+    return new Set(list);
+}
+function toggleSlokamRead(idx, el) {
+    if (!currentType) return;
+    if (!track.reading) track.reading = {};
+    const list = track.reading[currentType] || [];
+    const at = list.indexOf(idx);
+    if (at >= 0) list.splice(at, 1); else list.push(idx);
+    track.reading[currentType] = list;
+    saveTrack();
+    if (el) el.classList.toggle('read', at < 0);
+    gaEvent('slokam_mark_read', { stotram: currentType, on: at < 0 });
+}
+async function resetReading() {
+    if (!currentType) return;
+    const list = (track.reading && track.reading[currentType]) || [];
+    if (!list.length) return;
+    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?\n\nClear all read marks here?',
+        { okLabel: 'తీసేయి / Clear', danger: true })) return;
+    track.reading[currentType] = [];
+    saveTrack();
+    document.querySelectorAll('#slokamContainer .slokam-block.read')
+        .forEach((el) => el.classList.remove('read'));
 }
 
 function changeFontSize(d) {

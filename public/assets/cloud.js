@@ -110,7 +110,14 @@
     (cloud.mokkulu || []).forEach((m) => { if (m && m.id) mk[m.id] = m; });
     (local.mokkulu || []).forEach((m) => { if (m && m.id) mk[m.id] = m; });   // local wins on conflict
     const jm = Math.max((local.japamala && local.japamala.total) || 0, (cloud.japamala && cloud.japamala.total) || 0);
-    return { days, mokkulu: Object.values(mk), japamala: { total: jm } };
+    // read marks: union per stotram, so progress made on either device is kept
+    const reading = {};
+    const rKeys = new Set([...Object.keys(local.reading || {}), ...Object.keys(cloud.reading || {})]);
+    rKeys.forEach((k) => {
+      const set = new Set([...((local.reading || {})[k] || []), ...((cloud.reading || {})[k] || [])]);
+      reading[k] = [...set].sort((a, b) => a - b);
+    });
+    return { days, mokkulu: Object.values(mk), japamala: { total: jm }, reading };
   }
 
   /* ---------- UI ---------- */
