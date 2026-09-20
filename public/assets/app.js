@@ -161,6 +161,29 @@ function initMeaningsToggle() {
 }
 
 /* ============================================================
+   గ్రంథ రూపం — palm-leaf (తాళపత్రం) reading mode. Each slokam becomes
+   a dried-leaf panel strung on a binding cord, the way a stotram was
+   read before print. Off by default: the leaf has lower contrast than
+   the dark theme, so it stays the reader's choice.
+============================================================ */
+function toggleGrandham() {
+    const on = !document.body.classList.contains('grandham');
+    document.body.classList.toggle('grandham', on);
+    document.getElementById('grandhamToggle').classList.toggle('on', on);
+    try { localStorage.setItem('grandham', on ? '1' : '0'); } catch (e) {}
+    gaEvent('grandham_toggle', { on: on });
+}
+function initGrandham() {
+    let saved = '0';
+    try { saved = localStorage.getItem('grandham') || '0'; } catch (e) {}
+    if (saved === '1') {
+        document.body.classList.add('grandham');
+        const t = document.getElementById('grandhamToggle');
+        if (t) t.classList.add('on');
+    }
+}
+
+/* ============================================================
    IN-STOTRAM SEARCH — highlight matches in slokam text + Artham,
    step through with ↑/↓ (or Shift+Enter / Enter), Esc to clear.
 
@@ -1163,6 +1186,7 @@ async function resetJapa(i) {
 
 createParticles();
 initMeaningsToggle();
+initGrandham();
 initVoice();
 showDueReminders();
 initHomePradakshina();

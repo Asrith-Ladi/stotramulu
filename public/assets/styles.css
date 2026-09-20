@@ -1704,3 +1704,135 @@ body {
     line-height: 1;
 }
 .read-clear-btn { flex: none; }
+
+/* ============================================================
+   గ్రంథ రూపం — palm-leaf (తాళపత్రం) READING THEME.
+
+   OPT-IN ONLY. Every rule below is scoped to `body.grandham`, which
+   is added solely when the reader flips the 📜 toggle. With the
+   toggle off nothing here applies and the app looks exactly as
+   before — the default dark-gold theme is untouched.
+
+   Each slokam becomes a dried-leaf panel, and the leaves are strung
+   on a binding cord running down the page, as in a real grandham.
+============================================================ */
+
+/* the two cords the leaves are threaded on */
+body.grandham .slokam-container { position: relative; gap: 22px; }
+body.grandham .slokam-container::before,
+body.grandham .slokam-container::after {
+    content: ''; position: absolute; top: -10px; bottom: -10px; width: 4px;
+    border-radius: 3px; z-index: 0;
+    background:
+        repeating-linear-gradient(118deg,
+            rgba(195,154,90,0.85) 0px, rgba(195,154,90,0.85) 2px,
+            rgba(74,50,24,0.9) 2px, rgba(74,50,24,0.9) 5px),
+        linear-gradient(180deg, #7d5a2c, #4a3218);
+    box-shadow: 0 0 6px rgba(0,0,0,0.6);
+}
+body.grandham .slokam-container::before { left: 25px; }
+body.grandham .slokam-container::after  { right: 25px; }
+
+/* the leaf itself */
+body.grandham .slokam-block {
+    position: relative; z-index: 1;
+    padding: 34px 58px; border-radius: 10px / 34px;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 1px solid rgba(110,70,30,0.55);
+    background:
+        radial-gradient(ellipse 90px 40px at 18% 28%, rgba(120,80,35,0.16), transparent 70%),
+        radial-gradient(ellipse 70px 30px at 76% 68%, rgba(110,70,30,0.14), transparent 70%),
+        radial-gradient(ellipse 50px 26px at 55% 15%, rgba(140,95,45,0.12), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.13) 0px, rgba(120,80,38,0.13) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #b98f52 0%, #dcb87d 12%, #e3c48c 50%, #dcb87d 88%, #b58a4d 100%);
+    box-shadow:
+        inset 0 0 40px rgba(90,55,20,0.35),
+        inset 0 2px 0 rgba(255,240,205,0.35),
+        0 12px 28px rgba(0,0,0,0.55);
+    transform: none;
+}
+body.grandham .slokam-block:hover {
+    transform: none;
+    border-color: rgba(110,70,30,0.8);
+    background:
+        radial-gradient(ellipse 90px 40px at 18% 28%, rgba(120,80,35,0.16), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.13) 0px, rgba(120,80,38,0.13) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #bd9356 0%, #e0bc81 12%, #e7c891 50%, #e0bc81 88%, #b98e51 100%);
+}
+
+/* the pseudo-elements become the cord holes (they carry the dark-theme
+   hairline + gold edge otherwise, which a leaf must not have) */
+body.grandham .slokam-block::before,
+body.grandham .slokam-block::after {
+    content: ''; top: 50%; bottom: auto; left: auto; right: auto;
+    width: 14px; height: 14px; margin-top: -7px;
+    border-radius: 50%; opacity: 1;
+    background: #1c1108;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.9), 0 0 0 3px rgba(150,105,55,0.6);
+}
+body.grandham .slokam-block::before { left: 20px; }
+body.grandham .slokam-block::after  { right: 20px; }
+
+/* ink on leaf: serif face, dark brown, softly absorbed */
+body.grandham .slokam-text {
+    font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
+    color: #40260f; text-align: center;
+    text-shadow: 0 0 1px rgba(64,38,15,0.45);
+}
+body.grandham .slokam-number {
+    background: none; color: #6b431d;
+    box-shadow: none; padding: 0; font-size: 12.5px;
+    letter-spacing: 2px; display: block; text-align: center;
+    opacity: 0.85; margin-bottom: 12px;
+}
+body.grandham .slokam-meaning {
+    background: linear-gradient(90deg, rgba(110,70,30,0.14), rgba(110,70,30,0.04));
+    border-left-color: #8a6532; color: #4a2e13; opacity: 1;
+    box-shadow: none;
+}
+body.grandham .meaning-label {
+    background: linear-gradient(135deg, #8a6532, #6b431d); color: #f6e6c8;
+    box-shadow: none;
+}
+body.grandham .slokam-meaning::before { display: none; }
+
+/* read mark on a leaf: a deeper, well-handled leaf + inked number */
+body.grandham .slokam-block.read {
+    background:
+        repeating-linear-gradient(0deg,
+            rgba(110,70,30,0.16) 0px, rgba(110,70,30,0.16) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #a87c42 0%, #cda469 12%, #d4b076 50%, #cda469 88%, #a2773e 100%);
+    border-color: rgba(80,48,18,0.85);
+    box-shadow:
+        inset 0 0 44px rgba(70,40,12,0.45),
+        inset 0 2px 0 rgba(255,235,195,0.28),
+        0 12px 28px rgba(0,0,0,0.55);
+}
+body.grandham .slokam-block.read .slokam-number {
+    color: #2e1a08; font-weight: 700; opacity: 1;
+}
+
+/* search highlights need to work on a light leaf, not a dark panel */
+body.grandham .slokam-text mark,
+body.grandham .slokam-meaning mark {
+    background: rgba(190,130,45,0.5); color: #2e1a08;
+    box-shadow: none;
+}
+body.grandham .slokam-text mark.current,
+body.grandham .slokam-meaning mark.current {
+    background: #8a3a12; color: #ffeccd; font-weight: 700;
+    box-shadow: 0 0 10px rgba(138,58,18,0.6);
+}
+
+@media (max-width: 600px) {
+    body.grandham .slokam-block { padding: 26px 42px; }
+    body.grandham .slokam-block::before { left: 13px; }
+    body.grandham .slokam-block::after  { right: 13px; }
+    body.grandham .slokam-container::before { left: 18px; }
+    body.grandham .slokam-container::after  { right: 18px; }
+}

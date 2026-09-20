@@ -48,12 +48,32 @@ h1 { font-size: clamp(20px, 5vw, 27px); text-align: center; letter-spacing: 1px;
 /* the two cord holes of a bound grandham */
 .leaf::before, .leaf::after {
   content: ''; position: absolute; top: 50%; width: 15px; height: 15px;
-  margin-top: -7.5px; border-radius: 50%;
+  margin-top: -7.5px; border-radius: 50%; z-index: 2;
   background: #1c1108;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.9), 0 0 0 3px rgba(150,105,55,0.55);
 }
 .leaf::before { left: 17px; }
 .leaf::after { right: 17px; }
+
+/* the binding cord — drawn in SVG so it can curve through the hole,
+   loop around the edge and finish in a knot with a frayed tassel */
+.leaf { overflow: visible; }
+.cord {
+  position: absolute; top: 50%; z-index: 3; pointer-events: none;
+  transform: translateY(-50%);
+}
+.cord.left  { left: -46px; }
+.cord.right { right: -46px; }
+.cord-core  { fill: none; stroke: #7d5a2c; stroke-width: 6; stroke-linecap: round; }
+.cord-shade { fill: none; stroke: #4a3218; stroke-width: 6.5; stroke-linecap: round; opacity: 0.55; }
+/* short diagonal dashes = the twist of a hand-spun cord */
+.cord-twist {
+  fill: none; stroke: #c39a5a; stroke-width: 2.2; stroke-linecap: round;
+  stroke-dasharray: 2 5; opacity: 0.85;
+}
+.knot { fill: #6b4a24; stroke: #3c2712; stroke-width: 1; }
+.knot-hi { fill: #b08a4e; opacity: 0.7; }
+.fray { stroke: #8a6532; stroke-width: 1.6; stroke-linecap: round; fill: none; opacity: 0.9; }
 
 .leaf .ink {
   font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
@@ -97,23 +117,36 @@ h1 { font-size: clamp(20px, 5vw, 27px); text-align: center; letter-spacing: 1px;
   color: #d9a84e; opacity: 0.85; margin-bottom: 14px;
 }
 
-/* ─────────── 3. పాత కాగితం — aged paper with margin rules ─────────── */
+/* ─────────── 3. పాత కాగితం — puffed, padded old page ─────────── */
 .paper {
-  position: relative; padding: 38px 46px; border-radius: 4px;
+  position: relative; padding: 46px 46px; border-radius: 22px;
+  /* lighter in the middle, shaded at the rim = the sheet bulges towards you */
   background:
-    radial-gradient(ellipse 60px 60px at 88% 12%, rgba(150,110,60,0.16), transparent 70%),
-    radial-gradient(ellipse 80px 50px at 12% 82%, rgba(150,110,60,0.13), transparent 70%),
-    linear-gradient(180deg, #f2e2c2 0%, #ecd8b2 55%, #e2cba0 100%);
-  box-shadow: inset 0 0 30px rgba(150,110,60,0.25), 0 14px 30px rgba(0,0,0,0.5);
-  border: 1px solid rgba(140,100,55,0.45);
+    radial-gradient(ellipse 60px 60px at 88% 14%, rgba(150,110,60,0.14), transparent 70%),
+    radial-gradient(ellipse 80px 50px at 12% 84%, rgba(150,110,60,0.12), transparent 70%),
+    radial-gradient(ellipse 130% 110% at 50% 42%,
+      #fbf1dc 0%, #f4e4c4 42%, #e8d2a8 74%, #d6bd92 100%);
+  box-shadow:
+    /* crisp paper edge */
+    inset 0 0 0 1px rgba(255,255,255,0.5),
+    /* the puff: bright along the top, deeper shade along the bottom */
+    inset 0 16px 30px rgba(255,255,255,0.45),
+    inset 0 -20px 34px rgba(150,110,60,0.34),
+    inset 22px 0 30px rgba(150,110,60,0.16),
+    inset -22px 0 30px rgba(150,110,60,0.16),
+    /* it sits above the page, so the drop shadow is soft and wide */
+    0 20px 40px rgba(0,0,0,0.5),
+    0 4px 10px rgba(0,0,0,0.35);
+  border: 1px solid rgba(140,100,55,0.35);
 }
 /* the red margin rules you see in old printed stotram books */
 .paper::before, .paper::after {
-  content: ''; position: absolute; top: 10px; bottom: 10px; width: 2px;
-  background: rgba(150,40,30,0.4);
+  content: ''; position: absolute; top: 18px; bottom: 18px; width: 2px;
+  background: rgba(150,40,30,0.32);
+  border-radius: 2px;
 }
-.paper::before { left: 22px; }
-.paper::after { right: 22px; }
+.paper::before { left: 24px; }
+.paper::after { right: 24px; }
 .paper .ink {
   font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
   font-size: clamp(17px, 4.4vw, 21px); line-height: 2.25;
@@ -125,10 +158,13 @@ h1 { font-size: clamp(20px, 5vw, 27px); text-align: center; letter-spacing: 1px;
 }
 
 @media (max-width: 480px) {
-  .leaf { padding: 34px 40px; }
+  /* leave room on both sides so the cords/tassels aren't clipped */
+  .leaf { padding: 34px 34px; margin: 0 34px; }
   .leaf::before { left: 11px; } .leaf::after { right: 11px; }
-  .wood, .paper { padding: 30px 26px; }
-  .paper::before { left: 12px; } .paper::after { right: 12px; }
+  .cord.left  { left: -34px; }
+  .cord.right { right: -34px; }
+  .wood, .paper { padding: 34px 24px; }
+  .paper::before { left: 14px; } .paper::after { right: 14px; }
 }
 </style>
 </head>
@@ -139,6 +175,30 @@ h1 { font-size: clamp(20px, 5vw, 27px); text-align: center; letter-spacing: 1px;
 
   <div class="label">1 · తాళపత్రం (palm leaf)</div>
   <div class="leaf">
+    <!-- left binding cord: comes out of the hole, loops round the edge,
+         ends in a knot and a frayed tassel -->
+    <svg class="cord left" width="80" height="120" viewBox="0 0 80 120" aria-hidden="true">
+      <path class="cord-shade" d="M74 60 C 52 60, 34 52, 26 38 C 18 24, 26 12, 40 14"/>
+      <path class="cord-core"  d="M74 60 C 52 60, 34 52, 26 38 C 18 24, 26 12, 40 14"/>
+      <path class="cord-twist" d="M74 60 C 52 60, 34 52, 26 38 C 18 24, 26 12, 40 14"/>
+      <path class="cord-shade" d="M74 62 C 54 66, 38 76, 34 92"/>
+      <path class="cord-core"  d="M74 62 C 54 66, 38 76, 34 92"/>
+      <path class="cord-twist" d="M74 62 C 54 66, 38 76, 34 92"/>
+      <circle class="knot" cx="33" cy="95" r="6.5"/>
+      <circle class="knot-hi" cx="31" cy="93" r="2.4"/>
+      <path class="fray" d="M31 101 L27 113 M34 101 L34 114 M37 101 L41 112"/>
+    </svg>
+
+    <!-- right cord: a shorter tail, as the stack is usually tied on one side -->
+    <svg class="cord right" width="80" height="90" viewBox="0 0 80 90" aria-hidden="true">
+      <path class="cord-shade" d="M6 45 C 26 45, 42 40, 52 30"/>
+      <path class="cord-core"  d="M6 45 C 26 45, 42 40, 52 30"/>
+      <path class="cord-twist" d="M6 45 C 26 45, 42 40, 52 30"/>
+      <circle class="knot" cx="55" cy="28" r="5.5"/>
+      <circle class="knot-hi" cx="53" cy="26" r="2"/>
+      <path class="fray" d="M57 33 L55 44 M60 32 L63 42"/>
+    </svg>
+
     <span class="num">శ్లోకం ౧</span>
     <div class="ink">బ్రహ్మమురారిసురార్చితలింగం
 నిర్మలభాసితశోభితలింగమ్ |
