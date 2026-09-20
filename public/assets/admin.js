@@ -45,7 +45,22 @@
 
   let db = null;
   function fs() { if (!db && window.firebase) db = firebase.firestore(); return db; }
-  const cloudKeys = new Set();
+  const cloudKeys = new Set();          // stotras that exist ONLY in Firestore
+  const overrideKeys = new Set();       // built-in stotras currently overridden
+
+  // Snapshot of the 20 built-in stotras exactly as the .js files defined them.
+  // Editing a built-in saves a Firestore doc under the SAME key, which shadows
+  // the file; reverting deletes that doc and we restore from this snapshot, so
+  // the original text is never lost and the files never need touching.
+  const BUILTIN = {};
+  Object.keys(stotramConfig).forEach((k) => {
+    BUILTIN[k] = {
+      cfg: JSON.parse(JSON.stringify(stotramConfig[k])),
+      origin: origins[k] || '',
+      meanings: JSON.parse(JSON.stringify(meanings[k] || {})),
+    };
+  });
+  const isBuiltin = (k) => Object.prototype.hasOwnProperty.call(BUILTIN, k);
 
   /* ---------- Phase 2: load + render published cloud stotras ---------- */
   async function loadCloudStotras() {
@@ -58,6 +73,10 @@
     document.querySelectorAll('.card.cloud-card').forEach((el) => el.remove());
     cloudKeys.forEach((k) => { delete stotramConfig[k]; delete origins[k]; delete meanings[k]; });
     cloudKeys.clear();
+    // restore any built-in that was overridden last time, so a deleted override
+    // cleanly reverts to the original file text
+    overrideKeys.forEach((k) => restoreBuiltin(k));
+    overrideKeys.clear();
 
     const list = [];
     snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
@@ -66,6 +85,14 @@
     list.forEach((s) => {
       if (s.published === false) return;
       const key = s.id;
+
+      // editing one of the 20 built-ins → patch it in place, don't add a card
+      if (isBuiltin(key)) {
+        applyOverride(key, s);
+        overrideKeys.add(key);
+        return;
+      }
+
       const th = THEMES[s.theme] || THEMES.vishnu;
       stotramConfig[key] = {
         title: s.title || '', subtitle: s.subtitle || '',
@@ -83,6 +110,43 @@
     });
 
     try { searchIndex = buildSearchIndex(); } catch (e) {}
+  }
+
+  /* ---------- built-in overrides (edit the original 20 from the UI) ---------- */
+  // Apply an admin's edits on top of a built-in: update the config the reader
+  // uses, and the text on its existing card. Theme/category stay as the file
+  // defined them, so the card keeps its place and artwork.
+  function applyOverride(key, s) {
+    const cfg = stotramConfig[key];
+    if (!cfg) return;
+    if (s.title) cfg.title = s.title;
+    if (s.subtitle !== undefined) cfg.subtitle = s.subtitle;
+    if (Array.isArray(s.data) && s.data.length) cfg.data = s.data;
+    if (s.origin !== undefined) { cfg.origin = s.origin; origins[key] = s.origin; }
+    if (s.meanings) meanings[key] = s.meanings;
+    cfg.__edited = true;
+    patchCardText(key, s.title || cfg.title, s.subtitle, s.desc);
+  }
+
+  function restoreBuiltin(key) {
+    const snap = BUILTIN[key];
+    if (!snap) return;
+    stotramConfig[key] = JSON.parse(JSON.stringify(snap.cfg));
+    origins[key] = snap.origin;
+    meanings[key] = JSON.parse(JSON.stringify(snap.meanings));
+    patchCardText(key, snap.cfg.title, snap.cfg.subtitle, null);
+  }
+
+  // Update the title/subtitle/description shown on a built-in's hand-written card.
+  function patchCardText(key, title, subtitle, desc) {
+    const card = document.querySelector('.card[onclick*="openReader(\'' + key + '\')"]');
+    if (!card) return;
+    const h3 = card.querySelector('h3');
+    const sub = card.querySelector('.card-sub');
+    const ds = card.querySelector('.card-desc');
+    if (h3 && title) h3.textContent = title;
+    if (sub && subtitle !== undefined && subtitle !== null) sub.textContent = subtitle;
+    if (ds && desc) ds.textContent = desc;
   }
 
   function gridForCategory(slug, label) {
@@ -154,6 +218,7 @@
       '<input type="hidden" id="adEditKey">' +
       // existing stotras first, so edit/delete is visible without scrolling
       '<div class="ad-existing" id="adExisting"></div>' +
+      '<div class="ad-builtin-note" id="adBuiltinNote" style="display:none"></div>' +
       '<label class="ad-label">శీర్షిక / Title *</label><input class="ad-in" id="adTitle" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">' +
       '<label class="ad-label">Subtitle (English)</label><input class="ad-in" id="adSubtitle" placeholder="Sri Subrahmanya Ashtottaram">' +
       '<div class="ad-row"><div><label class="ad-label">థీమ్ / Theme</label><select class="ad-in" id="adTheme">' + opts + '</select></div>' +
@@ -192,6 +257,22 @@
       set('adCat', 'stotras'); adminCatChange();
     }
     document.getElementById('adErr').textContent = '';
+    // editing a built-in: theme/category come from the file and are ignored, so
+    // hide them and say what will change
+    const bi = !!(editKey && isBuiltin(editKey));
+    const themeRow = document.querySelector('#adminOverlay .ad-row');
+    if (themeRow) themeRow.style.display = bi ? 'none' : '';
+    const catNew = document.getElementById('adCatNew');
+    if (bi && catNew) catNew.style.display = 'none';
+    const note = document.getElementById('adBuiltinNote');
+    if (note) {
+      note.style.display = bi ? '' : 'none';
+      note.textContent = bi
+        ? 'ℹ️ ఇది అంతర్నిర్మిత స్తోత్రం. శీర్షిక, ఉపశీర్షిక, ఉద్భవం, శ్లోకాలు మాత్రమే మారుతాయి — కార్డు స్థానం/థీమ్ అలాగే ఉంటాయి. ఎప్పుడైనా ↩︎ తో అసలు రూపానికి తిరిగి మార్చవచ్చు.'
+        : '';
+    }
+    const head = document.querySelector('#adminOverlay .admin-head h2');
+    if (head) head.textContent = editKey ? '✏️ స్తోత్రం సవరించండి' : '➕ కొత్త స్తోత్రం';
     renderExistingList();
     document.getElementById('adminOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
@@ -208,14 +289,56 @@
 
   function renderExistingList() {
     const box = document.getElementById('adExisting');
-    const keys = [...cloudKeys];
-    if (!keys.length) { box.innerHTML = ''; return; }
-    box.innerHTML = '<div class="ad-existing-title">మీరు చేర్చిన స్తోత్రాలు</div>' +
-      keys.map((k) => '<div class="ad-ex-item"><span>' + escapeHtml(stotramConfig[k].title) + '</span>' +
-        '<span><button class="ad-mini" data-edit="' + k + '">✏️</button>' +
-        '<button class="ad-mini" data-del="' + k + '">🗑️</button></span></div>').join('');
+    if (!box) return;
+
+    const row = (k, buttons) =>
+      '<div class="ad-ex-item"><span class="ad-ex-name">' + escapeHtml(stotramConfig[k].title || k) +
+      (overrideKeys.has(k) ? ' <em class="ad-ex-tag">సవరించబడింది</em>' : '') +
+      '</span><span class="ad-ex-btns">' + buttons + '</span></div>';
+
+    const mine = [...cloudKeys];
+    const builtin = Object.keys(BUILTIN).filter((k) => !stotramConfig[k] || !stotramConfig[k].hidden);
+
+    let html = '';
+    if (mine.length) {
+      html += '<div class="ad-existing-title">మీరు చేర్చినవి (' + mine.length + ')</div>' +
+        mine.map((k) => row(k,
+          '<button class="ad-mini" data-edit="' + k + '" title="సవరించు">✏️</button>' +
+          '<button class="ad-mini" data-del="' + k + '" title="తొలగించు">🗑️</button>')).join('');
+    }
+    // every built-in is editable too — fixes typos without touching any file
+    html += '<div class="ad-existing-title">అంతర్నిర్మిత స్తోత్రాలు (' + builtin.length + ')' +
+      '<span class="ad-hint"> — ఇవి కూడా సవరించవచ్చు</span></div>' +
+      '<div class="ad-ex-scroll">' +
+      builtin.map((k) => row(k,
+        '<button class="ad-mini" data-edit="' + k + '" title="సవరించు">✏️</button>' +
+        (overrideKeys.has(k)
+          ? '<button class="ad-mini" data-revert="' + k + '" title="అసలు రూపానికి తిరిగి">↩︎</button>'
+          : ''))).join('') +
+      '</div>';
+
+    box.innerHTML = html;
     box.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openAdmin(b.getAttribute('data-edit')));
     box.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => deleteStotram(b.getAttribute('data-del')));
+    box.querySelectorAll('[data-revert]').forEach((b) => b.onclick = () => revertStotram(b.getAttribute('data-revert')));
+  }
+
+  // Undo an edit to a built-in: delete the override doc and the original file
+  // text comes back.
+  async function revertStotram(key) {
+    const ok = await siteConfirm(
+      'ఈ స్తోత్రాన్ని అసలు రూపానికి తిరిగి మార్చాలా?\n\n' + (stotramConfig[key] ? stotramConfig[key].title : key) +
+      '\n\nRevert to the original built-in text? Your edits will be removed.',
+      { okLabel: 'తిరిగి మార్చు / Revert', danger: true }
+    );
+    if (!ok) return;
+    try {
+      await fs().collection('stotras').doc(key).delete();
+      await loadCloudStotras();
+      renderExistingList();
+    } catch (e) {
+      siteAlert('❌ మార్చలేకపోయాం: ' + (e && e.message ? e.message : e));
+    }
   }
 
   function slokamsFromText(t) {
