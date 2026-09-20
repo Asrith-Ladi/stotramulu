@@ -1,455 +1,463 @@
-/* ============================================================
-   ADMIN + CLOUD STOTRAS
-   Phase 2 (everyone): load published stotras from Firestore and render
-   them as cards + make them readable/searchable — by merging into the
-   same window.STOTRAS_DATA the site already uses. No file/script/card edits.
-   Phase 3 (admin only): a hidden panel to add / edit / delete a stotram,
-   saved to Firestore. Gated to ADMIN_UID.
+# Feature 19 — Tracing (Langfuse)
 
-   Classic script → shares app.js globals (stotramConfig, origins, meanings,
-   buildSearchIndex, openReader, searchIndex, escapeHtml). Loads after cloud.js.
-============================================================ */
-(function () {
-  // 🔑 PASTE YOUR FIREBASE UID HERE (Firebase console → Authentication → Users → your row → copy "User UID")
-  const ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
+**One-sentence version:** every agent run emits a span tree to Langfuse Cloud —
+graph run → tool calls → LLM generations — with counterparty names
+pseudonymised before anything leaves the process.
 
-  // 🌐 Image→text OCR endpoint. This is a Cloudflare **Pages Function** that
-  //    ships with the site (see functions/api/ocr.js), so it's same-origin —
-  //    no separate Worker, no CORS. Just set the GEMINI_API_KEY secret on the
-  //    Pages project. (Locally via python http.server there is no function, so
-  //    OCR only works on the deployed site.)
-  const OCR_ENDPOINT = "/api/ocr";
+> Phase 5, sub-step 5-6. Decision **D-2 resolved: Langfuse Cloud**, not self-host.
+> See [../plan/phase-5-eval-traces.md](../plan/phase-5-eval-traces.md).
 
-  // theme → deity svg + accent + icon (mirrors the built-in cards)
-  const THEMES = {
-    vishnu:  { svg: '#svg-vishnu',  color: '#3070c0', icon: '🔱', label: 'విష్ణు' },
-    lalitha: { svg: '#svg-lalitha', color: '#c04070', icon: '🪷', label: 'లలిత/దేవి' },
-    shiva:   { svg: '#svg-shiva',   color: '#5088b0', icon: '🙏', label: 'శివ' },
-    venkat:  { svg: '#svg-venkat',  color: '#c89838', icon: '⛰️', label: 'వేంకటేశ్వర' },
-    ganesha: { svg: '#svg-ganesha', color: '#e08040', icon: '🐘', label: 'గణేశ' },
-    hanuman: { svg: '#svg-hanuman', color: '#d06030', icon: '🦍', label: 'హనుమాన్' },
-    lakshmi: { svg: '#svg-lakshmi', color: '#e0b840', icon: '💎', label: 'లక్ష్మి' },
-    saibaba: { svg: '#svg-saibaba', color: '#d08040', icon: '🌟', label: 'సాయి' },
-    ayyappa: { svg: '#svg-ayyappa', color: '#4080c8', icon: '🏔️', label: 'అయ్యప్ప' },
-    durga:   { svg: '#svg-durga',   color: '#d04050', icon: '🔥', label: 'దుర్గా' },
-    govinda: { svg: '#svg-krishna', color: '#4090d0', icon: '🦚', label: 'కృష్ణ/గోవింద' },
-    bilva:   { svg: '#svg-bilva',   color: '#409848', icon: '🍃', label: 'బిల్వ' },
-    harati:  { svg: '#svg-diya',    color: '#ffaa3c', icon: '🪔', label: 'హారతి' },
-  };
-  const CATEGORIES = [
-    { slug: 'sahasranama', label: 'సహస్రనామావళి' },
-    { slug: 'ashtottara',  label: 'అష్టోత్తర శతనామావళి' },
-    { slug: 'stotras',     label: 'స్తోత్రములు' },
-    { slug: 'aratis',      label: 'హారతులు' },
-  ];
+---
 
-  let db = null;
-  function fs() { if (!db && window.firebase) db = firebase.firestore(); return db; }
-  const cloudKeys = new Set();          // stotras that exist ONLY in Firestore
-  const overrideKeys = new Set();       // built-in stotras currently overridden
+## 1. Why Cloud, and why that reversed Phase 0
 
-  // Snapshot of the 20 built-in stotras exactly as the .js files defined them.
-  // Editing a built-in saves a Firestore doc under the SAME key, which shadows
-  // the file; reverting deletes that doc and we restore from this snapshot, so
-  // the original text is never lost and the files never need touching.
-  const BUILTIN = {};
-  Object.keys(stotramConfig).forEach((k) => {
-    BUILTIN[k] = {
-      cfg: JSON.parse(JSON.stringify(stotramConfig[k])),
-      origin: origins[k] || '',
-      meanings: JSON.parse(JSON.stringify(meanings[k] || {})),
-    };
-  });
-  const isBuiltin = (k) => Object.prototype.hasOwnProperty.call(BUILTIN, k);
+Phase 0 chose **self-host**, with the reasoning "self-host = no data leaves the
+laptop." That premise stopped being true before this got built:
 
-  /* ---------- Phase 2: load + render published cloud stotras ---------- */
-  async function loadCloudStotras() {
-    const d = fs(); if (!d) return;
-    let snap;
-    try { snap = await d.collection('stotras').get(); }
-    catch (e) { console.warn('[stotras] load failed', e); return; }
+- merchant names already go to **OpenAI** for embeddings
+- questions and tool results already go to **Groq** to compose answers
 
-    // clear previously rendered cloud cards + their config (handles deletes/edits)
-    document.querySelectorAll('.card.cloud-card').forEach((el) => el.remove());
-    cloudKeys.forEach((k) => { delete stotramConfig[k]; delete origins[k]; delete meanings[k]; });
-    cloudKeys.clear();
-    // restore any built-in that was overridden last time, so a deleted override
-    // cleanly reverts to the original file text
-    overrideKeys.forEach((k) => restoreBuiltin(k));
-    overrideKeys.clear();
+Transaction data egresses to two processors regardless. A trace store isn't a new
+boundary — it's a third processor with a *different retention profile* (LLM APIs
+hold transiently and don't train; a trace store persists, indexed and
+searchable). That's a difference of degree, and degree is manageable with masking.
 
-    const list = [];
-    snap.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
-    list.sort((a, b) => (a.position || 0) - (b.position || 0));
+Against that, self-hosting Langfuse v3 means **Postgres + ClickHouse + Redis +
+S3-compatible storage** — four stateful services, whose backups and upgrades we'd
+own, for an app serving a handful of allowlisted friends. The ops burden would
+dominate the value.
 
-    list.forEach((s) => {
-      if (s.published === false) return;
-      const key = s.id;
+So: Cloud, free tier, with masking doing the work the hosting choice was
+supposed to do.
 
-      // editing one of the 20 built-ins → patch it in place, don't add a card
-      if (isBuiltin(key)) {
-        applyOverride(key, s);
-        overrideKeys.add(key);
-        return;
-      }
+**Volume, for the record.** LangSmith counts *traces* (~5k/month free); Langfuse
+counts *observations*, ~8–12 per question (~50k/month free). Both land near 5,000
+questions/month. With a 50/day per-user cap across a few friends, real usage is
+100–500/month — a few percent of either.
 
-      const th = THEMES[s.theme] || THEMES.vishnu;
-      stotramConfig[key] = {
-        title: s.title || '', subtitle: s.subtitle || '',
-        theme: (s.theme || 'vishnu') + '-theme',
-        svgId: th.svg, svgColor: th.color,
-        origin: s.origin || '',
-        data: Array.isArray(s.data) ? s.data : [],
-        __cloud: true, __cat: s.category || 'stotras', __catLabel: s.categoryLabel || '',
-        __icon: s.icon || th.icon, __desc: s.desc || '',
-      };
-      origins[key] = s.origin || '';
-      meanings[key] = s.meanings || {};
-      cloudKeys.add(key);
-      renderCard(key);
-    });
+---
 
-    try { searchIndex = buildSearchIndex(); } catch (e) {}
-  }
+## 2. Where the data lives
 
-  /* ---------- built-in overrides (edit the original 20 from the UI) ---------- */
-  // Apply an admin's edits on top of a built-in: update the config the reader
-  // uses, and the text on its existing card. Theme/category stay as the file
-  // defined them, so the card keeps its place and artwork.
-  function applyOverride(key, s) {
-    const cfg = stotramConfig[key];
-    if (!cfg) return;
-    if (s.title) cfg.title = s.title;
-    if (s.subtitle !== undefined) cfg.subtitle = s.subtitle;
-    if (Array.isArray(s.data) && s.data.length) cfg.data = s.data;
-    if (s.origin !== undefined) { cfg.origin = s.origin; origins[key] = s.origin; }
-    if (s.meanings) meanings[key] = s.meanings;
-    cfg.__edited = true;
-    patchCardText(key, s.title || cfg.title, s.subtitle, s.desc);
-  }
+| Store | Location | Holds |
+|---|---|---|
+| Supabase | Tokyo | transactions + `agent_runs` — **source of truth**, unmasked |
+| Langfuse Cloud | EU **or** US (chosen at project creation) | a **copy** of traced span inputs/outputs, masked |
 
-  function restoreBuiltin(key) {
-    const snap = BUILTIN[key];
-    if (!snap) return;
-    stotramConfig[key] = JSON.parse(JSON.stringify(snap.cfg));
-    origins[key] = snap.origin;
-    meanings[key] = JSON.parse(JSON.stringify(snap.meanings));
-    patchCardText(key, snap.cfg.title, snap.cfg.subtitle, null);
-  }
+Langfuse never reads the database. It receives what we send it, which is why
+masking at the boundary is sufficient.
 
-  // Update the title/subtitle/description shown on a built-in's hand-written card.
-  function patchCardText(key, title, subtitle, desc) {
-    const card = document.querySelector('.card[onclick*="openReader(\'' + key + '\')"]');
-    if (!card) return;
-    const h3 = card.querySelector('h3');
-    const sub = card.querySelector('.card-sub');
-    const ds = card.querySelector('.card-desc');
-    if (h3 && title) h3.textContent = title;
-    if (sub && subtitle !== undefined && subtitle !== null) sub.textContent = subtitle;
-    if (ds && desc) ds.textContent = desc;
-  }
+---
 
-  function gridForCategory(slug, label) {
-    let sec = document.querySelector('.cards-section[data-cat="' + slug + '"]');
-    if (!sec) {
-      const home = document.getElementById('homePage');
-      sec = document.createElement('div');
-      sec.className = 'cards-section';
-      sec.dataset.cat = slug;
-      sec.innerHTML =
-        '<div class="section-divider"><h2 class="section-title">' +
-        escapeHtml(label || slug) + '</h2><div class="section-sub"></div></div>' +
-        '<div class="cards-grid"></div>';
-      home.appendChild(sec);
-    }
-    return sec.querySelector('.cards-grid');
-  }
+## 3. Masking — the part that must not be wrong
 
-  function renderCard(key) {
-    const cfg = stotramConfig[key];
-    const themeKey = (cfg.theme || '').replace('-theme', '');
-    const grid = gridForCategory(cfg.__cat, cfg.__catLabel);
-    const desc = cfg.__desc || (cfg.origin ? (cfg.origin.slice(0, 90) + '…') : '');
-    const div = document.createElement('div');
-    div.className = 'card cloud-card ' + themeKey;
-    div.setAttribute('onclick', "openReader('" + key + "')");
-    div.innerHTML =
-      '<div class="card-bg"></div>' +
-      '<svg class="card-deity-svg" style="color:' + cfg.svgColor + '"><use href="' + cfg.svgId + '"/></svg>' +
-      '<div class="card-content">' +
-        '<div class="card-icon-wrap"><span class="deity-icon">' + (cfg.__icon || '🕉️') + '</span></div>' +
-        '<h3>' + escapeHtml(cfg.title) + '</h3>' +
-        '<div class="card-sub">' + escapeHtml(cfg.subtitle || '') + '</div>' +
-        '<div class="card-desc">' + escapeHtml(desc) + '</div>' +
-        '<button class="card-btn">చదవండి →</button>' +
-      '</div>';
-    grid.appendChild(div);
-  }
+`transactions.main_detail` is the counterparty on a UPI transfer, which is very
+often **a person's name**. From the live dashboard: `Chintada Sateesh`,
+`Srinivasarao Silla`.
 
-  /* ---------- Phase 3: admin gate + panel ---------- */
-  function isAdmin(u) { return u && ADMIN_UID && u.uid === ADMIN_UID; }
+> The user agreed to use Paisa. **The people they paid did not.**
 
-  if (window.firebase) {
-    firebase.auth().onAuthStateChanged((u) => {
-      const fab = document.getElementById('adminFab');
-      if (isAdmin(u)) { if (!fab) injectFab(); }
-      else if (fab) fab.remove();
-    });
-  }
+That asymmetry is the whole argument. Their names must not reach a third-party
+store, and a mask that silently stops working is worse than none — you'd believe
+you were covered.
 
-  function injectFab() {
-    const b = document.createElement('button');
-    b.id = 'adminFab'; b.className = 'admin-fab';
-    b.title = 'కొత్త స్తోత్రం చేర్చండి'; b.textContent = '＋';
-    b.onclick = function () { openAdmin(); };
-    document.body.appendChild(b);
-  }
+### Pseudonymisation, not redaction
 
-  function ensureModal() {
-    if (document.getElementById('adminOverlay')) return;
-    const opts = Object.keys(THEMES).map((k) => '<option value="' + k + '">' + THEMES[k].label + '</option>').join('');
-    const cats = CATEGORIES.map((c) => '<option value="' + c.slug + '">' + c.label + '</option>').join('')
-      + '<option value="__new">＋ కొత్త విభాగం…</option>';
-    const ov = document.createElement('div');
-    ov.id = 'adminOverlay'; ov.className = 'admin-overlay';
-    ov.innerHTML =
-      '<div class="admin-box">' +
-      '<div class="admin-head"><h2>➕ స్తోత్రం</h2><button class="search-close-btn" onclick="closeAdmin()">✕</button></div>' +
-      '<input type="hidden" id="adEditKey">' +
-      // existing stotras first, so edit/delete is visible without scrolling
-      '<div class="ad-existing" id="adExisting"></div>' +
-      '<div class="ad-builtin-note" id="adBuiltinNote" style="display:none"></div>' +
-      '<label class="ad-label">శీర్షిక / Title *</label><input class="ad-in" id="adTitle" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">' +
-      '<label class="ad-label">Subtitle (English)</label><input class="ad-in" id="adSubtitle" placeholder="Sri Subrahmanya Ashtottaram">' +
-      '<div class="ad-row"><div><label class="ad-label">థీమ్ / Theme</label><select class="ad-in" id="adTheme">' + opts + '</select></div>' +
-      '<div><label class="ad-label">విభాగం / Category</label><select class="ad-in" id="adCat" onchange="adminCatChange()">' + cats + '</select></div></div>' +
-      '<input class="ad-in" id="adCatNew" placeholder="కొత్త విభాగం పేరు" style="display:none">' +
-      '<label class="ad-label">సంక్షిప్త వివరణ / Short description</label><input class="ad-in" id="adDesc" placeholder="కార్డుపై కనిపించే చిన్న వాక్యం">' +
-      '<label class="ad-label">ఉద్భవం / Origin (ఐచ్ఛికం)</label><textarea class="ad-in ad-area" id="adOrigin" rows="2"></textarea>' +
-      '<label class="ad-label">శ్లోకాలు / Slokams * <span class="ad-hint">— ఒక్కో శ్లోకం మధ్య ఖాళీ లైన్ వదలండి (blank line between verses)</span></label>' +
-      '<div class="ad-ocr"><input type="file" id="adImages" accept="image/*" multiple>' +
-      '<button type="button" class="track-btn ad-ocr-btn" onclick="ocrExtract()">🖼️ చిత్రం నుండి తీసుకోండి</button>' +
-      '<span class="ad-ocr-status" id="adOcrStatus"></span></div>' +
-      '<textarea class="ad-in ad-area" id="adSlokams" rows="8" placeholder="మొదటి శ్లోకం…\n\nరెండవ శ్లోకం…"></textarea>' +
-      '<label class="ad-check"><input type="checkbox" id="adPub" checked> ప్రచురించు (Publish — అందరికీ కనిపిస్తుంది)</label>' +
-      '<div class="ad-err" id="adErr"></div>' +
-      '<div class="ad-actions"><button class="track-btn" onclick="closeAdmin()">రద్దు</button><button class="track-btn primary" onclick="saveStotram()">సేవ్ చేయండి</button></div>' +
-      '</div>';
-    document.body.appendChild(ov);
-    ov.addEventListener('click', (e) => { if (e.target === ov) closeAdmin(); });
-  }
+```
+"SWIGGY"  →  "[redacted:3f8a1c]"
+```
 
-  function openAdmin(editKey) {
-    ensureModal();
-    document.getElementById('adEditKey').value = editKey || '';
-    // fill or clear the form
-    if (editKey && stotramConfig[editKey]) {
-      const c = stotramConfig[editKey];
-      set('adTitle', c.title); set('adSubtitle', c.subtitle || '');
-      set('adTheme', (c.theme || '').replace('-theme', ''));
-      set('adCat', c.__cat || 'stotras'); adminCatChange();
-      set('adDesc', c.__desc || ''); set('adOrigin', c.origin || '');
-      set('adSlokams', textFromSlokams(c.data));
-      document.getElementById('adPub').checked = true;
-    } else {
-      ['adTitle', 'adSubtitle', 'adDesc', 'adOrigin', 'adSlokams', 'adCatNew'].forEach((id) => set(id, ''));
-      document.getElementById('adPub').checked = true;
-      set('adCat', 'stotras'); adminCatChange();
-    }
-    document.getElementById('adErr').textContent = '';
-    // editing a built-in: theme/category come from the file and are ignored, so
-    // hide them and say what will change
-    const bi = !!(editKey && isBuiltin(editKey));
-    const themeRow = document.querySelector('#adminOverlay .ad-row');
-    if (themeRow) themeRow.style.display = bi ? 'none' : '';
-    const catNew = document.getElementById('adCatNew');
-    if (bi && catNew) catNew.style.display = 'none';
-    const note = document.getElementById('adBuiltinNote');
-    if (note) {
-      note.style.display = bi ? '' : 'none';
-      note.textContent = bi
-        ? 'ℹ️ ఇది అంతర్నిర్మిత స్తోత్రం. శీర్షిక, ఉపశీర్షిక, ఉద్భవం, శ్లోకాలు మాత్రమే మారుతాయి — కార్డు స్థానం/థీమ్ అలాగే ఉంటాయి. ఎప్పుడైనా ↩︎ తో అసలు రూపానికి తిరిగి మార్చవచ్చు.'
-        : '';
-    }
-    const head = document.querySelector('#adminOverlay .admin-head h2');
-    if (head) head.textContent = editKey ? '✏️ స్తోత్రం సవరించండి' : '➕ కొత్త స్తోత్రం';
-    renderExistingList();
-    document.getElementById('adminOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeAdmin() {
-    const ov = document.getElementById('adminOverlay');
-    if (ov) ov.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-  function adminCatChange() {
-    const sel = document.getElementById('adCat');
-    document.getElementById('adCatNew').style.display = (sel.value === '__new') ? '' : 'none';
-  }
+A salted SHA-256, truncated. The *same* merchant yields the *same* token
+throughout a trace, so **"this counterparty appears six times"** survives while
+the identity does not. A blanket `[redacted]` would destroy that structure for no
+extra privacy.
 
-  function renderExistingList() {
-    const box = document.getElementById('adExisting');
-    if (!box) return;
+Salt comes from `PAISA_TRACE_SALT`, falling back to `LANGFUSE_SECRET_KEY`
+(already a secret in the environment). **With no salt at all we emit plain
+`[redacted]` rather than an unsalted hash** — the merchant vocabulary is small
+enough that unsalted hashes of "Swiggy" or a friend's name are reversible by
+anyone who can guess the candidates, and a hash that *looks* protective while
+being reversible is the worst of the three options.
 
-    const row = (k, buttons) =>
-      '<div class="ad-ex-item"><span class="ad-ex-name">' + escapeHtml(stotramConfig[k].title || k) +
-      (overrideKeys.has(k) ? ' <em class="ad-ex-tag">సవరించబడింది</em>' : '') +
-      '</span><span class="ad-ex-btns">' + buttons + '</span></div>';
+### What's masked, and what deliberately isn't
 
-    const mine = [...cloudKeys];
-    const builtin = Object.keys(BUILTIN).filter((k) => !stotramConfig[k] || !stotramConfig[k].hidden);
+| Sent | Masked |
+|---|---|
+| dates, amounts, categories, platforms | `main_detail`, `narration`, `merchant`, `counterparty` |
+| row counts, `meta`, truncation flags | `upi_ref` (correlatable to a bank statement) |
+| tool arguments — the resolved date window | `email`, `pattern` (a `custom_tags` pattern IS a merchant name) |
+| per-node timings, intent, tool plan | |
+| **the user's own question** — see below | |
 
-    let html = '';
-    if (mine.length) {
-      html += '<div class="ad-existing-title">మీరు చేర్చినవి (' + mine.length + ')</div>' +
-        mine.map((k) => row(k,
-          '<button class="ad-mini" data-edit="' + k + '" title="సవరించు">✏️</button>' +
-          '<button class="ad-mini" data-del="' + k + '" title="తొలగించు">🗑️</button>')).join('');
-    }
-    // every built-in is editable too — fixes typos without touching any file
-    html += '<div class="ad-existing-title">అంతర్నిర్మిత స్తోత్రాలు (' + builtin.length + ')' +
-      '<span class="ad-hint"> — ఇవి కూడా సవరించవచ్చు</span></div>' +
-      '<div class="ad-ex-scroll">' +
-      builtin.map((k) => row(k,
-        '<button class="ad-mini" data-edit="' + k + '" title="సవరించు">✏️</button>' +
-        (overrideKeys.has(k)
-          ? '<button class="ad-mini" data-revert="' + k + '" title="అసలు రూపానికి తిరిగి">↩︎</button>'
-          : ''))).join('') +
-      '</div>';
+The question is sent unmasked, deliberately: it's the person's own text, and
+stripping it makes traces nearly useless for debugging. If a question contains a
+third party's name, that's a conscious trade, not an oversight.
 
-    box.innerHTML = html;
-    box.querySelectorAll('[data-edit]').forEach((b) => b.onclick = () => openAdmin(b.getAttribute('data-edit')));
-    box.querySelectorAll('[data-del]').forEach((b) => b.onclick = () => deleteStotram(b.getAttribute('data-del')));
-    box.querySelectorAll('[data-revert]').forEach((b) => b.onclick = () => revertStotram(b.getAttribute('data-revert')));
-  }
+### Free text — the second mechanism ✅ (closed 2026-09-20)
 
-  // Undo an edit to a built-in: delete the override doc and the original file
-  // text comes back.
-  async function revertStotram(key) {
-    const ok = await siteConfirm(
-      'ఈ స్తోత్రాన్ని అసలు రూపానికి తిరిగి మార్చాలా?\n\n' + (stotramConfig[key] ? stotramConfig[key].title : key) +
-      '\n\nRevert to the original built-in text? Your edits will be removed.',
-      { okLabel: 'తిరిగి మార్చు / Revert', danger: true }
-    );
-    if (!ok) return;
-    try {
-      await fs().collection('stotras').doc(key).delete();
-      await loadCloudStotras();
-      renderExistingList();
-    } catch (e) {
-      siteAlert('❌ మార్చలేకపోయాం: ' + (e && e.message ? e.message : e));
-    }
-  }
+The key-based mask above cannot cover a **string** that happens to contain a name.
+That limit is permanent: a key either is or isn't sensitive, but prose has no keys.
 
-  function slokamsFromText(t) {
-    return (t || '').split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean)
-      .map((text, i) => ({ number: String(i + 1), text }));
-  }
-  function textFromSlokams(arr) { return (arr || []).map((s) => s.text).join('\n\n'); }
-  function set(id, v) { const el = document.getElementById(id); if (el) el.value = v; }
-  function val(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+This used to be an open bug with a workaround (the compose prompt was omitted from
+traces entirely). It's now closed — with **two** fixes, because on closer reading it
+was two different problems that had been filed as one.
 
-  async function saveStotram() {
-    const err = document.getElementById('adErr');
-    const title = val('adTitle');
-    const data = slokamsFromText(val('adSlokams'));
-    if (!title) { err.textContent = '⚠️ శీర్షిక అవసరం'; return; }
-    if (!data.length) { err.textContent = '⚠️ కనీసం ఒక శ్లోకం అవసరం'; return; }
+#### Problem 1: the prompt — fixed structurally, and cheaply
 
-    const catSel = document.getElementById('adCat').value;
-    let category, categoryLabel;
-    if (catSel === '__new') {
-      categoryLabel = val('adCatNew');
-      if (!categoryLabel) { err.textContent = '⚠️ కొత్త విభాగం పేరు రాయండి'; return; }
-      category = 'cat-' + Math.abs(hashStr(categoryLabel)).toString(36);
-    } else {
-      category = catSel;
-      categoryLabel = (CATEGORIES.find((c) => c.slug === catSel) || {}).label || catSel;
-    }
-    const theme = document.getElementById('adTheme').value;
-    const doc = {
-      title, subtitle: val('adSubtitle'), theme,
-      category, categoryLabel,
-      desc: val('adDesc'), origin: val('adOrigin'),
-      icon: (THEMES[theme] || {}).icon || '🕉️',
-      data,
-      published: document.getElementById('adPub').checked,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    };
-    const d = fs();
-    const editKey = val('adEditKey');
-    err.textContent = '⏳ సేవ్ అవుతోంది…';
-    try {
-      if (editKey) await d.collection('stotras').doc(editKey).set(doc, { merge: true });
-      else await d.collection('stotras').add(doc);
-      await loadCloudStotras();
-      closeAdmin();
-    } catch (e) {
-      console.warn('[stotras] save failed', e);
-      err.textContent = '❌ సేవ్ కాలేదు: ' + (e && e.message ? e.message : e);
-    }
-  }
+`compose_answer_llm` renders tool results into a flat string for the model, so
+sending that string would have leaked names through the one channel the mask can't
+inspect.
 
-  async function deleteStotram(key) {
-    const title = (stotramConfig[key] && stotramConfig[key].title) || '';
-    const ok = await siteConfirm(
-      'ఈ స్తోత్రం తొలగించాలా?' + (title ? '\n\n' + title : '') + '\n\nDelete this stotram?',
-      { okLabel: 'తొలగించు / Delete', danger: true }
-    );
-    if (!ok) return;
-    try { await fs().collection('stotras').doc(key).delete(); await loadCloudStotras(); renderExistingList(); }
-    catch (e) { siteAlert('❌ తొలగించలేకపోయాం: ' + (e && e.message ? e.message : e)); }
-  }
+The plan called for "pass tool results as structured JSON". On reading the code, the
+results were **already structured** right up to the `json.dumps` inside
+`_build_compose_user_msg`. So nothing about the prompt needed rewriting:
 
-  function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return h; }
+```python
+# The dict, not the rendered string. Masked on export, for free.
+input={"query": user_query, "tool_results": trimmed}
+```
 
-  /* ---------- image → text OCR (via Cloudflare Worker) ---------- */
-  function fileToB64(f) {
-    return new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(String(r.result).split(',')[1]);   // strip the data: prefix
-      r.onerror = rej;
-      r.readAsDataURL(f);
-    });
-  }
-  async function ocrExtract() {
-    const status = document.getElementById('adOcrStatus');
-    const files = document.getElementById('adImages').files;
-    if (!OCR_ENDPOINT || OCR_ENDPOINT.indexOf('REPLACE') >= 0) { status.textContent = '⚙️ OCR ఇంకా సెటప్ కాలేదు'; return; }
-    if (!files || !files.length) { status.textContent = '⚠️ ముందు చిత్రం ఎంచుకోండి'; return; }
-    const user = window.firebase && firebase.auth().currentUser;
-    if (!user) { status.textContent = '⚠️ సైన్ ఇన్ అవ్వండి'; return; }
-    status.textContent = '⏳ చిత్రం చదువుతోంది…';
-    try {
-      const token = await user.getIdToken();
-      const images = [];
-      for (const f of files) images.push({ mime: f.type || 'image/jpeg', data: await fileToB64(f) });
-      const res = await fetch(OCR_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ images }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || ('HTTP ' + res.status));
-      const text = (body.text || '').trim();
-      if (!text) throw new Error('ఖాళీ ఫలితం — స్పష్టమైన చిత్రం ప్రయత్నించండి');
-      const box = document.getElementById('adSlokams');
-      box.value = box.value.trim() ? (box.value.trim() + '\n\n' + text) : text;
-      status.textContent = '✅ వచ్చింది — దయచేసి చిత్రంతో సరిచూసుకోండి';
-    } catch (e) {
-      console.warn('[ocr] failed', e);
-      status.textContent = '❌ ' + (e && e.message ? e.message : e);
-    }
-  }
+**The model still receives exactly the same string it always did** — what changed is
+what the *trace* is told. The compose span now shows the rows the model saw, which
+was the main reason to trace an LLM call at all.
 
-  // expose for inline handlers
-  window.openAdmin = openAdmin;
-  window.closeAdmin = closeAdmin;
-  window.adminCatChange = adminCatChange;
-  window.saveStotram = saveStotram;
-  window.ocrExtract = ocrExtract;
+#### Problem 2: the answer — no structural fix exists
 
-  // kick off Phase 2 load
-  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', loadCloudStotras);
-  else loadCloudStotras();
-})();
+The original bug report missed this half. The **model writes** counterparty names
+into prose: *"you spent ₹2,340 with Chintada Sateesh this month."* There is no key to
+match on and there never will be, because the model generated the string.
+
+So `redact_known_values` does three things, and the third is the important one:
+
+| Step | What | Catches |
+|---|---|---|
+| **Substitute** | replace exact known strings with their pseudonym tokens | the name as it was given |
+| **Verify** | check no distinctive fragment of those names survives | the model shortening it to "Chintada", or "CHINTADA S." |
+| **Omit** | if anything survived, send **nothing** | everything else |
+
+Failing closed is what makes this defensible. It converts *"probably clean"* into
+**"clean, or absent"** — a guarantee that can be written in a doc and be literally
+true. A scrubber that *mostly* works is exactly the false confidence to avoid.
+
+**This is not free-text scrubbing, and the distinction matters.** Regex/NER over
+prose was rejected and stays rejected: it over-matches (mangling "Bills", "Travel")
+and under-matches (missing an unusual name). What ships is exact-string substitution
+over a **closed set we supplied ourselves** — `collect_sensitive_values(tool_results)`
+returns precisely the counterparty strings our own tools put into the prompt, so
+there is no guessing anywhere in it.
+
+#### Three details that are easy to get wrong
+
+**Substitute full strings, verify on tokens.** Substituting token-by-token would
+over-mask: a merchant called `S S R Stores` would turn every occurrence of "stores"
+in an answer into a hash. Verifying token-by-token is the safe direction, because a
+false alarm costs one omitted trace output and nothing else.
+
+**The residue is never reported.** Saying *which* fragment tripped verification would
+put the name we just refused to send into the trace metadata — helpful-looking
+diagnostics that undo the whole feature. Only the **count** escapes
+(`redaction_metadata`). To find out which name it was, reproduce locally, where the
+real data is already in front of you.
+
+**Verification strips our own markers first.** A digest is `[0-9a-f]`, so a genuine
+name fragment like `beefed` or `facade` can occur *inside* a pseudonym token. Without
+stripping, that collision looks like a surviving name and the output is silently
+omitted — a bug that only appears for unlucky salts. Pinned by
+`test_a_hex_digest_is_not_mistaken_for_residue`, which forces the collision
+deterministically.
+
+**Amounts are deliberately kept.** A name is a person; ₹120 identifies nobody once
+the name beside it is gone. And amounts are precisely what you'd open a trace to
+check — the production bug that motivated all of this was a wrong *number*.
+
+**Both channels are covered.** The same answer text reaches the trace twice: as the
+compose generation's output, and as `paisa.run`'s `output.response`. Redacting one and
+forgetting the other would have made the exercise pointless — `runner.run_and_log`
+does the second.
+
+> ⚠️ Still read the key-based mask as a limit: **only structured data is masked by
+> key.** Pinned by `TestFreeTextIsNotMaskedByKey`. Anything sent as a bare string
+> needs `redact_known_values` explicitly — it is not automatic.
+
+### ⚠️ A masking function only protects the exporter it was passed to
+
+Found while doing the above, and it's the more transferable lesson. `paisa/tracing.py`'s
+mask is a callback handed to the **Langfuse SDK**. It has no bearing on any other
+exporter — and there was another one.
+
+`langsmith` arrives as a transitive dependency (`langgraph` → `langchain-core`), and
+LangChain auto-instruments whenever `LANGSMITH_TRACING` or `LANGCHAIN_TRACING_V2` is
+truthy. With those set shell-wide from an unrelated project, every run was posting
+~124 KB of graph state — including `tool_results` with real counterparty names —
+completely unmasked. No Paisa code enabled it, and none could have disabled it.
+
+`paisa/config.py` now forces both off at import unless `PAISA_LANGSMITH=on`, and
+`tests/conftest.py` repeats it before any import. Full write-up: §5c in
+[../plan/phase-5-eval-traces.md](../plan/phase-5-eval-traces.md) and
+[../issues-faced.md](../issues-faced.md).
+
+**The audit question is "what egress exists?", enumerated — not "is our masking
+correct?"**
+
+---
+
+## 4. The span tree
+
+```
+paisa.run                          ← agent_run_id, user_id, latency, intent
+├── llm.classify_intent            ← generation: prompt + raw output
+├── llm.plan                       ← generation: the tool plan it chose
+├── tool.query_transactions        ← input = resolved ARGS, output = row COUNT
+├── tool.detect_anomalies
+└── llm.compose_answer             ← generation (prompt omitted, see §3)
+```
+
+Instrumented at three central points, not sprinkled:
+
+| Where | What it buys |
+|---|---|
+| `runner.run_and_log` | the run span + correlation to `agent_runs.id` |
+| `nodes.tool_call` — the **single** dispatch site | one span per tool; a tool added later is traced for free |
+| `llm._call_json` + `compose_answer_llm` | generations, which is what Langfuse prices |
+
+**The payoff on your actual bug.** `tool.query_transactions` records its resolved
+arguments, so the "No transactions found between 2026-08-18 and 2026-09-17" answer
+would show, at a glance: the window it chose, `row_count: 0`, and that the data
+spans June–September. That's the diagnosis, visible without a debugger.
+
+---
+
+## 5. It cannot break a request
+
+Observability that can break the thing it observes is a liability. So:
+
+- **Off unless both keys are present.** A fresh clone and the test suite are
+  unaffected by default.
+- **Every wrapper is a no-op when disabled**, and returns `None` rather than a
+  mock, so nothing downstream depends on a span existing.
+- **Every wrapper swallows its own exceptions.** A dead Langfuse, an expired key,
+  a network blip — the question is still answered. Tested with a client that
+  raises on every call.
+- **Application exceptions still propagate.** Tracing must not swallow the
+  errors the agent's own handling depends on.
+- **A missing SDK degrades to disabled**, warns once, and is cached — so we don't
+  retry the import per question.
+
+`tests/conftest.py` forces `PAISA_TRACING=off` with a plain assignment, not
+`setdefault`: once real keys live in `.env`, an unguarded suite would ship
+fixture transaction data to a third party on every run.
+
+---
+
+## 6. Nothing imports the SDK except one file
+
+`paisa/tracing.py` is the only module that touches `langfuse`. We're on v3 and v4
+already exists with a different surface; had node code called
+`start_as_current_span` in a dozen places, an upgrade would be a dozen-file
+migration. It's one file — and the pure masking logic is testable with the SDK
+absent entirely.
+
+Pinned `langfuse>=3.15,<4` for that reason.
+
+---
+
+## 7. Setup
+
+1. Create a project at **cloud.langfuse.com** (EU) or **us.cloud.langfuse.com** (US)
+2. Copy the keys into `.env` (and Render's environment for production):
+
+```bash
+LANGFUSE_PUBLIC_KEY=pk-lf-...
+LANGFUSE_SECRET_KEY=sk-lf-...
+LANGFUSE_HOST=https://cloud.langfuse.com
+PAISA_ENV=dev            # tags traces so local noise is separable
+```
+
+3. Ask Paisa a question. A trace appears within a few seconds.
+
+```bash
+# Verify the wiring end to end — the eval flushes on exit
+.venv/bin/python -m paisa.eval --case anomalies_are_found
+```
+
+`PAISA_TRACING=off` silences it without removing the keys.
+
+**Flushing matters.** The SDK batches in a background thread, so a short-lived
+process — the CLI, the eval runner — exits before anything is sent unless it
+flushes. `run_and_log` flushes on the way out.
+
+---
+
+## 8. Cost accounting (sub-step 5-4)
+
+Tracing without token counts shows you latency but not spend — and spend is the
+number that matters, because the admin Settings page lets you change *"50
+questions per person per day"* with no idea whether 50 questions costs ₹1 or ₹100.
+A dial with no gauge.
+
+### Where the numbers come from
+
+Every provider returns token counts on the same response as the text:
+
+```python
+resp.choices[0].message.content   # the answer
+resp.usage                        # prompt_tokens, completion_tokens, total_tokens
+```
+
+We used to drop `resp.usage` on the floor. Now the four non-streaming provider
+methods record it as they return.
+
+### The design decision, and the one I got wrong first
+
+One question makes **several** LLM calls — classify intent, plan, maybe generate
+SQL, then compose. The counts appear deep in `llm.py`; the place that needs the
+*total* is `runner.py` at the end of the run. So the number has to travel.
+
+My first instinct was to widen the provider methods to return `(text, usage)`.
+Checking the callers killed it: **two of the five LLM entry points are called from
+inside tools** (`text_to_sql`, `classify_transaction`), and a tool must return a
+`ToolResult` — `{ok, data, error, meta}`. Carrying token counts out would mean
+smuggling accounting data through `meta` and having `nodes.tool_call` fish it back
+out. That's ~15 touch points and a bent contract, for a side observation.
+
+So instead: a **request-scoped accumulator** in `paisa/usage.py`. Which turns out
+to be a pattern already in this codebase one layer down —
+
+```sql
+SET LOCAL paisa.user_id = 42        -- Postgres: scoped to one transaction
+```
+```python
+usage.reset()                      -- Python: scoped to one request
+```
+
+`get_authed_connection` doesn't thread `user_id` into every statement; it sets it
+once and the RLS policies read it from ambient context. A `ContextVar` is that
+idea for a request, with the same isolation property: two concurrent questions get
+their own totals automatically, exactly as two transactions get their own
+`paisa.user_id`.
+
+The lifecycle is kept deliberately narrow so the number's origin stays obvious:
+
+| | |
+|---|---|
+| **writes** to the counter | `paisa/agent/llm.py` only |
+| **resets and reads** it | `paisa/runner.py` only |
+
+### Per-span vs per-run
+
+A Langfuse *generation* should report only its own call's tokens, but the
+accumulator holds the run total. `usage.delta(before)` subtracts a snapshot taken
+before the call. A test pins the invariant that makes both figures trustworthy:
+**the per-span deltas must sum back to the run total** written to `agent_runs`. If
+they ever disagree, the cost numbers are lying.
+
+Usage is reported even when a response **fails validation** — it was still
+generated and still cost money. Dropping it there would make the total understate
+the bill precisely when something is going wrong.
+
+### Two destinations
+
+**Langfuse**, via `usage_details` on each generation. Langfuse holds provider
+price tables and converts counts to currency, so no prices are hardcoded here.
+
+**`agent_runs`**, via [migration 014](../../paisa/db/migrations/014_agent_run_tokens.sql) —
+`prompt_tokens`, `completion_tokens`, `total_tokens`, `llm_calls`. Same reasoning
+as the rest of the tracing work: the vendor stays optional, so cost must be
+answerable in SQL against our own data.
+
+```sql
+select date_trunc('day', ts) as day,
+       count(*) as questions, sum(total_tokens) as tokens
+from agent_runs where ts > now() - interval '30 days'
+group by 1 order by 1 desc;
+```
+
+That's also the groundwork for turning the per-user cap from a **count** of
+questions into a **budget** of tokens — which is what actually tracks the bill.
+
+**Columns are NULLABLE with no default and no backfill**, all three deliberate.
+`NULL` means "not measured": historical rows predating the migration, and runs with
+`PAISA_LLM=off` where no call happened. `DEFAULT 0` would invent a zero-cost past
+and make any average over the column silently wrong — "didn't call the model" and
+"called it for free" are different facts.
+
+`llm_calls` is stored separately from the token total because the two move for
+different reasons: a jump in calls means the agent started looping or re-planning
+(a behaviour regression), while a jump in tokens alone usually just means bigger
+results reached compose.
+
+---
+
+## 9. The streaming path — a bug worth reading about
+
+When 5-4 shipped it wired `run_and_log` and **missed `stream_query_and_log`**.
+Since `usage.record()` is a deliberate no-op until the counter is started, the
+result was:
+
+| Path | Used by | Tokens recorded |
+|---|---|---|
+| `run_and_log` | CLI, `python -m paisa.eval` | ✅ correctly |
+| `stream_query_and_log` | **the UI** (SSE) | ❌ none at all |
+
+So the metric worked perfectly everywhere it was tested and reported nothing
+where it was actually used. That's a worse failure than no metric: you'd read
+`NULL` cost for real traffic and conclude the feature wasn't shipped, or read the
+eval's numbers and conclude real usage was cheap.
+
+Two things had to change: `usage.reset()` / `snapshot()` in the streaming entry
+point, and `_finalise_run` — which UPDATEs a row inserted up front, rather than
+INSERTing — needed the token columns too. Wiring only the INSERT is what left the
+UPDATE path silently NULL.
+
+**The fix that matters is the third one.** Nothing in the code forced the two
+entry points to agree, so
+[`tests/test_paisa_usage_entrypoints.py`](../../tests/test_paisa_usage_entrypoints.py)
+now does: an AST check that every public function in `runner.py` which runs the
+graph calls `usage.reset()` and `usage.snapshot()`, and that both row-writers
+persist all four columns. It's an AST test rather than a behavioural one because
+the thing it guards is an *absence* — no exception to catch, no wrong value to
+assert on, just a missing call. It also asserts its own entry-point list is
+complete, so a third path can't be added without either being covered or failing
+the test.
+
+> A note on `compose_answer_llm_stream`: it turned out to be **dead code**. Only
+> its own tests and a stale docstring reference it — the graph calls the
+> non-streaming `compose_answer_llm`, because SSE streams one event per graph
+> *node*, not per LLM token. The token-level streaming sub-step it was written for
+> never landed. So no `stream_options={"include_usage": True}` was needed after
+> all; the earlier note claiming otherwise was wrong.
+
+---
+
+## 10. What's still missing
+- **Free-text masking** — the open bug in
+  [../plan/phase-5-eval-traces.md](../plan/phase-5-eval-traces.md) §5b.
+- **Scores.** Langfuse can attach quality scores to traces; feeding golden-set
+  results in would join this to [18-eval.md](18-eval.md).
+
+---
+
+## 11. Tests
+
+**66 tracing + 29 usage = 95 tests, no SDK, no network, no DB.**
+
+| File | Covers |
+|---|---|
+| `test_paisa_tracing.py` | masking at depth, pseudonymisation, enablement, fail-safety, instrumented dispatch, the key-matching limit, **free-text redaction** (substitute / verify / omit, digest collisions, residue never reported, fail-closed) |
+| `test_paisa_usage.py` | summing across calls, per-request isolation, provider field-name variants, defensive parsing, delta ↔ total invariant |
+
+Three of the redaction tests earn their place specifically because they pin
+*failures that look like successes*:
+
+- `test_generic_words_do_not_cause_false_omission` — without the stoplist, nearly
+  every merchant name contributes a common word, so essentially every answer would
+  be silently omitted and the traces would just look empty.
+- `test_a_hex_digest_is_not_mistaken_for_residue` — forces the collision
+  deterministically by making the substitution token contain the fragment being
+  searched for. Verified to fail when the marker-stripping is removed.
+- `test_fails_closed_when_something_goes_wrong` — a redactor that errors *open* is
+  worse than no redactor, because the docs would still promise it works.
+
+The summing tests earn their place for the same reason: getting accumulation wrong
+doesn't crash anything, it produces a smaller, entirely believable number — the worst
+kind of wrong for a figure you're about to set spending limits from.

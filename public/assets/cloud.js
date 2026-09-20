@@ -138,4 +138,32 @@
 
   window.stotramSignIn = signIn;
   window.stotramSignOut = signOutUser;
+
+  /* ---------- feedback → Firestore ---------- */
+  // Anyone may submit (signed in or not); only the admin can read it back, which
+  // the security rules enforce. Returns a promise so app.js can keep the entry
+  // queued and retry it if this fails (offline, etc.).
+  window.__cloudFeedback = function (payload) {
+    if (payload && payload.website) return Promise.resolve();   // honeypot tripped → drop
+    const u = auth.currentUser;
+    return db.collection('feedback').add({
+      type: payload.type || 'other',
+      name: payload.name || '',
+      contact: payload.contact || '',
+      message: payload.message || '',
+      screen: payload.screen || '',
+      stotram: payload.stotram || '',
+      stotramTitle: payload.stotramTitle || '',
+      lang: payload.lang || '',
+      device: payload.device || '',
+      sentAt: payload.at || null,                     // when the user pressed send
+      uid: u ? u.uid : null,                          // null for anonymous users
+      email: u ? (u.email || null) : null,
+      handled: false,                                 // admin marks it done
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+  };
+
+  // Anything queued while offline gets sent once Firebase is ready.
+  if (typeof flushFeedback === 'function') setTimeout(flushFeedback, 1500);
 })();

@@ -858,15 +858,15 @@ function handleRestoreFile(input) {
 }
 
 /* ============================================================
-   FEEDBACK  (Name + Number + Message — all mandatory, voice-fill)
-   Submissions go to a Google Sheet via an Apps Script web app.
-   Paste your deployed /exec URL into FEEDBACK_SHEET_URL below.
-   (This URL lives in the browser, so it is public — the hidden
-    honeypot field + server-side checks keep out spam.)
-   It is ALWAYS also saved on the device as a safety copy.
+   FEEDBACK  (type + name + message; contact optional, voice-fill)
+   Submissions go to Firestore, and the admin reads them inside the
+   app (＋ → 💬 అభిప్రాయాలు). A hidden honeypot field keeps out bots.
+   Entries are queued on the device first and retried if the phone is
+   offline, so nothing is lost.
+
+   The old Google Apps Script / Sheet route has been removed — Firestore
+   replaces it. It also exposed a public script URL anyone could POST to.
 ============================================================ */
-const FEEDBACK_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwVTEplYkeudD9J1ilIX7W5hgHoyaIeRyCAUvCu1r7CDFp3d_6u-bSoZekw4hmbLFRy/exec';   // Google Apps Script web app → Sheet
-const FEEDBACK_EMAIL = '';       // optional fallback if no sheet URL is set
 
 function openFeedback() {
     resetFeedbackBox();
@@ -915,13 +915,13 @@ function submitFeedback() {
     [nameEl, numEl, msgEl].forEach(el => el.classList.remove('invalid'));
 
     const name = nameEl.value.trim();
-    const number = numEl.value.trim();
+    const contact = numEl.value.trim();          // phone OR email, now optional
     const message = msgEl.value.trim();
+    const typeEl = document.getElementById('fbType');
+    const type = typeEl ? typeEl.value : 'other';
     const missing = [];
 
     if (!name) { nameEl.classList.add('invalid'); missing.push('పేరు'); }
-    const digits = (number.match(/\d/g) || []).length;
-    if (!number || digits < 7) { numEl.classList.add('invalid'); missing.push('సరైన ఫోన్ నంబర్'); }
     if (!message) { msgEl.classList.add('invalid'); missing.push('అభిప్రాయం'); }
 
     if (missing.length) {
@@ -930,38 +930,58 @@ function submitFeedback() {
     }
     errEl.textContent = '';
 
+    // Context captured automatically so a report is actionable — without this a
+    // "there is a mistake" message gives no clue where to look.
     const payload = {
-        name, number, message,
+        type, name, contact,
+        number: contact,                          // keep old key so the Sheet columns still line up
+        message,
+        screen: currentType ? ('reader:' + currentType) : 'home',
+        stotram: currentType || '',
+        stotramTitle: (currentType && stotramConfig[currentType]) ? stotramConfig[currentType].title : '',
+        lang: navigator.language || '',
+        device: (navigator.userAgent || '').slice(0, 180),
         website: document.getElementById('fbWebsite').value,   // honeypot (must stay empty)
         at: new Date().toISOString()
     };
 
-    // always keep a copy on the device (safety net)
-    let all = [];
-    try { all = JSON.parse(localStorage.getItem('feedbackEntries_v1')) || []; } catch (e) {}
-    all.push(payload);
-    try { localStorage.setItem('feedbackEntries_v1', JSON.stringify(all)); } catch (e) {}
-
-    // send to Google Sheet (Apps Script). Sent as a "simple" request with
-    // no-cors so the browser does not block it; we don't read the response.
-    if (FEEDBACK_SHEET_URL) {
-        try {
-            fetch(FEEDBACK_SHEET_URL, {
-                method: 'POST', mode: 'no-cors',
-                body: JSON.stringify(payload)
-            }).catch(() => {});
-        } catch (e) {}
-    } else if (FEEDBACK_EMAIL) {
-        const subject = encodeURIComponent('స్తోత్రములు App — అభిప్రాయం (' + name + ')');
-        const body = encodeURIComponent('పేరు: ' + name + '\nఫోన్: ' + number + '\n\nఅభిప్రాయం:\n' + message);
-        window.location.href = 'mailto:' + FEEDBACK_EMAIL + '?subject=' + subject + '&body=' + body;
-    }
+    // Queue it on this device first, then try to send. If the phone is offline
+    // or Firestore hiccups, the entry stays queued and is retried on the next
+    // visit — so a message is never silently lost. (This replaces the old
+    // Google-Sheet copy, which is no longer used.)
+    queueFeedback(payload);
+    flushFeedback();
 
     // thank-you
     document.getElementById('fbForm').style.display = 'none';
     document.getElementById('fbThanks').style.display = 'block';
-    gaEvent('feedback_submit');
+    gaEvent('feedback_submit', { type });
     setTimeout(closeFeedback, 2200);
+}
+
+/* ---- feedback queue: survives offline, retried on next load ---- */
+const FB_QUEUE_KEY = 'feedbackQueue_v1';
+function readFbQueue() {
+    try { return JSON.parse(localStorage.getItem(FB_QUEUE_KEY)) || []; } catch (e) { return []; }
+}
+function writeFbQueue(q) {
+    try { localStorage.setItem(FB_QUEUE_KEY, JSON.stringify(q)); } catch (e) {}
+}
+function queueFeedback(payload) {
+    const q = readFbQueue();
+    q.push(payload);
+    writeFbQueue(q.slice(-30));            // keep the queue small
+}
+async function flushFeedback() {
+    if (!window.__cloudFeedback) return;   // cloud not ready yet; retried later
+    let q = readFbQueue();
+    if (!q.length) return;
+    const left = [];
+    for (const item of q) {
+        try { await window.__cloudFeedback(item); }
+        catch (e) { left.push(item); }     // keep it for the next attempt
+    }
+    writeFbQueue(left);
 }
 
 /* ============================================================

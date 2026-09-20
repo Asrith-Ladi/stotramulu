@@ -30,13 +30,31 @@ const FIREBASE_API_KEY = "AIzaSyCDwmjKvg-4XFra1NevTX4wW8BGsUzzQtU";
 // available", put the name from that error message into GEMINI_MODEL.
 const DEFAULT_MODEL = "gemini-3.6-flash";
 
-const PROMPT =
-  "You are given image(s) of a Hindu devotional stotram printed in Telugu script " +
-  "(the text may be Sanskrit written in Telugu letters). Transcribe the verse text " +
-  "EXACTLY as printed, preserving the original spelling and the line breaks within each " +
-  "verse (a newline per printed line). Separate each distinct verse / slokam with ONE " +
-  "blank line. Do NOT add verse numbers, titles, translations, transliteration, or any " +
-  "commentary — output ONLY the verse text as it appears.";
+// Transcription prompt. Deliberately strict: with well-known stotras the model
+// will otherwise recite a MEMORISED version instead of reading the page, which
+// is where "similar but reworded" output comes from. It is also told to mark
+// illegible letters rather than guess a plausible word.
+const PROMPT = [
+  "Transcribe the Hindu devotional stotram printed in the image(s). The script is Telugu",
+  "(the language may be Sanskrit written in Telugu letters).",
+  "",
+  "ABSOLUTE RULES — this is scripture, so fidelity matters more than fluency:",
+  "1. Transcribe ONLY what is actually printed in the image, character by character.",
+  "2. Do NOT use any memorised or well-known version of this text. If you recognise the",
+  "   stotram, ignore what you remember and read the page as it is.",
+  "3. Do NOT correct, modernise, standardise or improve anything — keep the exact spelling,",
+  "   sandhi, vowel marks, punctuation and dandas (| and ||) as printed, even if they look",
+  "   unusual or wrong to you.",
+  "4. Do NOT replace an uncommon word with a more common one. Never paraphrase.",
+  "5. Do NOT add, omit, merge, split or reorder any verse.",
+  "6. If a letter or word is genuinely illegible, write ⟨?⟩ at that spot instead of guessing.",
+  "",
+  "FORMAT:",
+  "- Keep the line breaks as printed: one newline per printed line.",
+  "- Separate each verse / slokam with exactly ONE blank line.",
+  "- Output only the verse text — no numbers you added yourself, no titles, no translation,",
+  "  no transliteration, no notes, no explanation.",
+].join("\n");
 
 export default {
   async fetch(request, env) {
@@ -85,21 +103,68 @@ async function handleOcr(request, env) {
   const endpoint =
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${env.GEMINI_API_KEY}`;
 
+  // Read the page TWICE and compare. Two independent readings of the same image
+  // agree on what is clearly printed and disagree exactly where the model was
+  // unsure — which tells you the handful of lines to check, instead of having to
+  // re-read everything. Skipped when the client asks for a single pass.
+  const wantCheck = payload.doubleCheck !== false;
+
+  let first;
+  try { first = await askGemini(endpoint, parts); }
+  catch (e) { return json({ error: e.message }, 502); }
+
+  if (!wantCheck) return json({ text: first, model });
+
+  let second = null;
+  try { second = await askGemini(endpoint, parts); }
+  catch (e) { /* second pass is a bonus — never fail the request for it */ }
+
+  const diff = second === null ? null : diffLines(first, second);
+  return json({
+    text: first,
+    model,
+    checked: second !== null,
+    // lines where the two readings differ → verify these first
+    uncertain: diff,
+  });
+}
+
+async function askGemini(endpoint, parts) {
   let res, body;
   try {
     res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0 } }),
+      body: JSON.stringify({
+        contents: [{ parts }],
+        // temperature 0 = read, don't compose
+        generationConfig: { temperature: 0, topP: 1, topK: 1 },
+      }),
     });
     body = await res.json();
   } catch (e) {
-    return json({ error: "Gemini call failed: " + e.message }, 502);
+    throw new Error("Gemini call failed: " + e.message);
   }
-  if (!res.ok) return json({ error: "Gemini: " + (body?.error?.message || res.status) }, 502);
-
+  if (!res.ok) throw new Error("Gemini: " + (body?.error?.message || res.status));
   const text = body?.candidates?.[0]?.content?.parts?.map((p) => p.text).join("") || "";
-  return json({ text: text.trim() });
+  if (!text.trim()) throw new Error("Empty result — try a clearer photo");
+  return text.trim();
+}
+
+// Compare two readings line by line and return the lines that disagree.
+function diffLines(a, b) {
+  const norm = (s) => s.replace(/\s+/g, " ").trim();
+  const la = a.split("\n");
+  const lb = b.split("\n");
+  const out = [];
+  const n = Math.max(la.length, lb.length);
+  for (let i = 0; i < n; i++) {
+    const x = norm(la[i] || "");
+    const y = norm(lb[i] || "");
+    if (x !== y) out.push({ line: i + 1, a: la[i] || "", b: lb[i] || "" });
+    if (out.length >= 25) break;      // don't flood the UI
+  }
+  return out;
 }
 
 // Validate a Firebase ID token via Google Identity Toolkit → returns the uid.
