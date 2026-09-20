@@ -933,8 +933,10 @@ function submitFeedback() {
     // Context captured automatically so a report is actionable — without this a
     // "there is a mistake" message gives no clue where to look.
     const payload = {
+        // stable id so a retry overwrites the same document instead of creating
+        // a duplicate (a timed-out attempt may actually have succeeded)
+        fbid: 'fb-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
         type, name, contact,
-        number: contact,                          // keep old key so the Sheet columns still line up
         message,
         screen: currentType ? ('reader:' + currentType) : 'home',
         stotram: currentType || '',
@@ -978,10 +980,30 @@ async function flushFeedback() {
     if (!q.length) return;
     const left = [];
     for (const item of q) {
-        try { await window.__cloudFeedback(item); }
-        catch (e) { left.push(item); }     // keep it for the next attempt
+        try {
+            // Firestore does NOT reject while offline — it just keeps the write
+            // pending forever, which would hang this loop. So cap each attempt;
+            // anything that doesn't confirm in time stays queued for next time.
+            await withTimeout(window.__cloudFeedback(item), 8000);
+        } catch (e) {
+            // "permission-denied" here almost always means the document already
+            // exists — i.e. an earlier attempt DID land and only the confirmation
+            // was lost. Retrying forever would never clear, so drop it. Anything
+            // else (offline, timeout, network) stays queued for the next visit.
+            if (e && e.code === 'permission-denied') continue;
+            left.push(item);
+        }
     }
     writeFbQueue(left);
+}
+function withTimeout(promise, ms) {
+    return new Promise((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('timeout')), ms);
+        Promise.resolve(promise).then(
+            (v) => { clearTimeout(t); resolve(v); },
+            (e) => { clearTimeout(t); reject(e); }
+        );
+    });
 }
 
 /* ============================================================

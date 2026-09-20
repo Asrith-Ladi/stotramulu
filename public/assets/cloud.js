@@ -146,7 +146,7 @@
   window.__cloudFeedback = function (payload) {
     if (payload && payload.website) return Promise.resolve();   // honeypot tripped → drop
     const u = auth.currentUser;
-    return db.collection('feedback').add({
+    const doc = {
       type: payload.type || 'other',
       name: payload.name || '',
       contact: payload.contact || '',
@@ -161,7 +161,12 @@
       email: u ? (u.email || null) : null,
       handled: false,                                 // admin marks it done
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
+    };
+    // Write under the client-generated id when we have one, so retrying a
+    // message that may already have landed overwrites it instead of duplicating.
+    return payload.fbid
+      ? db.collection('feedback').doc(payload.fbid).set(doc)
+      : db.collection('feedback').add(doc);
   };
 
   // Anything queued while offline gets sent once Firebase is ready.
