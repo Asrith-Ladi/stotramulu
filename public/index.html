@@ -1055,15 +1055,23 @@
             </div>
             <p class="fb-sub">మీ సూచనలు మాకు చాలా విలువైనవి 🙏 (🎤 నొక్కి మాట్లాడవచ్చు)</p>
 
+            <label class="fb-label">ఏమి చెప్పాలనుకుంటున్నారు?</label>
+            <select class="fb-input" id="fbType">
+                <option value="correction">📖 స్తోత్రంలో తప్పు / దిద్దుబాటు</option>
+                <option value="problem">⚠️ సమస్య / పని చేయలేదు</option>
+                <option value="suggestion" selected>💡 సూచన / కొత్త కోరిక</option>
+                <option value="other">🙏 ఇతరం</option>
+            </select>
+
             <label class="fb-label">పేరు <span class="req">*</span></label>
             <div class="fb-field">
                 <input type="text" class="fb-input" id="fbName" placeholder="మీ పేరు" autocomplete="name">
                 <button class="mic-mini" onclick="listenInto('fbName', this, false)" title="మాట్లాడండి">🎤</button>
             </div>
 
-            <label class="fb-label">ఫోన్ నంబర్ <span class="req">*</span></label>
+            <label class="fb-label">ఫోన్ లేదా ఇమెయిల్ <span class="fb-opt">(ఐచ్ఛికం — బదులు చెప్పాలంటే మాత్రమే)</span></label>
             <div class="fb-field">
-                <input type="tel" class="fb-input" id="fbNumber" placeholder="ఫోన్ నంబర్" inputmode="numeric" autocomplete="tel">
+                <input type="text" class="fb-input" id="fbNumber" placeholder="ఫోన్ నంబర్ లేదా ఇమెయిల్" autocomplete="tel">
                 <button class="mic-mini" onclick="listenInto('fbNumber', this, false)" title="మాట్లాడండి">🎤</button>
             </div>
 
@@ -1077,6 +1085,7 @@
             <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true"
                    style="position:absolute;left:-9999px;width:0;height:0;opacity:0;">
             <button class="mokku-add-btn fb-submit" onclick="submitFeedback()">పంపండి →</button>
+            <div class="fb-privacy">🔒 మీరు రాసినది, మీ పేరు, మరియు (ఇచ్చినట్లయితే) సంప్రదింపు వివరాలు మాత్రమే పంపబడతాయి. ఏ స్తోత్రం చూస్తున్నారో అనే సమాచారం కూడా జోడించబడుతుంది — తప్పు ఎక్కడ ఉందో తెలుసుకోవడానికి.</div>
         </div>
 
         <div id="fbThanks" class="fb-thanks" style="display:none;">
@@ -1135,5 +1144,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <script src="assets/cloud.js"></script>
 <script src="assets/admin.js"></script>
+<script src="assets/weekday.js"></script>
 </body>
 </html>
