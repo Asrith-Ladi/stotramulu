@@ -1,1285 +1,1347 @@
-
-
 // ============ STOTRAM DATA ============
 // Per-stotram data lives in data/stotras/<key>.js — each file registers
 // itself onto window.STOTRAS_DATA. Add a new stotram by creating a file
 // there and adding its <script> tag in index.html.
 const stotramConfig = window.STOTRAS_DATA || {};
 const origins = Object.fromEntries(
-    Object.entries(stotramConfig).map(([k, v]) => [k, v.origin || ''])
+   Object.entries(stotramConfig).map(([k, v]) => [k, v.origin || ''])
 );
 const meanings = Object.fromEntries(
-    Object.entries(stotramConfig).map(([k, v]) => [k, v.meanings || {}])
+   Object.entries(stotramConfig).map(([k, v]) => [k, v.meanings || {}])
 );
+
 
 // ============ APP ============
 let currentFontSize = 22;
 let currentType = null;
 
+
 function createParticles() {
-    const c = document.getElementById('particles');
-    for (let i = 0; i < 35; i++) {
-        const p = document.createElement('div');
-        p.className = 'particle ' + (Math.random() > 0.7 ? 'big' : 'gold');
-        p.style.left = Math.random() * 100 + '%';
-        p.style.animationDelay = Math.random() * 10 + 's';
-        p.style.animationDuration = (7 + Math.random() * 8) + 's';
-        c.appendChild(p);
-    }
+   const c = document.getElementById('particles');
+   for (let i = 0; i < 35; i++) {
+       const p = document.createElement('div');
+       p.className = 'particle ' + (Math.random() > 0.7 ? 'big' : 'gold');
+       p.style.left = Math.random() * 100 + '%';
+       p.style.animationDelay = Math.random() * 10 + 's';
+       p.style.animationDuration = (7 + Math.random() * 8) + 's';
+       c.appendChild(p);
+   }
 }
+
 
 function openReader(type) {
-    const cfg = stotramConfig[type];
-    if (!cfg) return;
-    currentType = type;
+   const cfg = stotramConfig[type];
+   if (!cfg) return;
+   currentType = type;
 
-    document.getElementById('homePage').style.display = 'none';
-    document.getElementById('readerPage').classList.add('active');
-    document.getElementById('backBtn').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'none';
-    gaEvent('screen_view', { screen_name: 'Reader: ' + type });
-    gaEvent('open_stotram', { stotram: type });
 
-    const ts = document.getElementById('readerTitleSection');
-    ts.className = 'reader-title-section ' + cfg.theme;
-    document.getElementById('readerTitle').textContent = cfg.title;
-    document.getElementById('readerSubtitle').textContent = cfg.subtitle;
+   document.getElementById('homePage').style.display = 'none';
+   document.getElementById('readerPage').classList.add('active');
+   document.getElementById('backBtn').style.display = 'block';
+   document.getElementById('headerActions').style.display = 'none';
+   gaEvent('screen_view', { screen_name: 'Reader: ' + type });
+   gaEvent('open_stotram', { stotram: type });
 
-    const bg = document.getElementById('readerDeityBg');
-    bg.innerHTML = `<svg style="width:100%;height:100%;color:${cfg.svgColor}"><use href="${cfg.svgId}"/></svg>`;
 
-    const originEl = document.getElementById('originBlock');
-    const originText = origins[type];
-    if (originText) {
-        originEl.innerHTML = `<span class="origin-label">📜 ఉద్భవం &amp; ప్రాముఖ్యత</span><div class="origin-text">${originText}</div>`;
-        originEl.classList.add('visible');
-    } else {
-        originEl.classList.remove('visible');
-        originEl.innerHTML = '';
-    }
+   const ts = document.getElementById('readerTitleSection');
+   ts.className = 'reader-title-section ' + cfg.theme;
+   document.getElementById('readerTitle').textContent = cfg.title;
+   document.getElementById('readerSubtitle').textContent = cfg.subtitle;
 
-    renderSlokams(cfg.data, type);
-    initStotramCounter(type, cfg.title);
-    clearReaderSearch();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+   const bg = document.getElementById('readerDeityBg');
+   bg.innerHTML = `<svg style="width:100%;height:100%;color:${cfg.svgColor}"><use href="${cfg.svgId}"/></svg>`;
+
+
+   const originEl = document.getElementById('originBlock');
+   const originText = origins[type];
+   if (originText) {
+       originEl.innerHTML = `<span class="origin-label">📜 ఉద్భవం &amp; ప్రాముఖ్యత</span><div class="origin-text">${originText}</div>`;
+       originEl.classList.add('visible');
+   } else {
+       originEl.classList.remove('visible');
+       originEl.innerHTML = '';
+   }
+
+
+   renderSlokams(cfg.data, type);
+   initStotramCounter(type, cfg.title);
+   clearReaderSearch();
+   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 function goHome() {
-    // close any open overlays/sheets and release scroll lock
-    document.getElementById('searchOverlay').classList.remove('active');
-    document.getElementById('daySheetOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-    activeDay = null;
+   // close any open overlays/sheets and release scroll lock
+   document.getElementById('searchOverlay').classList.remove('active');
+   document.getElementById('daySheetOverlay').classList.remove('active');
+   document.body.style.overflow = '';
+   activeDay = null;
 
-    document.getElementById('homePage').style.display = 'flex';
-    document.getElementById('readerPage').classList.remove('active');
-    document.getElementById('trackPage').classList.remove('active');
-    const jmPage = document.getElementById('japamalaPage');
-    if (jmPage) jmPage.classList.remove('active');
-    document.getElementById('backBtn').style.display = 'none';
-    document.getElementById('headerActions').style.display = 'flex';
-    document.getElementById('readerDeityBg').innerHTML = '';
-    currentType = null;
-    renderHomePradakshina();
-    gaEvent('screen_view', { screen_name: 'Home' });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+   document.getElementById('homePage').style.display = 'flex';
+   document.getElementById('readerPage').classList.remove('active');
+   document.getElementById('trackPage').classList.remove('active');
+   const jmPage = document.getElementById('japamalaPage');
+   if (jmPage) jmPage.classList.remove('active');
+   document.getElementById('backBtn').style.display = 'none';
+   document.getElementById('headerActions').style.display = 'flex';
+   document.getElementById('readerDeityBg').innerHTML = '';
+   currentType = null;
+   renderHomePradakshina();
+   gaEvent('screen_view', { screen_name: 'Home' });
+   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
 /* ============================================================
-   THE COUNT AT THE END OF EACH LEAF
+  THE COUNT AT THE END OF EACH LEAF
 
-   A devotee reading a long stotram wants to know how far they have
-   come, and the unit differs with what is being read — so the count
-   printed at the end of every block does too:
 
-     · అష్టోత్తరం   names.  Each block holds 4 of the 108, so the
-                     leaves end 4, 8, 12 … 108. The ధ్యానం and
-                     ఫలశ్రుతి blocks hold no names and get no count.
-     · సహస్రనామం   slokas. Each block's own label already says which
-                     slokas it covers, so "31-40" ends at 40 — read
-                     that leaf and 40 slokas are behind you.
-     · స్తోత్రం / హారతి  simply the block you are on: 1, 2, 3 …
+  A devotee reading a long stotram wants to know how far they have
+  come, and the unit differs with what is being read — so the count
+  printed at the end of every block does too:
 
-   The hand-written label at the top of the block (ధ్యానం, "31-40",
-   "1 - పీఠిక") is never touched; this only adds the count.
+
+    · అష్టోత్తరం   names.  Each block holds 4 of the 108, so the
+                    leaves end 4, 8, 12 … 108. The ధ్యానం and
+                    ఫలశ్రుతి blocks hold no names and get no count.
+    · సహస్రనామం   slokas. Each block's own label already says which
+                    slokas it covers, so "31-40" ends at 40 — read
+                    that leaf and 40 slokas are behind you.
+    · స్తోత్రం / హారతి  simply the block you are on: 1, 2, 3 …
+
+
+  The hand-written label at the top of the block (ధ్యానం, "31-40",
+  "1 - పీఠిక") is never touched; this only adds the count.
 ============================================================ */
+
 
 // Built-ins take their category from the home-page section their card sits
 // in; stotras added through the admin panel carry their own.
 function stotramCategory(type) {
-    const cfg = stotramConfig[type] || {};
-    if (cfg.__cat) return cfg.__cat;
-    const card = document.querySelector('.card[onclick*="openReader('' + type + '')"]');
-    const sec = card && card.closest('.cards-section[data-cat]');
-    if (sec && sec.dataset.cat) return sec.dataset.cat;
-    return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
+   const cfg = stotramConfig[type] || {};
+   if (cfg.__cat) return cfg.__cat;
+   const card = document.querySelector('.card[onclick*="openReader(\'' + type + '\')"]');
+   const sec = card && card.closest('.cards-section[data-cat]');
+   if (sec && sec.dataset.cat) return sec.dataset.cat;
+   return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
 }
+
 
 // Lines of actual text in a block.
 function countTextLines(text) {
-    return String(text || '').split('
-').filter((l) => l.trim()).length;
+   return String(text || '').split('\n').filter((l) => l.trim()).length;
 }
 // Lines that are a నామం — "ఓం … నమః". A ధ్యానం verse or a closing సమర్పణం
 // has none, so this is what separates the 108 names from everything else.
 function countNameLines(text) {
-    return String(text || '').split('
-').filter((l) => l.indexOf('నమః') !== -1).length;
+   return String(text || '').split('\n').filter((l) => l.indexOf('నమః') !== -1).length;
 }
 // How far a label reaches: "7" → 7, "31-40" → 40, "81-183 & సమర్పణం" → 183.
 // The label must START with a digit, otherwise it is a heading and counts for
 // nothing — "ధ్యానం - 2" is the second meditation verse, not slokam 2.
 function labelHighestNumber(label) {
-    const s = String(label == null ? '' : label);
-    if (!/^\s*\d/.test(s)) return 0;
-    const nums = s.match(/\d+/g);
-    return nums ? Math.max.apply(null, nums.map(Number)) : 0;
+   const s = String(label == null ? '' : label);
+   if (!/^\s*\d/.test(s)) return 0;
+   const nums = s.match(/\d+/g);
+   return nums ? Math.max.apply(null, nums.map(Number)) : 0;
 }
+
 
 function slokamCounts(data, type) {
-    const cat = stotramCategory(type);
-    if (cat === 'ashtottara') {
-        // A namavali added through the admin panel is split on blank lines and
-        // every block is numbered 1, 2, 3 … — including its ధ్యానం verse. So a
-        // numeric label alone does not prove a block holds names; count the
-        // నమః lines as well. (A namavali written without నమః — transliterated,
-        // say — falls back to counting every line.)
-        const hasNamah = data.some((item) => countNameLines(item.text) > 0);
-        let done = 0;
-        return data.map((item) => {
-            if (!labelHighestNumber(item.number)) return '';          // ధ్యానం / సమర్పణం
-            const n = hasNamah ? countNameLines(item.text) : countTextLines(item.text);
-            if (!n) return '';                                        // no names here
-            done += n;
-            return String(done);
-        });
-    }
-    if (cat === 'sahasranama') {
-        return data.map((item) => {
-            const n = labelHighestNumber(item.number);
-            return n ? String(n) : '';
-        });
-    }
-    return data.map((item, i) => String(i + 1));               // incremental
+   const cat = stotramCategory(type);
+   if (cat === 'ashtottara') {
+       // A namavali added through the admin panel is split on blank lines and
+       // every block is numbered 1, 2, 3 … — including its ధ్యానం verse. So a
+       // numeric label alone does not prove a block holds names; count the
+       // నమః lines as well. (A namavali written without నమః — transliterated,
+       // say — falls back to counting every line.)
+       const hasNamah = data.some((item) => countNameLines(item.text) > 0);
+       let done = 0;
+       return data.map((item) => {
+           if (!labelHighestNumber(item.number)) return '';          // ధ్యానం / సమర్పణం
+           const n = hasNamah ? countNameLines(item.text) : countTextLines(item.text);
+           if (!n) return '';                                        // no names here
+           done += n;
+           return String(done);
+       });
+   }
+   if (cat === 'sahasranama') {
+       return data.map((item) => {
+           const n = labelHighestNumber(item.number);
+           return n ? String(n) : '';
+       });
+   }
+   return data.map((item, i) => String(i + 1));               // incremental
 }
+
 
 function renderSlokams(data, type) {
-    const c = document.getElementById('slokamContainer');
-    c.innerHTML = '';
-    const meaningSet = (type && meanings[type]) || {};
-    const read = readSet(type);
-    const counts = slokamCounts(data, type);
-    data.forEach((item, idx) => {
-        const meaning = meaningSet[idx];
-        const meaningHtml = meaning
-            ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
-            : '';
-        // sits right after the verse, where a manuscript writes its number
-        const endHtml = counts[idx]
-            ? `<span class="slokam-end-num" aria-hidden="true">${counts[idx]}</span>`
-            : '';
-        const b = document.createElement('div');
-        b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
-        b.dataset.idx = idx;
-        b.onclick = () => toggleSlokamRead(idx, b);
-        b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${endHtml}${meaningHtml}`;
-        c.appendChild(b);
-    });
+   const c = document.getElementById('slokamContainer');
+   c.innerHTML = '';
+   const meaningSet = (type && meanings[type]) || {};
+   const read = readSet(type);
+   const counts = slokamCounts(data, type);
+   data.forEach((item, idx) => {
+       const meaning = meaningSet[idx];
+       const meaningHtml = meaning
+           ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
+           : '';
+       // sits right after the verse, where a manuscript writes its number
+       const endHtml = counts[idx]
+           ? `<span class="slokam-end-num" aria-hidden="true">${counts[idx]}</span>`
+           : '';
+       const b = document.createElement('div');
+       b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
+       b.dataset.idx = idx;
+       b.onclick = () => toggleSlokamRead(idx, b);
+       b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${endHtml}${meaningHtml}`;
+       c.appendChild(b);
+   });
 }
 
+
 /* ============================================================
-   READ MARKS — tap a slokam to highlight it as already read, so an
-   interruption never loses your place. Stored per stotram inside the
-   shared `track` object, so it survives a reload and rides the cloud
-   backup to other devices.
+  READ MARKS — tap a slokam to highlight it as already read, so an
+  interruption never loses your place. Stored per stotram inside the
+  shared `track` object, so it survives a reload and rides the cloud
+  backup to other devices.
 ============================================================ */
 function readSet(type) {
-    const list = (track.reading && track.reading[type]) || [];
-    return new Set(list);
+   const list = (track.reading && track.reading[type]) || [];
+   return new Set(list);
 }
 function toggleSlokamRead(idx, el) {
-    if (!currentType) return;
-    if (!track.reading) track.reading = {};
-    const list = track.reading[currentType] || [];
-    const at = list.indexOf(idx);
-    if (at >= 0) list.splice(at, 1); else list.push(idx);
-    track.reading[currentType] = list;
-    saveTrack();
-    if (el) el.classList.toggle('read', at < 0);
-    gaEvent('slokam_mark_read', { stotram: currentType, on: at < 0 });
+   if (!currentType) return;
+   if (!track.reading) track.reading = {};
+   const list = track.reading[currentType] || [];
+   const at = list.indexOf(idx);
+   if (at >= 0) list.splice(at, 1); else list.push(idx);
+   track.reading[currentType] = list;
+   saveTrack();
+   if (el) el.classList.toggle('read', at < 0);
+   gaEvent('slokam_mark_read', { stotram: currentType, on: at < 0 });
 }
 async function resetReading() {
-    if (!currentType) return;
-    const list = (track.reading && track.reading[currentType]) || [];
-    if (!list.length) return;
-    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?
-
-Clear all read marks here?',
-        { okLabel: 'తీసేయి / Clear', danger: true })) return;
-    track.reading[currentType] = [];
-    saveTrack();
-    document.querySelectorAll('#slokamContainer .slokam-block.read')
-        .forEach((el) => el.classList.remove('read'));
+   if (!currentType) return;
+   const list = (track.reading && track.reading[currentType]) || [];
+   if (!list.length) return;
+   if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?\n\nClear all read marks here?',
+       { okLabel: 'తీసేయి / Clear', danger: true })) return;
+   track.reading[currentType] = [];
+   saveTrack();
+   document.querySelectorAll('#slokamContainer .slokam-block.read')
+       .forEach((el) => el.classList.remove('read'));
 }
+
 
 function changeFontSize(d) {
-    currentFontSize = Math.max(16, Math.min(36, currentFontSize + d));
-    document.getElementById('fontSizeDisplay').textContent = currentFontSize;
-    document.querySelectorAll('.slokam-text').forEach(e => e.style.fontSize = currentFontSize + 'px');
+   currentFontSize = Math.max(16, Math.min(36, currentFontSize + d));
+   document.getElementById('fontSizeDisplay').textContent = currentFontSize;
+   document.querySelectorAll('.slokam-text').forEach(e => e.style.fontSize = currentFontSize + 'px');
 }
+
 
 function toggleMeanings() {
-    const enabled = !document.body.classList.contains('show-meanings');
-    document.body.classList.toggle('show-meanings', enabled);
-    document.getElementById('meaningToggle').classList.toggle('on', enabled);
-    try { localStorage.setItem('showMeanings', enabled ? '1' : '0'); } catch (e) {}
-    // If a search is active, re-run it so meaning matches appear/disappear with the toggle.
-    const q = document.getElementById('readerSearchInput');
-    if (q && q.value.trim()) onReaderSearch(q.value);
+   const enabled = !document.body.classList.contains('show-meanings');
+   document.body.classList.toggle('show-meanings', enabled);
+   document.getElementById('meaningToggle').classList.toggle('on', enabled);
+   try { localStorage.setItem('showMeanings', enabled ? '1' : '0'); } catch (e) {}
+   // If a search is active, re-run it so meaning matches appear/disappear with the toggle.
+   const q = document.getElementById('readerSearchInput');
+   if (q && q.value.trim()) onReaderSearch(q.value);
 }
+
 
 function initMeaningsToggle() {
-    let saved = '0';
-    try { saved = localStorage.getItem('showMeanings') || '0'; } catch (e) {}
-    if (saved === '1') {
-        document.body.classList.add('show-meanings');
-        document.getElementById('meaningToggle').classList.add('on');
-    }
+   let saved = '0';
+   try { saved = localStorage.getItem('showMeanings') || '0'; } catch (e) {}
+   if (saved === '1') {
+       document.body.classList.add('show-meanings');
+       document.getElementById('meaningToggle').classList.add('on');
+   }
 }
 
+
 /* ============================================================
-   గ్రంథ రూపం — palm-leaf (తాళపత్రం) reading mode. Each slokam becomes
-   a dried-leaf panel strung on a binding cord, the way a stotram was
-   read before print. Off by default: the leaf has lower contrast than
-   the dark theme, so it stays the reader's choice.
+  గ్రంథ రూపం — palm-leaf (తాళపత్రం) reading mode. Each slokam becomes
+  a dried-leaf panel strung on a binding cord, the way a stotram was
+  read before print. Off by default: the leaf has lower contrast than
+  the dark theme, so it stays the reader's choice.
 ============================================================ */
 function toggleGrandham() {
-    const on = !document.body.classList.contains('grandham');
-    document.body.classList.toggle('grandham', on);
-    document.getElementById('grandhamToggle').classList.toggle('on', on);
-    try { localStorage.setItem('grandham', on ? '1' : '0'); } catch (e) {}
-    gaEvent('grandham_toggle', { on: on });
+   const on = !document.body.classList.contains('grandham');
+   document.body.classList.toggle('grandham', on);
+   document.getElementById('grandhamToggle').classList.toggle('on', on);
+   try { localStorage.setItem('grandham', on ? '1' : '0'); } catch (e) {}
+   gaEvent('grandham_toggle', { on: on });
 }
 function initGrandham() {
-    let saved = '0';
-    try { saved = localStorage.getItem('grandham') || '0'; } catch (e) {}
-    if (saved === '1') {
-        document.body.classList.add('grandham');
-        const t = document.getElementById('grandhamToggle');
-        if (t) t.classList.add('on');
-    }
+   let saved = '0';
+   try { saved = localStorage.getItem('grandham') || '0'; } catch (e) {}
+   if (saved === '1') {
+       document.body.classList.add('grandham');
+       const t = document.getElementById('grandhamToggle');
+       if (t) t.classList.add('on');
+   }
 }
 
-/* ============================================================
-   IN-STOTRAM SEARCH — highlight matches in slokam text + Artham,
-   step through with ↑/↓ (or Shift+Enter / Enter), Esc to clear.
 
-   Telugu queries: literal substring.
-   English queries: phonetic — "padmanabha" matches "పద్మనాభ" by
-   reducing both to a consonant skeleton (drops vowels, collapses
-   aspirated/retroflex distinctions). Highlights whole word.
+/* ============================================================
+  IN-STOTRAM SEARCH — highlight matches in slokam text + Artham,
+  step through with ↑/↓ (or Shift+Enter / Enter), Esc to clear.
+
+
+  Telugu queries: literal substring.
+  English queries: phonetic — "padmanabha" matches "పద్మనాభ" by
+  reducing both to a consonant skeleton (drops vowels, collapses
+  aspirated/retroflex distinctions). Highlights whole word.
 ============================================================ */
 let readerMatches = [];
 let readerMatchIdx = 0;
 let readerSearchTimer = null;       // debounce handle (typing fires after 250ms pause)
 let readerScrolledOnce = false;     // whether user has scrolled to a match in the current result set
 
+
 // Telugu consonants → single Roman letter (retroflex/dental + aspirated/non
 // collapse on purpose — casual Roman typists don't distinguish them).
 const TELUGU_CONS_MAP = {
-    'క':'k','ఖ':'k','గ':'g','ఘ':'g','ఙ':'n',
-    'చ':'c','ఛ':'c','జ':'j','ఝ':'j','ఞ':'n',
-    'ట':'t','ఠ':'t','డ':'d','ఢ':'d','ణ':'n',
-    'త':'t','థ':'t','ద':'d','ధ':'d','న':'n',
-    'ప':'p','ఫ':'p','బ':'b','భ':'b','మ':'m',
-    'య':'y','ర':'r','ల':'l','వ':'v',
-    'శ':'s','ష':'s','స':'s','హ':'h',
-    'ళ':'l','ఱ':'r',
-    // Vocalic R (independent + matra) → 'r' so "krishna"/"కృష్ణ" lines up
-    'ఋ':'r','ౠ':'r','ృ':'r','ౄ':'r',
-    // Visarga (anusvara handled contextually below)
-    'ః':'h'
+   'క':'k','ఖ':'k','గ':'g','ఘ':'g','ఙ':'n',
+   'చ':'c','ఛ':'c','జ':'j','ఝ':'j','ఞ':'n',
+   'ట':'t','ఠ':'t','డ':'d','ఢ':'d','ణ':'n',
+   'త':'t','థ':'t','ద':'d','ధ':'d','న':'n',
+   'ప':'p','ఫ':'p','బ':'b','భ':'b','మ':'m',
+   'య':'y','ర':'r','ల':'l','వ':'v',
+   'శ':'s','ష':'s','స':'s','హ':'h',
+   'ళ':'l','ఱ':'r',
+   // Vocalic R (independent + matra) → 'r' so "krishna"/"కృష్ణ" lines up
+   'ఋ':'r','ౠ':'r','ృ':'r','ౄ':'r',
+   // Visarga (anusvara handled contextually below)
+   'ః':'h'
 };
 const TELUGU_LABIALS = 'పఫబభమ';
 function teluguSkeleton(text) {
-    let out = '';
-    for (let i = 0; i < text.length; i++) {
-        const ch = text[i];
-        if (ch === 'ం') {
-            // Anusvara: 'm' before labials (గంభీర → gambhir), 'n' otherwise (గోవింద → govinda).
-            let j = i + 1;
-            while (j < text.length && !TELUGU_CONS_MAP[text[j]]) j++;
-            out += TELUGU_LABIALS.includes(text[j] || '') ? 'm' : 'n';
-        } else if (TELUGU_CONS_MAP[ch]) {
-            out += TELUGU_CONS_MAP[ch];
-        }
-    }
-    return out;
+   let out = '';
+   for (let i = 0; i < text.length; i++) {
+       const ch = text[i];
+       if (ch === 'ం') {
+           // Anusvara: 'm' before labials (గంభీర → gambhir), 'n' otherwise (గోవింద → govinda).
+           let j = i + 1;
+           while (j < text.length && !TELUGU_CONS_MAP[text[j]]) j++;
+           out += TELUGU_LABIALS.includes(text[j] || '') ? 'm' : 'n';
+       } else if (TELUGU_CONS_MAP[ch]) {
+           out += TELUGU_CONS_MAP[ch];
+       }
+   }
+   return out;
 }
 function romanSkeleton(text) {
-    let s = text.toLowerCase().replace(/[^a-z]/g, '');
-    s = s.replace(/x/g, 'ks').replace(/w/g, 'v');
-    s = s.replace(/([kgcjtdpb])h/g, '$1').replace(/sh/g, 's');
-    s = s.replace(/[aeiou]/g, '');
-    return s;
+   let s = text.toLowerCase().replace(/[^a-z]/g, '');
+   s = s.replace(/x/g, 'ks').replace(/w/g, 'v');
+   s = s.replace(/([kgcjtdpb])h/g, '$1').replace(/sh/g, 's');
+   s = s.replace(/[aeiou]/g, '');
+   return s;
 }
 function isAsciiQuery(q) {
-    return /[a-zA-Z]/.test(q) && !/[ఀ-౿]/.test(q);
+   return /[a-zA-Z]/.test(q) && !/[ఀ-౿]/.test(q);
 }
+
 
 function onReaderSearch(query) {
-    const q = (query || '').trim();
-    const clearBtn = document.getElementById('readerSearchClear');
-    if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+   const q = (query || '').trim();
+   const clearBtn = document.getElementById('readerSearchClear');
+   if (clearBtn) clearBtn.style.display = q ? '' : 'none';
 
-    // Strip any existing highlights, then rejoin adjacent text nodes.
-    document.querySelectorAll('#slokamContainer mark').forEach(m => {
-        const tn = document.createTextNode(m.textContent);
-        m.parentNode.replaceChild(tn, m);
-    });
-    document.querySelectorAll('#slokamContainer .slokam-text, #slokamContainer .slokam-meaning')
-        .forEach(el => el.normalize());
 
-    readerMatches = [];
-    readerMatchIdx = 0;
-    if (!q) { updateMatchCount(); updateNavButtons(); return; }
+   // Strip any existing highlights, then rejoin adjacent text nodes.
+   document.querySelectorAll('#slokamContainer mark').forEach(m => {
+       const tn = document.createTextNode(m.textContent);
+       m.parentNode.replaceChild(tn, m);
+   });
+   document.querySelectorAll('#slokamContainer .slokam-text, #slokamContainer .slokam-meaning')
+       .forEach(el => el.normalize());
 
-    const ascii = isAsciiQuery(q);
-    const querySkel = ascii ? romanSkeleton(q) : null;
-    if (ascii && querySkel.length < 2) {
-        // Too short to be useful (e.g., "a" or "k") — don't pollute with thousands of hits.
-        updateMatchCount(); updateNavButtons(); return;
-    }
 
-    const includeMeanings = document.body.classList.contains('show-meanings');
-    const sel = includeMeanings
-        ? '#slokamContainer .slokam-text, #slokamContainer .slokam-meaning'
-        : '#slokamContainer .slokam-text';
-    const targets = document.querySelectorAll(sel);
-    const lowerQ = q.toLowerCase();
+   readerMatches = [];
+   readerMatchIdx = 0;
+   if (!q) { updateMatchCount(); updateNavButtons(); return; }
 
-    targets.forEach(el => {
-        const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
-        const textNodes = [];
-        let n; while ((n = walker.nextNode())) textNodes.push(n);
-        textNodes.forEach(tn => {
-            const text = tn.nodeValue;
-            const parent = tn.parentNode;
 
-            if (ascii) {
-                // Word-level phonetic match. Each whitespace-separated token's
-                // consonant skeleton is checked for the query skeleton; whole word
-                // gets highlighted on hit.
-                const tokens = text.split(/(\s+)/);
-                let hasMatch = false;
-                const frags = [];
-                for (const tok of tokens) {
-                    if (!tok) continue;
-                    if (/^\s+$/.test(tok)) { frags.push(document.createTextNode(tok)); continue; }
-                    const tokSkel = teluguSkeleton(tok);
-                    if (tokSkel.length >= 2 && tokSkel.includes(querySkel)) {
-                        const mark = document.createElement('mark');
-                        mark.textContent = tok;
-                        frags.push(mark);
-                        readerMatches.push(mark);
-                        hasMatch = true;
-                    } else {
-                        frags.push(document.createTextNode(tok));
-                    }
-                }
-                if (hasMatch) {
-                    frags.forEach(f => parent.insertBefore(f, tn));
-                    parent.removeChild(tn);
-                }
-            } else {
-                // Telugu literal substring path.
-                const lower = text.toLowerCase();
-                let pos = 0, idx;
-                const frags = [];
-                while ((idx = lower.indexOf(lowerQ, pos)) !== -1) {
-                    if (idx > pos) frags.push(document.createTextNode(text.substring(pos, idx)));
-                    const mark = document.createElement('mark');
-                    mark.textContent = text.substring(idx, idx + q.length);
-                    frags.push(mark);
-                    readerMatches.push(mark);
-                    pos = idx + q.length;
-                }
-                if (pos === 0) return;
-                if (pos < text.length) frags.push(document.createTextNode(text.substring(pos)));
-                frags.forEach(f => parent.insertBefore(f, tn));
-                parent.removeChild(tn);
-            }
-        });
-    });
+   const ascii = isAsciiQuery(q);
+   const querySkel = ascii ? romanSkeleton(q) : null;
+   if (ascii && querySkel.length < 2) {
+       // Too short to be useful (e.g., "a" or "k") — don't pollute with thousands of hits.
+       updateMatchCount(); updateNavButtons(); return;
+   }
 
-    if (readerMatches.length) {
-        readerMatches[0].classList.add('current');
-        // Don't auto-scroll on every keystroke — only on Enter / ↓ / ↑.
-        gaEvent('reader_search', { stotram: currentType || '', q: q.slice(0, 32), hits: readerMatches.length, mode: ascii ? 'phonetic' : 'literal' });
-    }
-    readerScrolledOnce = false;
-    updateMatchCount();
-    updateNavButtons();
+
+   const includeMeanings = document.body.classList.contains('show-meanings');
+   const sel = includeMeanings
+       ? '#slokamContainer .slokam-text, #slokamContainer .slokam-meaning'
+       : '#slokamContainer .slokam-text';
+   const targets = document.querySelectorAll(sel);
+   const lowerQ = q.toLowerCase();
+
+
+   targets.forEach(el => {
+       const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+       const textNodes = [];
+       let n; while ((n = walker.nextNode())) textNodes.push(n);
+       textNodes.forEach(tn => {
+           const text = tn.nodeValue;
+           const parent = tn.parentNode;
+
+
+           if (ascii) {
+               // Word-level phonetic match. Each whitespace-separated token's
+               // consonant skeleton is checked for the query skeleton; whole word
+               // gets highlighted on hit.
+               const tokens = text.split(/(\s+)/);
+               let hasMatch = false;
+               const frags = [];
+               for (const tok of tokens) {
+                   if (!tok) continue;
+                   if (/^\s+$/.test(tok)) { frags.push(document.createTextNode(tok)); continue; }
+                   const tokSkel = teluguSkeleton(tok);
+                   if (tokSkel.length >= 2 && tokSkel.includes(querySkel)) {
+                       const mark = document.createElement('mark');
+                       mark.textContent = tok;
+                       frags.push(mark);
+                       readerMatches.push(mark);
+                       hasMatch = true;
+                   } else {
+                       frags.push(document.createTextNode(tok));
+                   }
+               }
+               if (hasMatch) {
+                   frags.forEach(f => parent.insertBefore(f, tn));
+                   parent.removeChild(tn);
+               }
+           } else {
+               // Telugu literal substring path.
+               const lower = text.toLowerCase();
+               let pos = 0, idx;
+               const frags = [];
+               while ((idx = lower.indexOf(lowerQ, pos)) !== -1) {
+                   if (idx > pos) frags.push(document.createTextNode(text.substring(pos, idx)));
+                   const mark = document.createElement('mark');
+                   mark.textContent = text.substring(idx, idx + q.length);
+                   frags.push(mark);
+                   readerMatches.push(mark);
+                   pos = idx + q.length;
+               }
+               if (pos === 0) return;
+               if (pos < text.length) frags.push(document.createTextNode(text.substring(pos)));
+               frags.forEach(f => parent.insertBefore(f, tn));
+               parent.removeChild(tn);
+           }
+       });
+   });
+
+
+   if (readerMatches.length) {
+       readerMatches[0].classList.add('current');
+       // Don't auto-scroll on every keystroke — only on Enter / ↓ / ↑.
+       gaEvent('reader_search', { stotram: currentType || '', q: q.slice(0, 32), hits: readerMatches.length, mode: ascii ? 'phonetic' : 'literal' });
+   }
+   readerScrolledOnce = false;
+   updateMatchCount();
+   updateNavButtons();
 }
+
 
 function updateMatchCount() {
-    const el = document.getElementById('readerSearchCount');
-    if (!el) return;
-    el.textContent = readerMatches.length ? (readerMatchIdx + 1) + '/' + readerMatches.length : '';
+   const el = document.getElementById('readerSearchCount');
+   if (!el) return;
+   el.textContent = readerMatches.length ? (readerMatchIdx + 1) + '/' + readerMatches.length : '';
 }
 function updateNavButtons() {
-    const has = readerMatches.length > 0;
-    document.querySelectorAll('.reader-search .rs-nav').forEach(b => b.disabled = !has);
+   const has = readerMatches.length > 0;
+   document.querySelectorAll('.reader-search .rs-nav').forEach(b => b.disabled = !has);
 }
 
+
 function nextSearchMatch() {
-    if (!readerMatches.length) return;
-    if (!readerScrolledOnce) {
-        // First nav after a fresh search: scroll to current (match[0]) without advancing.
-        readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        readerScrolledOnce = true;
-        return;
-    }
-    readerMatches[readerMatchIdx].classList.remove('current');
-    readerMatchIdx = (readerMatchIdx + 1) % readerMatches.length;
-    readerMatches[readerMatchIdx].classList.add('current');
-    readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    updateMatchCount();
+   if (!readerMatches.length) return;
+   if (!readerScrolledOnce) {
+       // First nav after a fresh search: scroll to current (match[0]) without advancing.
+       readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+       readerScrolledOnce = true;
+       return;
+   }
+   readerMatches[readerMatchIdx].classList.remove('current');
+   readerMatchIdx = (readerMatchIdx + 1) % readerMatches.length;
+   readerMatches[readerMatchIdx].classList.add('current');
+   readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+   updateMatchCount();
 }
 function prevSearchMatch() {
-    if (!readerMatches.length) return;
-    if (!readerScrolledOnce) {
-        readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-        readerScrolledOnce = true;
-        return;
-    }
-    readerMatches[readerMatchIdx].classList.remove('current');
-    readerMatchIdx = (readerMatchIdx - 1 + readerMatches.length) % readerMatches.length;
-    readerMatches[readerMatchIdx].classList.add('current');
-    readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-    updateMatchCount();
+   if (!readerMatches.length) return;
+   if (!readerScrolledOnce) {
+       readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+       readerScrolledOnce = true;
+       return;
+   }
+   readerMatches[readerMatchIdx].classList.remove('current');
+   readerMatchIdx = (readerMatchIdx - 1 + readerMatches.length) % readerMatches.length;
+   readerMatches[readerMatchIdx].classList.add('current');
+   readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+   updateMatchCount();
 }
 // Debounced wrapper called from oninput — search runs once typing pauses.
 function onReaderSearchInput(query) {
-    clearTimeout(readerSearchTimer);
-    readerSearchTimer = setTimeout(() => { readerSearchTimer = null; onReaderSearch(query); }, 250);
+   clearTimeout(readerSearchTimer);
+   readerSearchTimer = setTimeout(() => { readerSearchTimer = null; onReaderSearch(query); }, 250);
 }
 function flushReaderSearch(query) {
-    if (readerSearchTimer) { clearTimeout(readerSearchTimer); readerSearchTimer = null; onReaderSearch(query); }
+   if (readerSearchTimer) { clearTimeout(readerSearchTimer); readerSearchTimer = null; onReaderSearch(query); }
 }
 function onReaderSearchKey(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault();
-        flushReaderSearch(event.target.value);    // make sure search is up-to-date before navigating
-        if (event.shiftKey) prevSearchMatch(); else nextSearchMatch();
-    } else if (event.key === 'Escape') {
-        event.preventDefault();
-        clearReaderSearch();
-        event.target.blur();
-    }
+   if (event.key === 'Enter') {
+       event.preventDefault();
+       flushReaderSearch(event.target.value);    // make sure search is up-to-date before navigating
+       if (event.shiftKey) prevSearchMatch(); else nextSearchMatch();
+   } else if (event.key === 'Escape') {
+       event.preventDefault();
+       clearReaderSearch();
+       event.target.blur();
+   }
 }
 function clearReaderSearch() {
-    clearTimeout(readerSearchTimer); readerSearchTimer = null;
-    const inp = document.getElementById('readerSearchInput');
-    if (inp) inp.value = '';
-    onReaderSearch('');
+   clearTimeout(readerSearchTimer); readerSearchTimer = null;
+   const inp = document.getElementById('readerSearchInput');
+   if (inp) inp.value = '';
+   onReaderSearch('');
 }
+
 
 // Mic for in-stotram search: speak in Telugu, transcript drops into the
 // search box and runs the literal-match path. Reuses the same SpeechRecognition
 // API that powers the home-page search and feedback form.
 function startReaderVoice() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const btn = document.getElementById('readerMicBtn');
-    if (!SR) {
-        siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.');
-        return;
-    }
-    const inp = document.getElementById('readerSearchInput');
-    const rec = new SR();
-    rec.lang = 'te-IN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 3;
-    rec.onresult = (e) => {
-        const text = e.results[0][0].transcript.trim();
-        if (!text) return;
-        inp.value = text;
-        clearTimeout(readerSearchTimer); readerSearchTimer = null;
-        onReaderSearch(text);
-        gaEvent('reader_search_voice', { stotram: currentType || '', q: text.slice(0, 32) });
-    };
-    rec.onend = () => btn && btn.classList.remove('listening');
-    rec.onerror = (e) => {
-        btn && btn.classList.remove('listening');
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
-            siteAlert('🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
-    };
-    try { rec.start(); btn && btn.classList.add('listening'); } catch (e) { /* already running */ }
+   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+   const btn = document.getElementById('readerMicBtn');
+   if (!SR) {
+       siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.');
+       return;
+   }
+   const inp = document.getElementById('readerSearchInput');
+   const rec = new SR();
+   rec.lang = 'te-IN';
+   rec.interimResults = false;
+   rec.maxAlternatives = 3;
+   rec.onresult = (e) => {
+       const text = e.results[0][0].transcript.trim();
+       if (!text) return;
+       inp.value = text;
+       clearTimeout(readerSearchTimer); readerSearchTimer = null;
+       onReaderSearch(text);
+       gaEvent('reader_search_voice', { stotram: currentType || '', q: text.slice(0, 32) });
+   };
+   rec.onend = () => btn && btn.classList.remove('listening');
+   rec.onerror = (e) => {
+       btn && btn.classList.remove('listening');
+       if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
+           siteAlert('🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
+   };
+   try { rec.start(); btn && btn.classList.add('listening'); } catch (e) { /* already running */ }
 }
 
+
 window.addEventListener('scroll', () => {
-    document.getElementById('scrollTopBtn').classList.toggle('visible', window.scrollY > 400);
+   document.getElementById('scrollTopBtn').classList.toggle('visible', window.scrollY > 400);
 });
 
+
 /* ============================================================
-   SEARCH + VOICE
-   Index is built automatically from stotramConfig, so any new
-   stotram added there becomes searchable with no extra work.
+  SEARCH + VOICE
+  Index is built automatically from stotramConfig, so any new
+  stotram added there becomes searchable with no extra work.
 ============================================================ */
 function buildSearchIndex() {
-    const icons = {
-        vishnu:'🔱', lalitha:'🪷', shiva:'🙏', bilva:'🌿', venkat:'⛰️', ganesha:'🐘',
-        hanuman:'🚩', lakshmi:'🪙', saibaba:'🕉️', ayyappa:'🛕', durga:'🗡️',
-        govinda:'🪈', chalisa:'🚩', manidweepa:'🌺', harati:'🪔'
-    };
-    return Object.keys(stotramConfig).filter(type => !stotramConfig[type].hidden).map(type => {
-        const cfg = stotramConfig[type];
-        const themeKey = (cfg.theme || '').replace('-theme', '');
-        return { type, title: cfg.title, subtitle: cfg.subtitle || '', icon: icons[themeKey] || '🕉️' };
-    });
+   const icons = {
+       vishnu:'🔱', lalitha:'🪷', shiva:'🙏', bilva:'🌿', venkat:'⛰️', ganesha:'🐘',
+       hanuman:'🚩', lakshmi:'🪙', saibaba:'🕉️', ayyappa:'🛕', durga:'🗡️',
+       govinda:'🪈', chalisa:'🚩', manidweepa:'🌺', harati:'🪔'
+   };
+   return Object.keys(stotramConfig).filter(type => !stotramConfig[type].hidden).map(type => {
+       const cfg = stotramConfig[type];
+       const themeKey = (cfg.theme || '').replace('-theme', '');
+       return { type, title: cfg.title, subtitle: cfg.subtitle || '', icon: icons[themeKey] || '🕉️' };
+   });
 }
 let searchIndex = [];
 
+
 function openSearch() {
-    if (!searchIndex.length) searchIndex = buildSearchIndex();
-    document.getElementById('searchOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-    gaEvent('screen_view', { screen_name: 'Search' });
-    runSearch('');
-    setTimeout(() => document.getElementById('searchInput').focus(), 100);
+   if (!searchIndex.length) searchIndex = buildSearchIndex();
+   document.getElementById('searchOverlay').classList.add('active');
+   document.body.style.overflow = 'hidden';
+   gaEvent('screen_view', { screen_name: 'Search' });
+   runSearch('');
+   setTimeout(() => document.getElementById('searchInput').focus(), 100);
 }
 function closeSearch() {
-    document.getElementById('searchOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-    document.getElementById('searchInput').value = '';
+   document.getElementById('searchOverlay').classList.remove('active');
+   document.body.style.overflow = '';
+   document.getElementById('searchInput').value = '';
 }
 function runSearch(q) {
-    const results = document.getElementById('searchResults');
-    const query = (q || '').trim().toLowerCase();
-    let list = searchIndex;
-    if (query) {
-        list = searchIndex.filter(s =>
-            s.title.toLowerCase().includes(query) ||
-            s.subtitle.toLowerCase().includes(query)
-        );
-    }
-    if (!list.length) {
-        results.innerHTML = '<div class="search-empty">😔 ఏమీ దొరకలేదు. వేరే పేరు ప్రయత్నించండి.</div>';
-        return;
-    }
-    results.innerHTML = list.map(s =>
-        `<div class="search-result" onclick="pickSearch('${s.type}')">
-            <span class="sr-icon">${s.icon}</span>
-            <div>
-                <div class="sr-title">${s.title}</div>
-                <div class="sr-sub">${s.subtitle}</div>
-            </div>
-        </div>`
-    ).join('');
+   const results = document.getElementById('searchResults');
+   const query = (q || '').trim().toLowerCase();
+   let list = searchIndex;
+   if (query) {
+       list = searchIndex.filter(s =>
+           s.title.toLowerCase().includes(query) ||
+           s.subtitle.toLowerCase().includes(query)
+       );
+   }
+   if (!list.length) {
+       results.innerHTML = '<div class="search-empty">😔 ఏమీ దొరకలేదు. వేరే పేరు ప్రయత్నించండి.</div>';
+       return;
+   }
+   results.innerHTML = list.map(s =>
+       `<div class="search-result" onclick="pickSearch('${s.type}')">
+           <span class="sr-icon">${s.icon}</span>
+           <div>
+               <div class="sr-title">${s.title}</div>
+               <div class="sr-sub">${s.subtitle}</div>
+           </div>
+       </div>`
+   ).join('');
 }
 function pickSearch(type) {
-    closeSearch();
-    openReader(type);
+   closeSearch();
+   openReader(type);
 }
+
 
 let recognition = null;
 function initVoice() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const micBtn = document.getElementById('micBtn');
-    if (!SR) { micBtn.style.display = 'none'; return; }
-    recognition = new SR();
-    recognition.lang = 'te-IN';            // Telugu; works alongside typed search
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 3;
-    recognition.onresult = (e) => {
-        const text = e.results[0][0].transcript;
-        const input = document.getElementById('searchInput');
-        input.value = text;
-        runSearch(text);
-        document.getElementById('searchHint').textContent = '🔎 "' + text + '" కోసం వెతుకుతోంది…';
-    };
-    recognition.onend = () => micBtn.classList.remove('listening');
-    recognition.onerror = (e) => {
-        micBtn.classList.remove('listening');
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
-            document.getElementById('searchHint').textContent = '🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.';
-    };
+   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+   const micBtn = document.getElementById('micBtn');
+   if (!SR) { micBtn.style.display = 'none'; return; }
+   recognition = new SR();
+   recognition.lang = 'te-IN';            // Telugu; works alongside typed search
+   recognition.interimResults = false;
+   recognition.maxAlternatives = 3;
+   recognition.onresult = (e) => {
+       const text = e.results[0][0].transcript;
+       const input = document.getElementById('searchInput');
+       input.value = text;
+       runSearch(text);
+       document.getElementById('searchHint').textContent = '🔎 "' + text + '" కోసం వెతుకుతోంది…';
+   };
+   recognition.onend = () => micBtn.classList.remove('listening');
+   recognition.onerror = (e) => {
+       micBtn.classList.remove('listening');
+       if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
+           document.getElementById('searchHint').textContent = '🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.';
+   };
 }
 function startVoice() {
-    if (!recognition) return;
-    const micBtn = document.getElementById('micBtn');
-    try {
-        recognition.start();
-        micBtn.classList.add('listening');
-        document.getElementById('searchHint').textContent = '🎙️ వింటున్నాను… ఇప్పుడు చెప్పండి';
-    } catch (e) { /* already started */ }
+   if (!recognition) return;
+   const micBtn = document.getElementById('micBtn');
+   try {
+       recognition.start();
+       micBtn.classList.add('listening');
+       document.getElementById('searchHint').textContent = '🎙️ వింటున్నాను… ఇప్పుడు చెప్పండి';
+   } catch (e) { /* already started */ }
 }
 
+
 /* ============================================================
-   POOJA TRACK : calendar + pradakshina/japa counters + mokkulu
-   All data stored locally on the device (localStorage).
+  POOJA TRACK : calendar + pradakshina/japa counters + mokkulu
+  All data stored locally on the device (localStorage).
 ============================================================ */
 const TRACK_KEY = 'poojaTrack_v1';
 let track = loadTrack();
 function loadTrack() {
-    try { return JSON.parse(localStorage.getItem(TRACK_KEY)) || { days: {}, mokkulu: [] }; }
-    catch (e) { return { days: {}, mokkulu: [] }; }
+   try { return JSON.parse(localStorage.getItem(TRACK_KEY)) || { days: {}, mokkulu: [] }; }
+   catch (e) { return { days: {}, mokkulu: [] }; }
 }
 function saveTrack() {
-    try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
-    // if signed in, cloud.js registers this hook to also back up to Firestore (debounced)
-    if (window.__cloudSync) window.__cloudSync();
+   try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
+   // if signed in, cloud.js registers this hook to also back up to Firestore (debounced)
+   if (window.__cloudSync) window.__cloudSync();
 }
 // accessors used by assets/cloud.js (optional cloud backup)
 function getTrack() { return track; }
 function setTrack(next) {
-    track = next || { days: {}, mokkulu: [] };
-    try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
-    // refresh whatever view is open so restored data shows immediately
-    try {
-        if (typeof renderMonths === 'function' && document.getElementById('trackPage').classList.contains('active')) {
-            buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
-        }
-        if (typeof renderHomePradakshina === 'function') renderHomePradakshina();
-        if (typeof renderCount === 'function') renderCount();
-    } catch (e) {}
+   track = next || { days: {}, mokkulu: [] };
+   try { localStorage.setItem(TRACK_KEY, JSON.stringify(track)); } catch (e) {}
+   // refresh whatever view is open so restored data shows immediately
+   try {
+       if (typeof renderMonths === 'function' && document.getElementById('trackPage').classList.contains('active')) {
+           buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
+       }
+       if (typeof renderHomePradakshina === 'function') renderHomePradakshina();
+       if (typeof renderCount === 'function') renderCount();
+   } catch (e) {}
 }
+
 
 const teMonths = ['జనవరి','ఫిబ్రవరి','మార్చి','ఏప్రిల్','మే','జూన్','జూలై','ఆగస్టు','సెప్టెంబర్','అక్టోబర్','నవంబర్','డిసెంబర్'];
 const teWeekdays = ['ఆది','సోమ','మంగళ','బుధ','గురు','శుక్ర','శని'];
 function ymd(d) {
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+   return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 function todayStr() { return ymd(new Date()); }
+
 
 let trackMonths = [];   // oldest -> newest (current month last)
 let monthIdx = 0;       // currently viewed month index
 
+
 function openTrack() {
-    document.getElementById('homePage').style.display = 'none';
-    document.getElementById('readerPage').classList.remove('active');
-    document.getElementById('trackPage').classList.add('active');
-    document.getElementById('backBtn').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'none';
-    gaEvent('screen_view', { screen_name: 'Track' });
-    buildMonths();
-    renderMonths();
-    renderMokkulu();
-    showDueReminders();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+   document.getElementById('homePage').style.display = 'none';
+   document.getElementById('readerPage').classList.remove('active');
+   document.getElementById('trackPage').classList.add('active');
+   document.getElementById('backBtn').style.display = 'block';
+   document.getElementById('headerActions').style.display = 'none';
+   gaEvent('screen_view', { screen_name: 'Track' });
+   buildMonths();
+   renderMonths();
+   renderMokkulu();
+   showDueReminders();
+   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 
 function buildMonths() {
-    trackMonths = [];
-    const now = new Date();
-    for (let i = 6; i >= 0; i--) {               // this month + previous 6
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        trackMonths.push({ y: d.getFullYear(), m: d.getMonth() });
-    }
-    monthIdx = trackMonths.length - 1;           // default = current month
+   trackMonths = [];
+   const now = new Date();
+   for (let i = 6; i >= 0; i--) {               // this month + previous 6
+       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+       trackMonths.push({ y: d.getFullYear(), m: d.getMonth() });
+   }
+   monthIdx = trackMonths.length - 1;           // default = current month
 }
+
 
 function dayHasData(dateStr) {
-    const d = track.days[dateStr];
-    if (!d) return false;
-    if (d.pradakshina > 0) return true;
-    return Array.isArray(d.japa) && d.japa.some(j => j.count > 0);
+   const d = track.days[dateStr];
+   if (!d) return false;
+   if (d.pradakshina > 0) return true;
+   return Array.isArray(d.japa) && d.japa.some(j => j.count > 0);
 }
 
+
 function renderMonths() {
-    const strip = document.getElementById('monthStrip');
-    const today = todayStr();
-    strip.innerHTML = trackMonths.map(({y, m}) => {
-        const first = new Date(y, m, 1).getDay();          // 0=Sun
-        const daysIn = new Date(y, m + 1, 0).getDate();
-        let cells = teWeekdays.map(w => `<div class="cal-weekday">${w}</div>`).join('');
-        for (let i = 0; i < first; i++) cells += '<div class="cal-day empty"></div>';
-        for (let day = 1; day <= daysIn; day++) {
-            const ds = y + '-' + String(m+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
-            const isFuture = ds > today;
-            const cls = ['cal-day'];
-            if (isFuture) cls.push('future');
-            if (ds === today) cls.push('today');
-            if (dayHasData(ds)) cls.push('has-data');
-            const dot = dayHasData(ds) ? '<span class="dot"></span>' : '';
-            const onclick = isFuture ? '' : ` onclick="openDay('${ds}')"`;
-            cells += `<div class="${cls.join(' ')}"${onclick}>${day}${dot}</div>`;
-        }
-        return `<div class="month-card"><div class="cal-grid">${cells}</div></div>`;
-    }).join('');
-    updateMonthView();
-    // jump strip to current month without animation
-    requestAnimationFrame(() => {
-        strip.scrollLeft = monthIdx * strip.clientWidth;
-    });
-    // keep label/arrows in sync when user swipes
-    strip.onscroll = () => {
-        const idx = Math.round(strip.scrollLeft / strip.clientWidth);
-        if (idx !== monthIdx) { monthIdx = idx; updateMonthView(); }
-    };
+   const strip = document.getElementById('monthStrip');
+   const today = todayStr();
+   strip.innerHTML = trackMonths.map(({y, m}) => {
+       const first = new Date(y, m, 1).getDay();          // 0=Sun
+       const daysIn = new Date(y, m + 1, 0).getDate();
+       let cells = teWeekdays.map(w => `<div class="cal-weekday">${w}</div>`).join('');
+       for (let i = 0; i < first; i++) cells += '<div class="cal-day empty"></div>';
+       for (let day = 1; day <= daysIn; day++) {
+           const ds = y + '-' + String(m+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+           const isFuture = ds > today;
+           const cls = ['cal-day'];
+           if (isFuture) cls.push('future');
+           if (ds === today) cls.push('today');
+           if (dayHasData(ds)) cls.push('has-data');
+           const dot = dayHasData(ds) ? '<span class="dot"></span>' : '';
+           const onclick = isFuture ? '' : ` onclick="openDay('${ds}')"`;
+           cells += `<div class="${cls.join(' ')}"${onclick}>${day}${dot}</div>`;
+       }
+       return `<div class="month-card"><div class="cal-grid">${cells}</div></div>`;
+   }).join('');
+   updateMonthView();
+   // jump strip to current month without animation
+   requestAnimationFrame(() => {
+       strip.scrollLeft = monthIdx * strip.clientWidth;
+   });
+   // keep label/arrows in sync when user swipes
+   strip.onscroll = () => {
+       const idx = Math.round(strip.scrollLeft / strip.clientWidth);
+       if (idx !== monthIdx) { monthIdx = idx; updateMonthView(); }
+   };
 }
 function updateMonthView() {
-    const { y, m } = trackMonths[monthIdx];
-    document.getElementById('monthLabel').textContent = teMonths[m] + ' ' + y;
-    document.getElementById('prevMonthBtn').disabled = (monthIdx === 0);
-    document.getElementById('nextMonthBtn').disabled = (monthIdx === trackMonths.length - 1);
+   const { y, m } = trackMonths[monthIdx];
+   document.getElementById('monthLabel').textContent = teMonths[m] + ' ' + y;
+   document.getElementById('prevMonthBtn').disabled = (monthIdx === 0);
+   document.getElementById('nextMonthBtn').disabled = (monthIdx === trackMonths.length - 1);
 }
 function shiftMonth(dir) {
-    const next = monthIdx + dir;
-    if (next < 0 || next >= trackMonths.length) return;
-    monthIdx = next;
-    const strip = document.getElementById('monthStrip');
-    strip.scrollTo({ left: monthIdx * strip.clientWidth, behavior: 'smooth' });
-    updateMonthView();
+   const next = monthIdx + dir;
+   if (next < 0 || next >= trackMonths.length) return;
+   monthIdx = next;
+   const strip = document.getElementById('monthStrip');
+   strip.scrollTo({ left: monthIdx * strip.clientWidth, behavior: 'smooth' });
+   updateMonthView();
 }
+
 
 /* ---- Day detail sheet ---- */
 let activeDay = null;
 function openDay(dateStr) {
-    activeDay = dateStr;
-    if (!track.days[dateStr]) track.days[dateStr] = { pradakshina: 0, japa: [] };
-    const [y, m, d] = dateStr.split('-');
-    document.getElementById('sheetDate').textContent = parseInt(d) + ' ' + teMonths[parseInt(m)-1] + ' ' + y;
-    renderDaySheet();
-    document.getElementById('daySheetOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
+   activeDay = dateStr;
+   if (!track.days[dateStr]) track.days[dateStr] = { pradakshina: 0, japa: [] };
+   const [y, m, d] = dateStr.split('-');
+   document.getElementById('sheetDate').textContent = parseInt(d) + ' ' + teMonths[parseInt(m)-1] + ' ' + y;
+   renderDaySheet();
+   document.getElementById('daySheetOverlay').classList.add('active');
+   document.body.style.overflow = 'hidden';
 }
 function closeDay() {
-    document.getElementById('daySheetOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-    activeDay = null;
-    renderMonths();   // refresh dots on calendar
+   document.getElementById('daySheetOverlay').classList.remove('active');
+   document.body.style.overflow = '';
+   activeDay = null;
+   renderMonths();   // refresh dots on calendar
 }
 function renderDaySheet() {
-    const d = track.days[activeDay];
-    const japaHtml = (d.japa || []).map((j, i) => {
-        const done = j.target > 0 && j.count >= j.target;
-        const targetTxt = j.target > 0
-            ? `<div class="count-target ${done ? 'done' : ''}" onclick="editTarget(${i})">${done ? '✅ ' : ''}లక్ష్యం: ${j.target} ${done ? '— పూర్తయింది' : '(మార్చు)'}</div>`
-            : `<div class="count-target" onclick="editTarget(${i})">లక్ష్యం పెట్టండి</div>`;
-        return `<div class="counter-card">
-            <div class="counter-head">
-                <span class="counter-name">📖 ${j.name}</span>
-                <div class="counter-actions">
-                    <button class="counter-reset" onclick="resetJapa(${i})" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
-                    <span class="counter-del" onclick="removeJapa(${i})" title="తీసివేయి">🗑️</span>
-                </div>
-            </div>
-            <div class="counter-row">
-                <button class="count-btn" onclick="bumpJapa(${i},-1)">−</button>
-                <div class="count-center"><div class="count-display">${j.count}</div>${targetTxt}</div>
-                <button class="count-btn" onclick="bumpJapa(${i},1)">＋</button>
-            </div>
-        </div>`;
-    }).join('');
+   const d = track.days[activeDay];
+   const japaHtml = (d.japa || []).map((j, i) => {
+       const done = j.target > 0 && j.count >= j.target;
+       const targetTxt = j.target > 0
+           ? `<div class="count-target ${done ? 'done' : ''}" onclick="editTarget(${i})">${done ? '✅ ' : ''}లక్ష్యం: ${j.target} ${done ? '— పూర్తయింది' : '(మార్చు)'}</div>`
+           : `<div class="count-target" onclick="editTarget(${i})">లక్ష్యం పెట్టండి</div>`;
+       return `<div class="counter-card">
+           <div class="counter-head">
+               <span class="counter-name">📖 ${j.name}</span>
+               <div class="counter-actions">
+                   <button class="counter-reset" onclick="resetJapa(${i})" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+                   <span class="counter-del" onclick="removeJapa(${i})" title="తీసివేయి">🗑️</span>
+               </div>
+           </div>
+           <div class="counter-row">
+               <button class="count-btn" onclick="bumpJapa(${i},-1)">−</button>
+               <div class="count-center"><div class="count-display">${j.count}</div>${targetTxt}</div>
+               <button class="count-btn" onclick="bumpJapa(${i},1)">＋</button>
+           </div>
+       </div>`;
+   }).join('');
 
-    const chips = buildSearchIndex().slice(0, 6).map(s =>
-        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\'")}')">＋ ${s.title}</span>`
-    ).join('');
 
-    document.getElementById('sheetBody').innerHTML = `
-        <div class="counter-card">
-            <div class="counter-head">
-                <span class="counter-name">🕉️ ప్రదక్షిణలు</span>
-                <button class="counter-reset" onclick="resetDayPradakshina()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
-            </div>
-            <div class="counter-row">
-                <button class="count-btn" onclick="bumpPradakshina(-1)">−</button>
-                <div class="count-center"><div class="count-display">${d.pradakshina}</div><div class="count-target">Pradakshina</div></div>
-                <button class="count-btn" onclick="bumpPradakshina(1)">＋</button>
-            </div>
-        </div>
-        <div class="track-card-title" style="margin-top:20px;">📿 పారాయణం / జపం</div>
-        ${japaHtml || '<div class="track-empty">ఇంకా ఏ పారాయణం జోడించలేదు. క్రింద నుండి ఎంచుకోండి 👇</div>'}
-        <div class="chip-row">${chips}<span class="add-chip" onclick="addJapaCustom()">＋ వేరే…</span></div>
-    `;
+   const chips = buildSearchIndex().slice(0, 6).map(s =>
+       `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
+   ).join('');
+
+
+   document.getElementById('sheetBody').innerHTML = `
+       <div class="counter-card">
+           <div class="counter-head">
+               <span class="counter-name">🕉️ ప్రదక్షిణలు</span>
+               <button class="counter-reset" onclick="resetDayPradakshina()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+           </div>
+           <div class="counter-row">
+               <button class="count-btn" onclick="bumpPradakshina(-1)">−</button>
+               <div class="count-center"><div class="count-display">${d.pradakshina}</div><div class="count-target">Pradakshina</div></div>
+               <button class="count-btn" onclick="bumpPradakshina(1)">＋</button>
+           </div>
+       </div>
+       <div class="track-card-title" style="margin-top:20px;">📿 పారాయణం / జపం</div>
+       ${japaHtml || '<div class="track-empty">ఇంకా ఏ పారాయణం జోడించలేదు. క్రింద నుండి ఎంచుకోండి 👇</div>'}
+       <div class="chip-row">${chips}<span class="add-chip" onclick="addJapaCustom()">＋ వేరే…</span></div>
+   `;
 }
 function bumpPradakshina(delta) {
-    const d = track.days[activeDay];
-    d.pradakshina = Math.max(0, (d.pradakshina || 0) + delta);
-    if (delta > 0) gaEvent('pradakshina_count');
-    saveTrack(); renderDaySheet();
+   const d = track.days[activeDay];
+   d.pradakshina = Math.max(0, (d.pradakshina || 0) + delta);
+   if (delta > 0) gaEvent('pradakshina_count');
+   saveTrack(); renderDaySheet();
 }
 function addJapa(name) {
-    const d = track.days[activeDay];
-    if (!d.japa) d.japa = [];
-    d.japa.push({ name, count: 0, target: 11 });   // 11 is a common parayana target
-    saveTrack(); renderDaySheet();
+   const d = track.days[activeDay];
+   if (!d.japa) d.japa = [];
+   d.japa.push({ name, count: 0, target: 11 });   // 11 is a common parayana target
+   saveTrack(); renderDaySheet();
 }
 function addJapaCustom() {
-    const name = prompt('పారాయణం / జపం పేరు:');
-    if (name && name.trim()) addJapa(name.trim());
+   const name = prompt('పారాయణం / జపం పేరు:');
+   if (name && name.trim()) addJapa(name.trim());
 }
 function bumpJapa(i, delta) {
-    const j = track.days[activeDay].japa[i];
-    j.count = Math.max(0, (j.count || 0) + delta);
-    saveTrack(); renderDaySheet();
+   const j = track.days[activeDay].japa[i];
+   j.count = Math.max(0, (j.count || 0) + delta);
+   saveTrack(); renderDaySheet();
 }
 function removeJapa(i) {
-    track.days[activeDay].japa.splice(i, 1);
-    saveTrack(); renderDaySheet();
+   track.days[activeDay].japa.splice(i, 1);
+   saveTrack(); renderDaySheet();
 }
 function editTarget(i) {
-    const j = track.days[activeDay].japa[i];
-    const val = prompt('ఎన్ని సార్లు చేయాలి? (లక్ష్యం)', j.target || 11);
-    if (val !== null) { j.target = Math.max(0, parseInt(val) || 0); saveTrack(); renderDaySheet(); }
+   const j = track.days[activeDay].japa[i];
+   const val = prompt('ఎన్ని సార్లు చేయాలి? (లక్ష్యం)', j.target || 11);
+   if (val !== null) { j.target = Math.max(0, parseInt(val) || 0); saveTrack(); renderDaySheet(); }
 }
+
 
 /* ---- Mokkulu (vows) + reminders ---- */
 function addMokku() {
-    const textEl = document.getElementById('mokkuText');
-    const dateEl = document.getElementById('mokkuDate');
-    const text = textEl.value.trim();
-    if (!text) { textEl.focus(); return; }
-    const reminderDate = dateEl.value || null;
-    track.mokkulu.push({ id: Date.now() + '' + Math.floor(performance.now()), text, reminderDate, done: false });
-    if (reminderDate) requestNotifyPermission();
-    gaEvent('add_mokku', { has_reminder: !!reminderDate });
-    saveTrack();
-    textEl.value = ''; dateEl.value = '';
-    renderMokkulu();
+   const textEl = document.getElementById('mokkuText');
+   const dateEl = document.getElementById('mokkuDate');
+   const text = textEl.value.trim();
+   if (!text) { textEl.focus(); return; }
+   const reminderDate = dateEl.value || null;
+   track.mokkulu.push({ id: Date.now() + '' + Math.floor(performance.now()), text, reminderDate, done: false });
+   if (reminderDate) requestNotifyPermission();
+   gaEvent('add_mokku', { has_reminder: !!reminderDate });
+   saveTrack();
+   textEl.value = ''; dateEl.value = '';
+   renderMokkulu();
 }
 function renderMokkulu() {
-    const list = document.getElementById('mokkuList');
-    if (!track.mokkulu.length) {
-        list.innerHTML = '<div class="track-empty">ఇంకా మొక్కులు లేవు. పైన జోడించండి 🙏</div>';
-        return;
-    }
-    const today = todayStr();
-    // pending first, then done; pending sorted by reminder date
-    const sorted = track.mokkulu.slice().sort((a, b) => {
-        if (a.done !== b.done) return a.done ? 1 : -1;
-        return (a.reminderDate || '9999').localeCompare(b.reminderDate || '9999');
-    });
-    list.innerHTML = sorted.map(mk => {
-        let badge = '';
-        if (mk.reminderDate) {
-            const [yy, mm, dd] = mk.reminderDate.split('-');
-            const nice = parseInt(dd) + ' ' + teMonths[parseInt(mm)-1];
-            const due = !mk.done && mk.reminderDate <= today;
-            badge = `<span class="mokku-badge ${due ? 'due' : ''}">🔔 ${nice}${due ? ' • ఈరోజు!' : ''}</span>`;
-        }
-        return `<div class="mokku-item ${mk.done ? 'done' : ''}">
-            <div class="mokku-check" onclick="toggleMokku('${mk.id}')">${mk.done ? '✔' : ''}</div>
-            <div class="mokku-body">
-                <div class="mokku-text">${escapeHtml(mk.text)}</div>
-                <div class="mokku-meta">${badge}</div>
-            </div>
-            <span class="mokku-del" onclick="deleteMokku('${mk.id}')" title="తొలగించు">🗑️</span>
-        </div>`;
-    }).join('');
+   const list = document.getElementById('mokkuList');
+   if (!track.mokkulu.length) {
+       list.innerHTML = '<div class="track-empty">ఇంకా మొక్కులు లేవు. పైన జోడించండి 🙏</div>';
+       return;
+   }
+   const today = todayStr();
+   // pending first, then done; pending sorted by reminder date
+   const sorted = track.mokkulu.slice().sort((a, b) => {
+       if (a.done !== b.done) return a.done ? 1 : -1;
+       return (a.reminderDate || '9999').localeCompare(b.reminderDate || '9999');
+   });
+   list.innerHTML = sorted.map(mk => {
+       let badge = '';
+       if (mk.reminderDate) {
+           const [yy, mm, dd] = mk.reminderDate.split('-');
+           const nice = parseInt(dd) + ' ' + teMonths[parseInt(mm)-1];
+           const due = !mk.done && mk.reminderDate <= today;
+           badge = `<span class="mokku-badge ${due ? 'due' : ''}">🔔 ${nice}${due ? ' • ఈరోజు!' : ''}</span>`;
+       }
+       return `<div class="mokku-item ${mk.done ? 'done' : ''}">
+           <div class="mokku-check" onclick="toggleMokku('${mk.id}')">${mk.done ? '✔' : ''}</div>
+           <div class="mokku-body">
+               <div class="mokku-text">${escapeHtml(mk.text)}</div>
+               <div class="mokku-meta">${badge}</div>
+           </div>
+           <span class="mokku-del" onclick="deleteMokku('${mk.id}')" title="తొలగించు">🗑️</span>
+       </div>`;
+   }).join('');
 }
 function toggleMokku(id) {
-    const mk = track.mokkulu.find(m => m.id === id);
-    if (mk) { mk.done = !mk.done; saveTrack(); renderMokkulu(); }
+   const mk = track.mokkulu.find(m => m.id === id);
+   if (mk) { mk.done = !mk.done; saveTrack(); renderMokkulu(); }
 }
 function deleteMokku(id) {
-    track.mokkulu = track.mokkulu.filter(m => m.id !== id);
-    saveTrack(); renderMokkulu();
+   track.mokkulu = track.mokkulu.filter(m => m.id !== id);
+   saveTrack(); renderMokkulu();
 }
 function escapeHtml(s) {
-    return s.replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+   return s.replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 }
+
 
 /* ============================================================
-   siteConfirm — an in-app confirmation dialog, styled like the rest
-   of the site, instead of the browser's plain "localhost says…" box.
-   Returns a Promise that resolves true (confirmed) or false (cancelled).
-   Big buttons + clear wording for our 40+ audience.
-       if (await siteConfirm('తొలగించాలా?', { danger: true })) { … }
+  siteConfirm — an in-app confirmation dialog, styled like the rest
+  of the site, instead of the browser's plain "localhost says…" box.
+  Returns a Promise that resolves true (confirmed) or false (cancelled).
+  Big buttons + clear wording for our 40+ audience.
+      if (await siteConfirm('తొలగించాలా?', { danger: true })) { … }
 ============================================================ */
 function siteConfirm(message, opts) {
-    opts = opts || {};
-    const okLabel = opts.okLabel || 'సరే / OK';
-    const cancelLabel = opts.cancelLabel || 'రద్దు / Cancel';
-    return new Promise((resolve) => {
-        const ov = document.createElement('div');
-        ov.className = 'sc-overlay';
-        ov.innerHTML =
-            '<div class="sc-box" role="dialog" aria-modal="true">' +
-            '<div class="sc-msg">' + escapeHtml(String(message)) + '</div>' +
-            '<div class="sc-actions">' +
-            (opts.hideCancel ? '' : '<button class="sc-btn" data-no>' + escapeHtml(cancelLabel) + '</button>') +
-            '<button class="sc-btn ' + (opts.danger ? 'danger' : 'primary') + '" data-yes>' + escapeHtml(okLabel) + '</button>' +
-            '</div></div>';
+   opts = opts || {};
+   const okLabel = opts.okLabel || 'సరే / OK';
+   const cancelLabel = opts.cancelLabel || 'రద్దు / Cancel';
+   return new Promise((resolve) => {
+       const ov = document.createElement('div');
+       ov.className = 'sc-overlay';
+       ov.innerHTML =
+           '<div class="sc-box" role="dialog" aria-modal="true">' +
+           '<div class="sc-msg">' + escapeHtml(String(message)) + '</div>' +
+           '<div class="sc-actions">' +
+           (opts.hideCancel ? '' : '<button class="sc-btn" data-no>' + escapeHtml(cancelLabel) + '</button>') +
+           '<button class="sc-btn ' + (opts.danger ? 'danger' : 'primary') + '" data-yes>' + escapeHtml(okLabel) + '</button>' +
+           '</div></div>';
 
-        let done = false;
-        function finish(val) {
-            if (done) return;
-            done = true;
-            document.removeEventListener('keydown', onKey);
-            ov.classList.remove('show');
-            setTimeout(() => ov.remove(), 180);
-            resolve(val);
-        }
-        function onKey(e) {
-            if (e.key === 'Escape') { e.preventDefault(); finish(false); }
-            else if (e.key === 'Enter') { e.preventDefault(); finish(true); }
-        }
 
-        ov.querySelector('[data-no]') && (ov.querySelector('[data-no]').onclick = () => finish(false));
-        ov.querySelector('[data-yes]').onclick = () => finish(true);
-        ov.addEventListener('click', (e) => { if (e.target === ov) finish(false); });
-        document.addEventListener('keydown', onKey);
+       let done = false;
+       function finish(val) {
+           if (done) return;
+           done = true;
+           document.removeEventListener('keydown', onKey);
+           ov.classList.remove('show');
+           setTimeout(() => ov.remove(), 180);
+           resolve(val);
+       }
+       function onKey(e) {
+           if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+           else if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+       }
 
-        document.body.appendChild(ov);
-        requestAnimationFrame(() => ov.classList.add('show'));
-        ov.querySelector('[data-yes]').focus();
-    });
+
+       ov.querySelector('[data-no]') && (ov.querySelector('[data-no]').onclick = () => finish(false));
+       ov.querySelector('[data-yes]').onclick = () => finish(true);
+       ov.addEventListener('click', (e) => { if (e.target === ov) finish(false); });
+       document.addEventListener('keydown', onKey);
+
+
+       document.body.appendChild(ov);
+       requestAnimationFrame(() => ov.classList.add('show'));
+       ov.querySelector('[data-yes]').focus();
+   });
 }
+
 
 // Single-button message box (replaces alert()). Returns a Promise so callers
 // can await it, but ignoring the result is fine too.
 function siteAlert(message, opts) {
-    opts = opts || {};
-    return siteConfirm(message, { okLabel: opts.okLabel || 'సరే / OK', hideCancel: true });
+   opts = opts || {};
+   return siteConfirm(message, { okLabel: opts.okLabel || 'సరే / OK', hideCancel: true });
 }
 function requestNotifyPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
+   if ('Notification' in window && Notification.permission === 'default') {
+       Notification.requestPermission();
+   }
 }
 function showDueReminders() {
-    const today = todayStr();
-    const due = track.mokkulu.filter(m => !m.done && m.reminderDate && m.reminderDate <= today);
-    const banner = document.getElementById('reminderBanner');
-    if (!due.length) { banner.classList.remove('show'); return; }
-    banner.innerHTML = `<span>🔔</span><span>ఈరోజు జ్ఞాపిక: <b>${escapeHtml(due[0].text)}</b>${due.length > 1 ? ' (+' + (due.length-1) + ' మరిన్ని)' : ''}</span><span class="rb-close" onclick="this.parentElement.classList.remove('show')">✕</span>`;
-    banner.classList.add('show');
-    if ('Notification' in window && Notification.permission === 'granted') {
-        try { new Notification('🙏 పూజా జ్ఞాపిక', { body: due[0].text }); } catch (e) {}
-    }
+   const today = todayStr();
+   const due = track.mokkulu.filter(m => !m.done && m.reminderDate && m.reminderDate <= today);
+   const banner = document.getElementById('reminderBanner');
+   if (!due.length) { banner.classList.remove('show'); return; }
+   banner.innerHTML = `<span>🔔</span><span>ఈరోజు జ్ఞాపిక: <b>${escapeHtml(due[0].text)}</b>${due.length > 1 ? ' (+' + (due.length-1) + ' మరిన్ని)' : ''}</span><span class="rb-close" onclick="this.parentElement.classList.remove('show')">✕</span>`;
+   banner.classList.add('show');
+   if ('Notification' in window && Notification.permission === 'granted') {
+       try { new Notification('🙏 పూజా జ్ఞాపిక', { body: due[0].text }); } catch (e) {}
+   }
 }
+
 
 // close search with Escape
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeSearch(); closeDay(); closeFeedback(); }
+   if (e.key === 'Escape') { closeSearch(); closeDay(); closeFeedback(); }
 });
 
+
 /* ============================================================
-   BACKUP / RESTORE  (Option A — a file on the user's own device)
-   Export writes a .json the browser downloads; restore reads it
-   back. Nothing is uploaded anywhere.
+  BACKUP / RESTORE  (Option A — a file on the user's own device)
+  Export writes a .json the browser downloads; restore reads it
+  back. Nothing is uploaded anywhere.
 ============================================================ */
 function exportBackup() {
-    try {
-        const data = JSON.stringify(track, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pooja-backup-' + todayStr() + '.json';
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-        gaEvent('backup_export');
-    } catch (e) {
-        siteAlert('❌ బ్యాకప్ తీసుకోవడంలో సమస్య వచ్చింది.');
-    }
+   try {
+       const data = JSON.stringify(track, null, 2);
+       const blob = new Blob([data], { type: 'application/json' });
+       const url = URL.createObjectURL(blob);
+       const a = document.createElement('a');
+       a.href = url;
+       a.download = 'pooja-backup-' + todayStr() + '.json';
+       document.body.appendChild(a);
+       a.click();
+       a.remove();
+       URL.revokeObjectURL(url);
+       gaEvent('backup_export');
+   } catch (e) {
+       siteAlert('❌ బ్యాకప్ తీసుకోవడంలో సమస్య వచ్చింది.');
+   }
 }
 function triggerRestore() {
-    document.getElementById('restoreFile').click();
+   document.getElementById('restoreFile').click();
 }
 function handleRestoreFile(input) {
-    const file = input.files && input.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-            if (!data || typeof data !== 'object' || (!('days' in data) && !('mokkulu' in data))) throw new Error('bad');
-            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?
-
-Replace current data with this backup?',
-                { okLabel: 'పునరుద్ధరించు / Restore', danger: true })) { input.value = ''; return; }
-            track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [] };
-            saveTrack();
-            buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
-            siteAlert('✅ బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది.');
-        } catch (err) {
-            siteAlert('❌ ఇది సరైన బ్యాకప్ ఫైల్ కాదు.');
-        }
-        input.value = '';
-    };
-    reader.readAsText(file);
+   const file = input.files && input.files[0];
+   if (!file) return;
+   const reader = new FileReader();
+   reader.onload = async (e) => {
+       try {
+           const data = JSON.parse(e.target.result);
+           if (!data || typeof data !== 'object' || (!('days' in data) && !('mokkulu' in data))) throw new Error('bad');
+           if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?\n\nReplace current data with this backup?',
+               { okLabel: 'పునరుద్ధరించు / Restore', danger: true })) { input.value = ''; return; }
+           track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [] };
+           saveTrack();
+           buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
+           siteAlert('✅ బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది.');
+       } catch (err) {
+           siteAlert('❌ ఇది సరైన బ్యాకప్ ఫైల్ కాదు.');
+       }
+       input.value = '';
+   };
+   reader.readAsText(file);
 }
+
 
 /* ============================================================
-   FEEDBACK  (type + name + message; contact optional, voice-fill)
-   Submissions go to Firestore, and the admin reads them inside the
-   app (＋ → 💬 అభిప్రాయాలు). A hidden honeypot field keeps out bots.
-   Entries are queued on the device first and retried if the phone is
-   offline, so nothing is lost.
+  FEEDBACK  (type + name + message; contact optional, voice-fill)
+  Submissions go to Firestore, and the admin reads them inside the
+  app (＋ → 💬 అభిప్రాయాలు). A hidden honeypot field keeps out bots.
+  Entries are queued on the device first and retried if the phone is
+  offline, so nothing is lost.
 
-   The old Google Apps Script / Sheet route has been removed — Firestore
-   replaces it. It also exposed a public script URL anyone could POST to.
+
+  The old Google Apps Script / Sheet route has been removed — Firestore
+  replaces it. It also exposed a public script URL anyone could POST to.
 ============================================================ */
 
+
 function openFeedback() {
-    resetFeedbackBox();
-    document.getElementById('feedbackOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
+   resetFeedbackBox();
+   document.getElementById('feedbackOverlay').classList.add('active');
+   document.body.style.overflow = 'hidden';
 }
 function closeFeedback() {
-    document.getElementById('feedbackOverlay').classList.remove('active');
-    document.body.style.overflow = '';
+   document.getElementById('feedbackOverlay').classList.remove('active');
+   document.body.style.overflow = '';
 }
 function resetFeedbackBox() {
-    document.getElementById('fbForm').style.display = 'block';
-    document.getElementById('fbThanks').style.display = 'none';
-    document.getElementById('fbError').textContent = '';
-    ['fbName', 'fbNumber', 'fbMessage'].forEach(id => {
-        const el = document.getElementById(id);
-        el.value = ''; el.classList.remove('invalid');
-    });
+   document.getElementById('fbForm').style.display = 'block';
+   document.getElementById('fbThanks').style.display = 'none';
+   document.getElementById('fbError').textContent = '';
+   ['fbName', 'fbNumber', 'fbMessage'].forEach(id => {
+       const el = document.getElementById(id);
+       el.value = ''; el.classList.remove('invalid');
+   });
 }
+
 
 // Generic voice-to-field helper (used by each 🎤 button)
 function listenInto(inputId, btn, append) {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.'); return; }
-    const rec = new SR();
-    rec.lang = 'te-IN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    rec.onresult = (e) => {
-        let t = e.results[0][0].transcript;
-        const el = document.getElementById(inputId);
-        if (inputId === 'fbNumber') t = t.replace(/[^\d+]/g, '');   // keep digits for phone
-        el.value = (append && el.value) ? (el.value + ' ' + t) : t;
-        el.classList.remove('invalid');
-    };
-    rec.onend = () => btn && btn.classList.remove('listening');
-    rec.onerror = () => btn && btn.classList.remove('listening');
-    try { rec.start(); btn && btn.classList.add('listening'); } catch (e) {}
+   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+   if (!SR) { siteAlert('ఈ బ్రౌజర్‌లో వాయిస్ సదుపాయం లేదు. దయచేసి టైప్ చేయండి.'); return; }
+   const rec = new SR();
+   rec.lang = 'te-IN';
+   rec.interimResults = false;
+   rec.maxAlternatives = 1;
+   rec.onresult = (e) => {
+       let t = e.results[0][0].transcript;
+       const el = document.getElementById(inputId);
+       if (inputId === 'fbNumber') t = t.replace(/[^\d+]/g, '');   // keep digits for phone
+       el.value = (append && el.value) ? (el.value + ' ' + t) : t;
+       el.classList.remove('invalid');
+   };
+   rec.onend = () => btn && btn.classList.remove('listening');
+   rec.onerror = () => btn && btn.classList.remove('listening');
+   try { rec.start(); btn && btn.classList.add('listening'); } catch (e) {}
 }
+
 
 function submitFeedback() {
-    const nameEl = document.getElementById('fbName');
-    const numEl = document.getElementById('fbNumber');
-    const msgEl = document.getElementById('fbMessage');
-    const errEl = document.getElementById('fbError');
-    [nameEl, numEl, msgEl].forEach(el => el.classList.remove('invalid'));
+   const nameEl = document.getElementById('fbName');
+   const numEl = document.getElementById('fbNumber');
+   const msgEl = document.getElementById('fbMessage');
+   const errEl = document.getElementById('fbError');
+   [nameEl, numEl, msgEl].forEach(el => el.classList.remove('invalid'));
 
-    const name = nameEl.value.trim();
-    const contact = numEl.value.trim();          // phone OR email, now optional
-    const message = msgEl.value.trim();
-    const typeEl = document.getElementById('fbType');
-    const type = typeEl ? typeEl.value : 'other';
-    const missing = [];
 
-    if (!name) { nameEl.classList.add('invalid'); missing.push('పేరు'); }
-    if (!message) { msgEl.classList.add('invalid'); missing.push('అభిప్రాయం'); }
+   const name = nameEl.value.trim();
+   const contact = numEl.value.trim();          // phone OR email, now optional
+   const message = msgEl.value.trim();
+   const typeEl = document.getElementById('fbType');
+   const type = typeEl ? typeEl.value : 'other';
+   const missing = [];
 
-    if (missing.length) {
-        errEl.textContent = '⚠️ దయచేసి నింపండి: ' + missing.join(', ');
-        return;
-    }
-    errEl.textContent = '';
 
-    // Context captured automatically so a report is actionable — without this a
-    // "there is a mistake" message gives no clue where to look.
-    const payload = {
-        // stable id so a retry overwrites the same document instead of creating
-        // a duplicate (a timed-out attempt may actually have succeeded)
-        fbid: 'fb-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-        type, name, contact,
-        message,
-        screen: currentType ? ('reader:' + currentType) : 'home',
-        stotram: currentType || '',
-        stotramTitle: (currentType && stotramConfig[currentType]) ? stotramConfig[currentType].title : '',
-        lang: navigator.language || '',
-        device: (navigator.userAgent || '').slice(0, 180),
-        website: document.getElementById('fbWebsite').value,   // honeypot (must stay empty)
-        at: new Date().toISOString()
-    };
+   if (!name) { nameEl.classList.add('invalid'); missing.push('పేరు'); }
+   if (!message) { msgEl.classList.add('invalid'); missing.push('అభిప్రాయం'); }
 
-    // Queue it on this device first, then try to send. If the phone is offline
-    // or Firestore hiccups, the entry stays queued and is retried on the next
-    // visit — so a message is never silently lost. (This replaces the old
-    // Google-Sheet copy, which is no longer used.)
-    queueFeedback(payload);
-    flushFeedback();
 
-    // thank-you
-    document.getElementById('fbForm').style.display = 'none';
-    document.getElementById('fbThanks').style.display = 'block';
-    gaEvent('feedback_submit', { type });
-    setTimeout(closeFeedback, 2200);
+   if (missing.length) {
+       errEl.textContent = '⚠️ దయచేసి నింపండి: ' + missing.join(', ');
+       return;
+   }
+   errEl.textContent = '';
+
+
+   // Context captured automatically so a report is actionable — without this a
+   // "there is a mistake" message gives no clue where to look.
+   const payload = {
+       // stable id so a retry overwrites the same document instead of creating
+       // a duplicate (a timed-out attempt may actually have succeeded)
+       fbid: 'fb-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+       type, name, contact,
+       message,
+       screen: currentType ? ('reader:' + currentType) : 'home',
+       stotram: currentType || '',
+       stotramTitle: (currentType && stotramConfig[currentType]) ? stotramConfig[currentType].title : '',
+       lang: navigator.language || '',
+       device: (navigator.userAgent || '').slice(0, 180),
+       website: document.getElementById('fbWebsite').value,   // honeypot (must stay empty)
+       at: new Date().toISOString()
+   };
+
+
+   // Queue it on this device first, then try to send. If the phone is offline
+   // or Firestore hiccups, the entry stays queued and is retried on the next
+   // visit — so a message is never silently lost. (This replaces the old
+   // Google-Sheet copy, which is no longer used.)
+   queueFeedback(payload);
+   flushFeedback();
+
+
+   // thank-you
+   document.getElementById('fbForm').style.display = 'none';
+   document.getElementById('fbThanks').style.display = 'block';
+   gaEvent('feedback_submit', { type });
+   setTimeout(closeFeedback, 2200);
 }
+
 
 /* ---- feedback queue: survives offline, retried on next load ---- */
 const FB_QUEUE_KEY = 'feedbackQueue_v1';
 function readFbQueue() {
-    try { return JSON.parse(localStorage.getItem(FB_QUEUE_KEY)) || []; } catch (e) { return []; }
+   try { return JSON.parse(localStorage.getItem(FB_QUEUE_KEY)) || []; } catch (e) { return []; }
 }
 function writeFbQueue(q) {
-    try { localStorage.setItem(FB_QUEUE_KEY, JSON.stringify(q)); } catch (e) {}
+   try { localStorage.setItem(FB_QUEUE_KEY, JSON.stringify(q)); } catch (e) {}
 }
 function queueFeedback(payload) {
-    const q = readFbQueue();
-    q.push(payload);
-    writeFbQueue(q.slice(-30));            // keep the queue small
+   const q = readFbQueue();
+   q.push(payload);
+   writeFbQueue(q.slice(-30));            // keep the queue small
 }
 async function flushFeedback() {
-    if (!window.__cloudFeedback) return;   // cloud not ready yet; retried later
-    let q = readFbQueue();
-    if (!q.length) return;
-    const left = [];
-    for (const item of q) {
-        try {
-            // Firestore does NOT reject while offline — it just keeps the write
-            // pending forever, which would hang this loop. So cap each attempt;
-            // anything that doesn't confirm in time stays queued for next time.
-            await withTimeout(window.__cloudFeedback(item), 8000);
-        } catch (e) {
-            // "permission-denied" here almost always means the document already
-            // exists — i.e. an earlier attempt DID land and only the confirmation
-            // was lost. Retrying forever would never clear, so drop it. Anything
-            // else (offline, timeout, network) stays queued for the next visit.
-            if (e && e.code === 'permission-denied') continue;
-            left.push(item);
-        }
-    }
-    writeFbQueue(left);
+   if (!window.__cloudFeedback) return;   // cloud not ready yet; retried later
+   let q = readFbQueue();
+   if (!q.length) return;
+   const left = [];
+   for (const item of q) {
+       try {
+           // Firestore does NOT reject while offline — it just keeps the write
+           // pending forever, which would hang this loop. So cap each attempt;
+           // anything that doesn't confirm in time stays queued for next time.
+           await withTimeout(window.__cloudFeedback(item), 8000);
+       } catch (e) {
+           // "permission-denied" here almost always means the document already
+           // exists — i.e. an earlier attempt DID land and only the confirmation
+           // was lost. Retrying forever would never clear, so drop it. Anything
+           // else (offline, timeout, network) stays queued for the next visit.
+           if (e && e.code === 'permission-denied') continue;
+           left.push(item);
+       }
+   }
+   writeFbQueue(left);
 }
 function withTimeout(promise, ms) {
-    return new Promise((resolve, reject) => {
-        const t = setTimeout(() => reject(new Error('timeout')), ms);
-        Promise.resolve(promise).then(
-            (v) => { clearTimeout(t); resolve(v); },
-            (e) => { clearTimeout(t); reject(e); }
-        );
-    });
+   return new Promise((resolve, reject) => {
+       const t = setTimeout(() => reject(new Error('timeout')), ms);
+       Promise.resolve(promise).then(
+           (v) => { clearTimeout(t); resolve(v); },
+           (e) => { clearTimeout(t); reject(e); }
+       );
+   });
 }
 
+
 /* ============================================================
-   ANALYTICS (GA4) — anonymous usage. Single-page app, so we
-   fire a screen_view as the user moves between views, plus a
-   few key action events. Named gaEvent to avoid clashing with
-   the `track` pooja-data variable.
+  ANALYTICS (GA4) — anonymous usage. Single-page app, so we
+  fire a screen_view as the user moves between views, plus a
+  few key action events. Named gaEvent to avoid clashing with
+  the `track` pooja-data variable.
 ============================================================ */
 function gaEvent(name, params) {
-    try { if (window.gtag) gtag('event', name, params || {}); } catch (e) {}
+   try { if (window.gtag) gtag('event', name, params || {}); } catch (e) {}
 }
 
+
 /* ============================================================
-   HOME + STOTRAM COUNTERS (pradakshina + per-stotram parayana)
-   Both reuse the same track.days[date] storage as the Track page.
-   Per-stotram parayana counts live in track.days[date].parayana[type].
+  HOME + STOTRAM COUNTERS (pradakshina + per-stotram parayana)
+  Both reuse the same track.days[date] storage as the Track page.
+  Per-stotram parayana counts live in track.days[date].parayana[type].
 ============================================================ */
 let homeSelectedDate = todayStr();
 let stotramSelectedDate = todayStr();
 
+
 function ensureDay(dateStr) {
-    if (!track.days[dateStr]) track.days[dateStr] = { pradakshina: 0, japa: [], parayana: {} };
-    if (!track.days[dateStr].parayana) track.days[dateStr].parayana = {};
-    return track.days[dateStr];
+   if (!track.days[dateStr]) track.days[dateStr] = { pradakshina: 0, japa: [], parayana: {} };
+   if (!track.days[dateStr].parayana) track.days[dateStr].parayana = {};
+   return track.days[dateStr];
 }
+
 
 function initHomePradakshina() {
-    const picker = document.getElementById('homeDatePicker');
-    if (picker && !picker.value) picker.value = homeSelectedDate;
-    renderHomePradakshina();
+   const picker = document.getElementById('homeDatePicker');
+   if (picker && !picker.value) picker.value = homeSelectedDate;
+   renderHomePradakshina();
 }
 function renderHomePradakshina() {
-    const d = track.days[homeSelectedDate];
-    const count = (d && d.pradakshina) || 0;
-    const el = document.getElementById('homePradakshinaCount');
-    if (el) el.textContent = count;
+   const d = track.days[homeSelectedDate];
+   const count = (d && d.pradakshina) || 0;
+   const el = document.getElementById('homePradakshinaCount');
+   if (el) el.textContent = count;
 }
 function onHomeDateChange(val) {
-    if (!val) return;
-    homeSelectedDate = val;
-    renderHomePradakshina();
+   if (!val) return;
+   homeSelectedDate = val;
+   renderHomePradakshina();
 }
 function bumpHomePradakshina(delta) {
-    const d = ensureDay(homeSelectedDate);
-    d.pradakshina = Math.max(0, (d.pradakshina || 0) + delta);
-    if (delta > 0) gaEvent('pradakshina_count', { source: 'home', date: homeSelectedDate });
-    saveTrack();
-    renderHomePradakshina();
+   const d = ensureDay(homeSelectedDate);
+   d.pradakshina = Math.max(0, (d.pradakshina || 0) + delta);
+   if (delta > 0) gaEvent('pradakshina_count', { source: 'home', date: homeSelectedDate });
+   saveTrack();
+   renderHomePradakshina();
 }
+
 
 function initStotramCounter(type, title) {
-    stotramSelectedDate = todayStr();
-    const picker = document.getElementById('stotramDatePicker');
-    if (picker) picker.value = stotramSelectedDate;
-    const label = document.getElementById('stotramCounterLabel');
-    if (label) label.textContent = title ? title + ' — పారాయణం' : 'పారాయణం';
-    renderStotramCounter();
+   stotramSelectedDate = todayStr();
+   const picker = document.getElementById('stotramDatePicker');
+   if (picker) picker.value = stotramSelectedDate;
+   const label = document.getElementById('stotramCounterLabel');
+   if (label) label.textContent = title ? title + ' — పారాయణం' : 'పారాయణం';
+   renderStotramCounter();
 }
 function renderStotramCounter() {
-    if (!currentType) return;
-    const d = track.days[stotramSelectedDate];
-    const count = (d && d.parayana && d.parayana[currentType]) || 0;
-    const el = document.getElementById('stotramParayanaCount');
-    if (el) el.textContent = count;
+   if (!currentType) return;
+   const d = track.days[stotramSelectedDate];
+   const count = (d && d.parayana && d.parayana[currentType]) || 0;
+   const el = document.getElementById('stotramParayanaCount');
+   if (el) el.textContent = count;
 }
 function onStotramDateChange(val) {
-    if (!val) return;
-    stotramSelectedDate = val;
-    renderStotramCounter();
+   if (!val) return;
+   stotramSelectedDate = val;
+   renderStotramCounter();
 }
 function bumpStotramParayana(delta) {
-    if (!currentType) return;
-    const d = ensureDay(stotramSelectedDate);
-    d.parayana[currentType] = Math.max(0, (d.parayana[currentType] || 0) + delta);
-    if (delta > 0) gaEvent('parayana_count', { stotram: currentType, date: stotramSelectedDate });
-    saveTrack();
-    renderStotramCounter();
+   if (!currentType) return;
+   const d = ensureDay(stotramSelectedDate);
+   d.parayana[currentType] = Math.max(0, (d.parayana[currentType] || 0) + delta);
+   if (delta > 0) gaEvent('parayana_count', { stotram: currentType, date: stotramSelectedDate });
+   saveTrack();
+   renderStotramCounter();
 }
+
 
 async function resetHomePradakshina() {
-    const d = track.days[homeSelectedDate];
-    if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset pradakshina to 0?',
-        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
-    d.pradakshina = 0;
-    gaEvent('pradakshina_reset', { source: 'home', date: homeSelectedDate });
-    saveTrack();
-    renderHomePradakshina();
+   const d = track.days[homeSelectedDate];
+   if (!d || !d.pradakshina) return;
+   if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+       { okLabel: 'రీసెట్ / Reset', danger: true })) return;
+   d.pradakshina = 0;
+   gaEvent('pradakshina_reset', { source: 'home', date: homeSelectedDate });
+   saveTrack();
+   renderHomePradakshina();
 }
 async function resetStotramParayana() {
-    if (!currentType) return;
-    const d = track.days[stotramSelectedDate];
-    if (!d || !d.parayana || !d.parayana[currentType]) return;
-    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset parayana to 0?',
-        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
-    d.parayana[currentType] = 0;
-    gaEvent('parayana_reset', { stotram: currentType, date: stotramSelectedDate });
-    saveTrack();
-    renderStotramCounter();
+   if (!currentType) return;
+   const d = track.days[stotramSelectedDate];
+   if (!d || !d.parayana || !d.parayana[currentType]) return;
+   if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset parayana to 0?',
+       { okLabel: 'రీసెట్ / Reset', danger: true })) return;
+   d.parayana[currentType] = 0;
+   gaEvent('parayana_reset', { stotram: currentType, date: stotramSelectedDate });
+   saveTrack();
+   renderStotramCounter();
 }
 async function resetDayPradakshina() {
-    const d = track.days[activeDay];
-    if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset pradakshina to 0?',
-        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
-    d.pradakshina = 0;
-    gaEvent('pradakshina_reset', { source: 'day-sheet', date: activeDay });
-    saveTrack();
-    renderDaySheet();
+   const d = track.days[activeDay];
+   if (!d || !d.pradakshina) return;
+   if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+       { okLabel: 'రీసెట్ / Reset', danger: true })) return;
+   d.pradakshina = 0;
+   gaEvent('pradakshina_reset', { source: 'day-sheet', date: activeDay });
+   saveTrack();
+   renderDaySheet();
 }
 async function resetJapa(i) {
-    const j = track.days[activeDay].japa[i];
-    if (!j || !j.count) return;
-    if (!await siteConfirm(j.name + '
-
-count 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
-        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
-    j.count = 0;
-    gaEvent('japa_reset', { name: j.name, date: activeDay });
-    saveTrack();
-    renderDaySheet();
+   const j = track.days[activeDay].japa[i];
+   if (!j || !j.count) return;
+   if (!await siteConfirm(j.name + '\n\ncount 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
+       { okLabel: 'రీసెట్ / Reset', danger: true })) return;
+   j.count = 0;
+   gaEvent('japa_reset', { name: j.name, date: activeDay });
+   saveTrack();
+   renderDaySheet();
 }
+
 
 createParticles();
 initMeaningsToggle();
@@ -1287,3 +1349,5 @@ initGrandham();
 initVoice();
 showDueReminders();
 initHomePradakshina();
+
+
