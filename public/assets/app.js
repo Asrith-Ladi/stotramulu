@@ -1,3 +1,5 @@
+
+
 // ============ STOTRAM DATA ============
 // Per-stotram data lives in data/stotras/<key>.js — each file registers
 // itself onto window.STOTRAS_DATA. Add a new stotram by creating a file
@@ -83,21 +85,104 @@ function goHome() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* ============================================================
+   THE COUNT AT THE END OF EACH LEAF
+
+   A devotee reading a long stotram wants to know how far they have
+   come, and the unit differs with what is being read — so the count
+   printed at the end of every block does too:
+
+     · అష్టోత్తరం   names.  Each block holds 4 of the 108, so the
+                     leaves end 4, 8, 12 … 108. The ధ్యానం and
+                     ఫలశ్రుతి blocks hold no names and get no count.
+     · సహస్రనామం   slokas. Each block's own label already says which
+                     slokas it covers, so "31-40" ends at 40 — read
+                     that leaf and 40 slokas are behind you.
+     · స్తోత్రం / హారతి  simply the block you are on: 1, 2, 3 …
+
+   The hand-written label at the top of the block (ధ్యానం, "31-40",
+   "1 - పీఠిక") is never touched; this only adds the count.
+============================================================ */
+
+// Built-ins take their category from the home-page section their card sits
+// in; stotras added through the admin panel carry their own.
+function stotramCategory(type) {
+    const cfg = stotramConfig[type] || {};
+    if (cfg.__cat) return cfg.__cat;
+    const card = document.querySelector('.card[onclick*="openReader('' + type + '')"]');
+    const sec = card && card.closest('.cards-section[data-cat]');
+    if (sec && sec.dataset.cat) return sec.dataset.cat;
+    return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
+}
+
+// Lines of actual text in a block.
+function countTextLines(text) {
+    return String(text || '').split('
+').filter((l) => l.trim()).length;
+}
+// Lines that are a నామం — "ఓం … నమః". A ధ్యానం verse or a closing సమర్పణం
+// has none, so this is what separates the 108 names from everything else.
+function countNameLines(text) {
+    return String(text || '').split('
+').filter((l) => l.indexOf('నమః') !== -1).length;
+}
+// How far a label reaches: "7" → 7, "31-40" → 40, "81-183 & సమర్పణం" → 183.
+// The label must START with a digit, otherwise it is a heading and counts for
+// nothing — "ధ్యానం - 2" is the second meditation verse, not slokam 2.
+function labelHighestNumber(label) {
+    const s = String(label == null ? '' : label);
+    if (!/^\s*\d/.test(s)) return 0;
+    const nums = s.match(/\d+/g);
+    return nums ? Math.max.apply(null, nums.map(Number)) : 0;
+}
+
+function slokamCounts(data, type) {
+    const cat = stotramCategory(type);
+    if (cat === 'ashtottara') {
+        // A namavali added through the admin panel is split on blank lines and
+        // every block is numbered 1, 2, 3 … — including its ధ్యానం verse. So a
+        // numeric label alone does not prove a block holds names; count the
+        // నమః lines as well. (A namavali written without నమః — transliterated,
+        // say — falls back to counting every line.)
+        const hasNamah = data.some((item) => countNameLines(item.text) > 0);
+        let done = 0;
+        return data.map((item) => {
+            if (!labelHighestNumber(item.number)) return '';          // ధ్యానం / సమర్పణం
+            const n = hasNamah ? countNameLines(item.text) : countTextLines(item.text);
+            if (!n) return '';                                        // no names here
+            done += n;
+            return String(done);
+        });
+    }
+    if (cat === 'sahasranama') {
+        return data.map((item) => {
+            const n = labelHighestNumber(item.number);
+            return n ? String(n) : '';
+        });
+    }
+    return data.map((item, i) => String(i + 1));               // incremental
+}
+
 function renderSlokams(data, type) {
     const c = document.getElementById('slokamContainer');
     c.innerHTML = '';
     const meaningSet = (type && meanings[type]) || {};
     const read = readSet(type);
+    const counts = slokamCounts(data, type);
     data.forEach((item, idx) => {
         const meaning = meaningSet[idx];
         const meaningHtml = meaning
             ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
             : '';
+        // sits right after the verse, where a manuscript writes its number
+        const endHtml = counts[idx]
+            ? `<span class="slokam-end-num" aria-hidden="true">${counts[idx]}</span>`
+            : '';
         const b = document.createElement('div');
         b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
         b.dataset.idx = idx;
         b.onclick = () => toggleSlokamRead(idx, b);
-        b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${meaningHtml}`;
+        b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${endHtml}${meaningHtml}`;
         c.appendChild(b);
     });
 }
@@ -127,7 +212,9 @@ async function resetReading() {
     if (!currentType) return;
     const list = (track.reading && track.reading[currentType]) || [];
     if (!list.length) return;
-    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?\n\nClear all read marks here?',
+    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?
+
+Clear all read marks here?',
         { okLabel: 'తీసేయి / Clear', danger: true })) return;
     track.reading[currentType] = [];
     saveTrack();
@@ -687,7 +774,7 @@ function renderDaySheet() {
     }).join('');
 
     const chips = buildSearchIndex().slice(0, 6).map(s =>
-        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
+        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\'")}')">＋ ${s.title}</span>`
     ).join('');
 
     document.getElementById('sheetBody').innerHTML = `
@@ -902,7 +989,9 @@ function handleRestoreFile(input) {
         try {
             const data = JSON.parse(e.target.result);
             if (!data || typeof data !== 'object' || (!('days' in data) && !('mokkulu' in data))) throw new Error('bad');
-            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?\n\nReplace current data with this backup?',
+            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?
+
+Replace current data with this backup?',
                 { okLabel: 'పునరుద్ధరించు / Restore', danger: true })) { input.value = ''; return; }
             track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [] };
             saveTrack();
@@ -1145,7 +1234,9 @@ function bumpStotramParayana(delta) {
 async function resetHomePradakshina() {
     const d = track.days[homeSelectedDate];
     if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
+
+Reset pradakshina to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'home', date: homeSelectedDate });
@@ -1156,7 +1247,9 @@ async function resetStotramParayana() {
     if (!currentType) return;
     const d = track.days[stotramSelectedDate];
     if (!d || !d.parayana || !d.parayana[currentType]) return;
-    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset parayana to 0?',
+    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?
+
+Reset parayana to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.parayana[currentType] = 0;
     gaEvent('parayana_reset', { stotram: currentType, date: stotramSelectedDate });
@@ -1166,7 +1259,9 @@ async function resetStotramParayana() {
 async function resetDayPradakshina() {
     const d = track.days[activeDay];
     if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
+
+Reset pradakshina to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'day-sheet', date: activeDay });
@@ -1176,7 +1271,9 @@ async function resetDayPradakshina() {
 async function resetJapa(i) {
     const j = track.days[activeDay].japa[i];
     if (!j || !j.count) return;
-    if (!await siteConfirm(j.name + '\n\ncount 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
+    if (!await siteConfirm(j.name + '
+
+count 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     j.count = 0;
     gaEvent('japa_reset', { name: j.name, date: activeDay });

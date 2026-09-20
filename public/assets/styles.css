@@ -1922,3 +1922,82 @@ body.grandham .reader-page { padding-bottom: 150px; }
         background-position: 7px top, right 7px top, 6px bottom, right 6px bottom;
     }
 }
+
+/* ============================================================
+   COUNT AT THE END OF EACH SLOKAM
+   Names for an అష్టోత్తరం (4, 8 … 108), slokas for a సహస్రనామం,
+   plain position for a స్తోత్రం. Quiet by design — it is a
+   progress marker, not part of the verse.
+============================================================ */
+.slokam-end-num {
+    display: block; text-align: right; margin-top: 12px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 1.5px;
+    color: var(--gold); opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+}
+/* in the leaf theme the number is written at the end of the verse
+   between dandas, the way a manuscript marks it */
+body.grandham .slokam-end-num {
+    text-align: center; margin-top: 16px;
+    font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
+    font-size: 13.5px; color: #5a3413; opacity: 0.95; letter-spacing: 2px;
+}
+body.grandham .slokam-end-num::before { content: '॥ '; opacity: 0.7; }
+body.grandham .slokam-end-num::after  { content: ' ॥'; opacity: 0.7; }
+
+/* ============================================================
+   READ MARK — clearer separation between done and not-done.
+   The tint alone read as too similar, so both themes now carry an
+   unmistakable tick, and the read leaf is visibly more handled.
+============================================================ */
+
+/* dark theme: the ✓ becomes a ringed badge instead of a bare glyph */
+.slokam-block.read {
+    background: linear-gradient(135deg, rgba(212,168,67,0.22) 0%, rgba(30,20,12,0.66) 100%);
+    border-color: rgba(212,168,67,0.6);
+}
+.slokam-block.read::before {
+    right: 12px; top: 12px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; line-height: 1;
+    color: #2a1808;
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 12px rgba(255,223,133,0.45);
+    text-shadow: none;
+}
+
+/* leaf theme: an inked tick, and a darker, well-thumbed leaf.
+   The block's own pseudo-elements are the cord holes here, so the tick
+   is drawn on .slokam-text instead (positioned against the leaf). */
+body.grandham .slokam-block.read {
+    background:
+        radial-gradient(ellipse 120px 50px at 30% 40%, rgba(90,52,19,0.10), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(110,70,30,0.14) 0px, rgba(110,70,30,0.14) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #a87f45 0%, #cfae7c 12%, #d8ba8c 50%, #cfae7c 88%, #a37a40 100%);
+    border-color: rgba(70,42,15,0.9);
+    box-shadow:
+        inset 0 0 50px rgba(70,40,12,0.38),
+        inset 0 2px 0 rgba(255,238,200,0.3),
+        0 12px 28px rgba(0,0,0,0.5);
+}
+body.grandham .slokam-block.read .slokam-text::after {
+    content: '✓';
+    position: absolute; top: 12px; right: 48px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    font-size: 15px; font-weight: 700; line-height: 1;
+    color: #3a2109;
+    background: rgba(255,246,225,0.45);
+    border: 1.5px solid rgba(58,33,9,0.75);
+    box-shadow: 0 1px 3px rgba(60,35,10,0.35);
+    text-shadow: none;
+}
+body.grandham .slokam-block.read .slokam-end-num { color: #3a2109; opacity: 1; }
+
+@media (max-width: 600px) {
+    body.grandham .slokam-block.read .slokam-text::after { right: 38px; top: 9px; }
+}
