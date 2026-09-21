@@ -14,6 +14,7 @@
         gtag('config', 'G-1S66GLXJJ4');
     </script>
     <link rel="stylesheet" href="assets/styles.css">
+    <link rel="stylesheet" href="assets/reading.css">
 </head>
 <body>
 
@@ -881,9 +882,9 @@
     <div class="controls">
         <div class="font-control">
             <label>అక్షరాలు:</label>
-            <button class="font-btn" onclick="changeFontSize(-2)">−</button>
-            <span class="font-size-display" id="fontSizeDisplay">22</span>
-            <button class="font-btn" onclick="changeFontSize(2)">+</button>
+            <button class="font-btn" onclick="changeFontSize(-2)" aria-label="అక్షరాలు చిన్నవి / Smaller text">−</button>
+            <span class="font-size-display" id="fontSizeDisplay" aria-live="polite">24</span>
+            <button class="font-btn" onclick="changeFontSize(2)" aria-label="అక్షరాలు పెద్దవి / Larger text">+</button>
         </div>
         <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
             <label>అర్థం చూపించు</label>
@@ -909,6 +910,18 @@
             <button class="rs-clear" id="readerSearchClear" onclick="clearReaderSearch()" title="మూసివేయి (Esc)" aria-label="Clear" style="display:none">✕</button>
         </div>
     </div>
+    <nav class="reader-navigation" aria-label="పఠన మార్గదర్శి">
+        <label for="verseJump">శ్లోకానికి వెళ్ళండి</label>
+        <select id="verseJump" onchange="jumpToVerse(this.value)"></select>
+        <button type="button" onclick="resumeReading()">చదవడం కొనసాగించు</button>
+    </nav>
+    <div class="reader-library-actions">
+        <button type="button" id="favoriteButton" onclick="toggleFavorite()" aria-pressed="false">☆ ఇష్టమైనవాటిలో చేర్చు</button>
+        <button type="button" onclick="copyReaderLink()">లింక్ కాపీ చేయండి</button>
+        <p id="readerLinkStatus" role="status" aria-live="polite"></p>
+        <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
+    </div>
+    <details class="source-details" id="sourceDetails"><summary>మూలాలు &amp; పాఠం వివరాలు</summary><div id="sourceContent"></div></details>
     <div class="slokam-container" id="slokamContainer"></div>
 </div>
 
@@ -1141,6 +1154,8 @@
 <script src="data/stotras/manidweepa.js"></script>
 <script src="data/stotras/manidweepa2.js"></script>
 
+<script src="data/content-audit.js"></script>
+<script src="assets/reader-navigation.js"></script>
 <script src="assets/app.js"></script>
 <script src="assets/japamala.js"></script>
 
@@ -1151,5 +1166,6 @@
 <script src="assets/cloud.js"></script>
 <script src="assets/admin.js"></script>
 <script src="assets/weekday.js"></script>
+<script src="assets/library.js"></script>
 </body>
 </html>

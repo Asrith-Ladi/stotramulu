@@ -1,0 +1,68 @@
+﻿/* Reading-first refinements: keep the established gold/purple identity. */
+:root { --reader-font-size: 24px; }
+button, input, select { font: inherit; }
+button, select, [role="button"], .library-navigation a { touch-action: manipulation; }
+:focus-visible { outline: 3px solid #ffdf85; outline-offset: 4px; }
+button:disabled { opacity: .45; cursor: default; }
+.library-navigation, .reader-navigation {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+    gap: 12px; width: 100%; margin: 16px auto 24px;
+}
+.library-navigation { max-width: 1100px; }
+.library-navigation a, .library-navigation button, .reader-navigation button,
+.reader-navigation select, .verse-read-button {
+    min-height: 48px; padding: 10px 16px; border: 1px solid #b99447;
+    border-radius: 10px; background: #20132f; color: #fdf5e6;
+    text-decoration: none; cursor: pointer; font-size: 1rem; line-height: 1.6;
+}
+.reader-navigation select { max-width: 100%; }
+.reader-navigation { background: #140d20; padding: 14px; border-radius: 14px; }
+.source-details { max-width: 850px; margin: 0 auto 24px; padding: 16px; color: #f5e0a3; background: #20132f; border-radius: 12px; line-height: 1.8; }
+.source-details summary { cursor: pointer; min-height: 44px; }
+.source-details a { display: block; color: #ffdf85; padding: 8px 0; text-decoration: underline; }
+.source-details p { margin: 10px 0; }
+.slokam-block { scroll-margin-top: 110px; cursor: default; }
+.slokam-text, .slokam-meaning { overflow-wrap: anywhere; word-break: normal; }
+.slokam-meaning { font-size: var(--reader-font-size); }
+.verse-read-button { display: block; margin: 18px 0 0 auto; }
+.verse-read-button[aria-pressed="true"] { background: #29412d; border-color: #9fca9f; }
+.font-btn, .rs-nav, .rs-clear, .rs-mic { min-width: 48px; min-height: 48px; }
+.meaning-toggle { min-height: 48px; }
+.card .card-sub, .card .card-desc, .section-sub { opacity: 1; }
+.card .card-sub { color: #e2c985; font-size: .9rem; letter-spacing: .04em; }
+.card .card-desc { color: #e3dbea; }
+.today-strip { flex-wrap: wrap; overflow: visible; }
+.today-tile { flex: 1 1 220px; max-width: none; font-size: 1rem; }
+.weekday-guidance { color: #e3dbea; font-size: 1rem; line-height: 1.8; margin: 10px 0 14px; }
+@media (max-width: 600px) {
+    .card { min-height: 0; }
+    .card .card-desc { margin-bottom: 14px; }
+    .reader-page { padding-left: 12px; padding-right: 12px; }
+    .slokam-block { padding: 20px 16px; }
+    body.grandham .slokam-block { padding: 24px; }
+    .reader-search { min-width: 0; width: 100%; flex-wrap: wrap; }
+    .rs-input { min-width: 0; flex: 1 1 140px; }
+    .today-tile { flex-basis: 100%; }
+    .library-navigation a, .library-navigation button { flex: 1 1 140px; text-align: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    .particles { display: none; }
+}
+@media print {
+    .library-navigation, .reader-navigation, .verse-read-button { display: none !important; }
+    .source-details { color: #000; background: #fff; }
+}
+
+/* Phase 2: returning to familiar prayers. */
+.favorites-section { width: 100%; max-width: 1200px; padding: 20px; margin: 0 auto 28px; border: 1px solid #71562f; border-radius: 16px; background: #181023; }
+.favorites-section h2 { color: #f5e0a3; font-size: 1.25rem; margin-bottom: 16px; }
+.favorites-section p { color: #e3dbea; line-height: 1.9; }
+.favorites-section a { text-decoration: none; overflow-wrap: anywhere; }
+.reader-library-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin: 0 auto 20px; max-width: 850px; }
+.reader-library-actions button { min-height: 48px; padding: 12px 16px; border: 1px solid #b99447; border-radius: 10px; color: #fdf5e6; background: #20132f; cursor: pointer; }
+.reader-library-actions button[aria-pressed="true"] { background: #29412d; border-color: #9fca9f; }
+#readerLinkStatus { width: 100%; line-height: 1.8; color: #f5e0a3; }
+#readerLinkStatus:empty { display: none; }
+#readerLinkFallback { width: 100%; padding: 12px; color: #fdf5e6; background: #20132f; border: 1px solid #b99447; }
+@media print { .reader-library-actions { display: none !important; } }

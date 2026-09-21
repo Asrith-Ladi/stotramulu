@@ -23,8 +23,8 @@
   // 0 = Sunday … 6 = Saturday (matches JS Date.getDay())
   const DAY_TE = ['ఆదివారం', 'సోమవారం', 'మంగళవారం', 'బుధవారం', 'గురువారం', 'శుక్రవారం', 'శనివారం'];
   const DAY_NOTE = [
-    'సూర్య / విష్ణు ఆరాధన', 'శివ ఆరాధన', 'హనుమాన్ / దుర్గా ఆరాధన', 'కృష్ణ / విష్ణు ఆరాధన',
-    'సాయి / గురు ఆరాధన', 'లక్ష్మీ / దేవి ఆరాధన', 'వేంకటేశ్వర / శని ఆరాధన',
+    'విష్ణు / వేంకటేశ్వర స్తోత్రాలు', 'శివ ఆరాధన', 'హనుమాన్ / దుర్గా ఆరాధన', 'కృష్ణ / విష్ణు ఆరాధన',
+    'సాయి / గురు ఆరాధన', 'లక్ష్మీ / దేవి ఆరాధన', 'వేంకటేశ్వర / హనుమాన్ / అయ్యప్ప స్తోత్రాలు',
   ];
 
   // deity keys come from each stotram's theme, so nothing extra to fill in.
@@ -123,6 +123,7 @@
     sec.innerHTML =
       '<div class="today-head"><span class="today-day">🌅 ఈ రోజు — ' + DAY_TE[i] + '</span>' +
       '<span class="today-note">' + DAY_NOTE[i] + '</span></div>' +
+      '<p class="weekday-guidance">ఈ రోజు సూచనలు మాత్రమే. మీ సంప్రదాయం ప్రకారం ఏ రోజైనా చదవవచ్చు.</p>' +
       '<div class="today-strip">' +
       keys.map((k) => {
         const cfg = stotramConfig[k];
@@ -230,6 +231,13 @@
   window.saveWeekdayMap = saveWeekdayMap;
 
   // first paint from defaults, then refine once Firestore answers
+  let lastDay = new Date().toDateString();
+  function refreshDate() {
+    const day = new Date().toDateString();
+    if (day !== lastDay) { lastDay = day; renderToday(); }
+  }
+  document.addEventListener('visibilitychange', refreshDate);
+  setInterval(refreshDate, 60000);
   renderToday();
   setTimeout(loadWeekdayMap, 400);
 })();

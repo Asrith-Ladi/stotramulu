@@ -110,6 +110,7 @@
     });
 
     try { searchIndex = buildSearchIndex(); } catch (e) {}
+    document.dispatchEvent(new Event('stotras-updated'));
     // newly added stotras may belong to today's worship day
     if (window.__renderToday) { try { window.__renderToday(); } catch (e) {} }
   }
@@ -123,7 +124,14 @@
     if (!cfg) return;
     if (s.title) cfg.title = s.title;
     if (s.subtitle !== undefined) cfg.subtitle = s.subtitle;
-    if (Array.isArray(s.data) && s.data.length) cfg.data = s.data;
+    if (Array.isArray(s.data) && s.data.length) {
+      cfg.data = s.data;
+      // Distinguish remotely edited verse positions from the bundled edition.
+      let hash = 2166136261;
+      for (const ch of JSON.stringify(s.data)) hash = Math.imul(hash ^ ch.charCodeAt(0), 16777619);
+      cfg.readingVersion = 'cloud-' + (hash >>> 0).toString(16);
+      meanings[key] = s.meanings || {};
+    }
     if (s.origin !== undefined) { cfg.origin = s.origin; origins[key] = s.origin; }
     if (s.meanings) meanings[key] = s.meanings;
     cfg.__edited = true;

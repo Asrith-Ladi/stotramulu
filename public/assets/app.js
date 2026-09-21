@@ -13,7 +13,11 @@ const meanings = Object.fromEntries(
 );
 
 // ============ APP ============
-let currentFontSize = 22;
+let currentFontSize = 24;
+try {
+    const saved = Number(localStorage.getItem('readerFontSize'));
+    if (Number.isFinite(saved) && saved >= 18 && saved <= 48) currentFontSize = saved;
+} catch (e) { /* Reading works when storage is unavailable. */ }
 let currentType = null;
 
 function createParticles() {
@@ -32,6 +36,9 @@ function openReader(type) {
     const cfg = stotramConfig[type];
     if (!cfg) return;
     currentType = type;
+    syncReaderRoute(type);
+    document.getElementById('readerLinkStatus').textContent = '';
+    document.getElementById('readerLinkFallback').hidden = true;
 
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.add('active');
@@ -59,6 +66,8 @@ function openReader(type) {
     }
 
     renderSlokams(cfg.data, type);
+    changeFontSize(0);
+    setupReaderNavigation(type);
     initStotramCounter(type, cfg.title);
     clearReaderSearch();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -80,6 +89,7 @@ function goHome() {
     document.getElementById('headerActions').style.display = 'flex';
     document.getElementById('readerDeityBg').innerHTML = '';
     currentType = null;
+    syncReaderRoute(null);
     renderHomePradakshina();
     gaEvent('screen_view', { screen_name: 'Home' });
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -109,7 +119,7 @@ function goHome() {
 function stotramCategory(type) {
     const cfg = stotramConfig[type] || {};
     if (cfg.__cat) return cfg.__cat;
-    const card = document.querySelector('.card[onclick*="openReader('' + type + '')"]');
+    const card = Array.from(document.querySelectorAll('.card[onclick]')).find(el => el.getAttribute('onclick').includes("openReader('" + type + "')"));
     const sec = card && card.closest('.cards-section[data-cat]');
     if (sec && sec.dataset.cat) return sec.dataset.cat;
     return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
@@ -117,14 +127,12 @@ function stotramCategory(type) {
 
 // Lines of actual text in a block.
 function countTextLines(text) {
-    return String(text || '').split('
-').filter((l) => l.trim()).length;
+    return String(text || '').split(/\r?\n/).filter((l) => l.trim()).length;
 }
 // Lines that are a నామం — "ఓం … నమః". A ధ్యానం verse or a closing సమర్పణం
 // has none, so this is what separates the 108 names from everything else.
 function countNameLines(text) {
-    return String(text || '').split('
-').filter((l) => l.indexOf('నమః') !== -1).length;
+    return String(text || '').split(/\r?\n/).filter((l) => l.indexOf('నమః') !== -1).length;
 }
 // How far a label reaches: "7" → 7, "31-40" → 40, "81-183 & సమర్పణం" → 183.
 // The label must START with a digit, otherwise it is a heading and counts for
@@ -181,8 +189,15 @@ function renderSlokams(data, type) {
         const b = document.createElement('div');
         b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
         b.dataset.idx = idx;
-        b.onclick = () => toggleSlokamRead(idx, b);
+        b.id = 'verse-' + idx;
+        b.tabIndex = -1;
         b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${endHtml}${meaningHtml}`;
+        const mark = document.createElement('button');
+        mark.className = 'verse-read-button';
+        mark.textContent = read.has(idx) ? 'చదివాను ✓' : 'చదివినట్లు గుర్తించు';
+        mark.setAttribute('aria-pressed', String(read.has(idx)));
+        mark.onclick = () => toggleSlokamRead(idx, b);
+        b.appendChild(mark);
         c.appendChild(b);
     });
 }
@@ -193,39 +208,53 @@ function renderSlokams(data, type) {
    shared `track` object, so it survives a reload and rides the cloud
    backup to other devices.
 ============================================================ */
+function readingKey(type) {
+    const version = stotramConfig[type] && stotramConfig[type].readingVersion;
+    return version ? type + ':' + version : type;
+}
 function readSet(type) {
-    const list = (track.reading && track.reading[type]) || [];
+    const list = (track.reading && track.reading[readingKey(type)]) || [];
     return new Set(list);
 }
 function toggleSlokamRead(idx, el) {
     if (!currentType) return;
     if (!track.reading) track.reading = {};
-    const list = track.reading[currentType] || [];
+    const list = track.reading[readingKey(currentType)] || [];
     const at = list.indexOf(idx);
     if (at >= 0) list.splice(at, 1); else list.push(idx);
-    track.reading[currentType] = list;
+    track.reading[readingKey(currentType)] = list;
     saveTrack();
-    if (el) el.classList.toggle('read', at < 0);
+    if (el) {
+        el.classList.toggle('read', at < 0);
+        const button = el.querySelector('.verse-read-button');
+        if (button) {
+            button.setAttribute('aria-pressed', String(at < 0));
+            button.textContent = at < 0 ? 'చదివాను ✓' : 'చదివినట్లు గుర్తించు';
+        }
+    }
     gaEvent('slokam_mark_read', { stotram: currentType, on: at < 0 });
 }
 async function resetReading() {
     if (!currentType) return;
-    const list = (track.reading && track.reading[currentType]) || [];
+    const list = (track.reading && track.reading[readingKey(currentType)]) || [];
     if (!list.length) return;
-    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?
-
-Clear all read marks here?',
+    if (!await siteConfirm('ఈ స్తోత్రంలో చదివిన గుర్తులు అన్నీ తీసేయాలా?\n\nClear all read marks here?',
         { okLabel: 'తీసేయి / Clear', danger: true })) return;
-    track.reading[currentType] = [];
+    track.reading[readingKey(currentType)] = [];
     saveTrack();
-    document.querySelectorAll('#slokamContainer .slokam-block.read')
-        .forEach((el) => el.classList.remove('read'));
+    renderSlokams(stotramConfig[currentType].data, currentType);
+    setupReaderNavigation(currentType);
+    clearReaderSearch();
 }
 
 function changeFontSize(d) {
-    currentFontSize = Math.max(16, Math.min(36, currentFontSize + d));
+    currentFontSize = Math.max(18, Math.min(48, currentFontSize + d));
     document.getElementById('fontSizeDisplay').textContent = currentFontSize;
-    document.querySelectorAll('.slokam-text').forEach(e => e.style.fontSize = currentFontSize + 'px');
+    document.querySelectorAll('.slokam-text, .slokam-meaning').forEach(e => e.style.fontSize = currentFontSize + 'px');
+    document.documentElement.style.setProperty('--reader-font-size', currentFontSize + 'px');
+    try { localStorage.setItem('readerFontSize', String(currentFontSize)); } catch (e) {}
+    document.querySelectorAll('[onclick="changeFontSize(-2)"]').forEach(b => b.disabled = currentFontSize <= 18);
+    document.querySelectorAll('[onclick="changeFontSize(2)"]').forEach(b => b.disabled = currentFontSize >= 48);
 }
 
 function toggleMeanings() {
@@ -774,7 +803,7 @@ function renderDaySheet() {
     }).join('');
 
     const chips = buildSearchIndex().slice(0, 6).map(s =>
-        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\'")}')">＋ ${s.title}</span>`
+        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
     ).join('');
 
     document.getElementById('sheetBody').innerHTML = `
@@ -791,7 +820,7 @@ function renderDaySheet() {
         </div>
         <div class="track-card-title" style="margin-top:20px;">📿 పారాయణం / జపం</div>
         ${japaHtml || '<div class="track-empty">ఇంకా ఏ పారాయణం జోడించలేదు. క్రింద నుండి ఎంచుకోండి 👇</div>'}
-        <div class="chip-row">${chips}<span class="add-chip" onclick="addJapaCustom()">＋ వేరే…</span></div>
+        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
     `;
 }
 function bumpPradakshina(delta) {
@@ -989,11 +1018,9 @@ function handleRestoreFile(input) {
         try {
             const data = JSON.parse(e.target.result);
             if (!data || typeof data !== 'object' || (!('days' in data) && !('mokkulu' in data))) throw new Error('bad');
-            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?
-
-Replace current data with this backup?',
+            if (!await siteConfirm('ప్రస్తుత సమాచారం స్థానంలో బ్యాకప్ సమాచారం పెట్టాలా?\n\nReplace current data with this backup?',
                 { okLabel: 'పునరుద్ధరించు / Restore', danger: true })) { input.value = ''; return; }
-            track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [] };
+            track = { days: data.days || {}, mokkulu: Array.isArray(data.mokkulu) ? data.mokkulu : [], reading: data.reading || {} };
             saveTrack();
             buildMonths(); renderMonths(); renderMokkulu(); showDueReminders();
             siteAlert('✅ బ్యాకప్ విజయవంతంగా పునరుద్ధరించబడింది.');
@@ -1234,9 +1261,7 @@ function bumpStotramParayana(delta) {
 async function resetHomePradakshina() {
     const d = track.days[homeSelectedDate];
     if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset pradakshina to 0?',
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'home', date: homeSelectedDate });
@@ -1247,9 +1272,7 @@ async function resetStotramParayana() {
     if (!currentType) return;
     const d = track.days[stotramSelectedDate];
     if (!d || !d.parayana || !d.parayana[currentType]) return;
-    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset parayana to 0?',
+    if (!await siteConfirm('పారాయణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset parayana to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.parayana[currentType] = 0;
     gaEvent('parayana_reset', { stotram: currentType, date: stotramSelectedDate });
@@ -1259,9 +1282,7 @@ Reset parayana to 0?',
 async function resetDayPradakshina() {
     const d = track.days[activeDay];
     if (!d || !d.pradakshina) return;
-    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?
-
-Reset pradakshina to 0?',
+    if (!await siteConfirm('ప్రదక్షిణ count 0కి తిరిగి సెట్ చేయాలా?\n\nReset pradakshina to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     d.pradakshina = 0;
     gaEvent('pradakshina_reset', { source: 'day-sheet', date: activeDay });
@@ -1271,9 +1292,7 @@ Reset pradakshina to 0?',
 async function resetJapa(i) {
     const j = track.days[activeDay].japa[i];
     if (!j || !j.count) return;
-    if (!await siteConfirm(j.name + '
-
-count 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
+    if (!await siteConfirm(j.name + '\n\ncount 0కి తిరిగి సెట్ చేయాలా? / Reset to 0?',
         { okLabel: 'రీసెట్ / Reset', danger: true })) return;
     j.count = 0;
     gaEvent('japa_reset', { name: j.name, date: activeDay });
