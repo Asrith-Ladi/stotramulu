@@ -104,29 +104,7 @@ function goHome() {
 }
 
 
-/* ============================================================
-   THE COUNT AT THE END OF EACH LEAF
-
-
-   A devotee reading a long stotram wants to know how far they have
-   come, and the unit differs with what is being read — so the count
-   printed at the end of every block does too:
-
-
-     · అష్టోత్తరం   names.  Each block holds 4 of the 108, so the
-                     leaves end 4, 8, 12 … 108. The ధ్యానం and
-                     ఫలశ్రుతి blocks hold no names and get no count.
-     · సహస్రనామం   slokas. Each block's own label already says which
-                     slokas it covers, so "31-40" ends at 40 — read
-                     that leaf and 40 slokas are behind you.
-     · స్తోత్రం / హారతి  simply the block you are on: 1, 2, 3 …
-
-
-   The hand-written label at the top of the block (ధ్యానం, "31-40",
-   "1 - పీఠిక") is never touched; this only adds the count.
-============================================================ */
-
-
+// Reader numbering follows verses and individual namavali names.
 // Built-ins take their category from the home-page section their card sits
 // in; stotras added through the admin panel carry their own.
 function stotramCategory(type) {
@@ -159,31 +137,30 @@ function labelHighestNumber(label) {
 }
 
 
-function slokamCounts(data, type) {
-    const cat = stotramCategory(type);
-    if (cat === 'ashtottara') {
-        // A namavali added through the admin panel is split on blank lines and
-        // every block is numbered 1, 2, 3 … — including its ధ్యానం verse. So a
-        // numeric label alone does not prove a block holds names; count the
-        // నమః lines as well. (A namavali written without నమః — transliterated,
-        // say — falls back to counting every line.)
-        const hasNamah = data.some((item) => countNameLines(item.text) > 0);
-        let done = 0;
-        return data.map((item) => {
-            if (!labelHighestNumber(item.number)) return '';          // ధ్యానం / సమర్పణం
-            const n = hasNamah ? countNameLines(item.text) : countTextLines(item.text);
-            if (!n) return '';                                        // no names here
-            done += n;
-            return String(done);
-        });
-    }
-    if (cat === 'sahasranama') {
-        return data.map((item) => {
-            const n = labelHighestNumber(item.number);
-            return n ? String(n) : '';
-        });
-    }
-    return data.map((item, i) => String(i + 1));               // incremental
+function numberedReaderRows(data, type) {
+    const isNames = stotramCategory(type) === 'ashtottara';
+    const hasNamah = data.some(item => countNameLines(item.text) > 0);
+    let nameNumber = 0;
+    return data.map(item => {
+        const label = String(item.number);
+        if (isNames && labelHighestNumber(label)) {
+            return String(item.text).split(/\r?\n/).filter(line => line.trim()).map(text => ({
+                text,
+                number: (!hasNamah || countNameLines(text) > 0) ? String(++nameNumber) : ''
+            }));
+        }
+        // Split grouped verses only when their paragraph count matches the range.
+        const range = label.match(/^(\d+)\s*[-\u2013]\s*(\d+)$/);
+        const paragraphs = String(item.text).split(/\r?\n\s*\r?\n/);
+        if (!isNames && range && paragraphs.length === Number(range[2]) - Number(range[1]) + 1) {
+            return paragraphs.map((text, i) => ({text, number: String(Number(range[1]) + i)}));
+        }
+        return [{text: item.text, number: /^\d/.test(label) ? label : ''}];
+    });
+}
+
+function readerRowsHtml(rows) {
+    return rows.map(row => `<div class="reader-verse-row"><div class="slokam-text" style="font-size:${currentFontSize}px">${row.text}</div>${row.number ? `<span class="reader-verse-number">${row.number}</span>` : ''}</div>`).join('');
 }
 
 
@@ -192,22 +169,19 @@ function renderSlokams(data, type) {
     c.innerHTML = '';
     const meaningSet = (type && meanings[type]) || {};
     const read = readSet(type);
-    const counts = slokamCounts(data, type);
+    const rows = numberedReaderRows(data, type);
     data.forEach((item, idx) => {
         const meaning = meaningSet[idx];
         const meaningHtml = meaning
             ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
-            : '';
-        // sits right after the verse, where a manuscript writes its number
-        const endHtml = counts[idx]
-            ? `<span class="slokam-end-num" aria-hidden="true">${counts[idx]}</span>`
             : '';
         const b = document.createElement('div');
         b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
         b.dataset.idx = idx;
         b.id = 'verse-' + idx;
         b.tabIndex = -1;
-        b.innerHTML = `<span class="slokam-number">${item.number}</span><div class="slokam-text" style="font-size:${currentFontSize}px">${item.text}</div>${endHtml}${meaningHtml}`;
+        const heading = /^\d/.test(String(item.number)) ? '' : `<span class="slokam-number">${item.number}</span>`;
+        b.innerHTML = `${heading}${readerRowsHtml(rows[idx])}${meaningHtml}`;
         const mark = document.createElement('button');
         mark.className = 'verse-read-button';
         mark.textContent = read.has(idx) ? 'చదివాను ✓' : 'చదివినట్లు గుర్తించు';

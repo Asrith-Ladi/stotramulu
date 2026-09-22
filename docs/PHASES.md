@@ -15,3 +15,7 @@ Resolve flagged source editions and pronunciation differences, visually test on 
 ## Release
 
 Publish through the repository's existing automatic deployment after pushing main. The direct Cloudflare CLI deployment did not run successfully because authentication was unavailable. A successful Git push is not confirmation that the hosting build succeeded.
+
+## Reading layout follow-up
+
+Implemented: one right-side number per verse, individual Ashtottaram names numbered 1-108, and removal of duplicate block/end counters. Grouped verses split for display when their paragraph count matches the labeled range; other ranges retain their source label. Section headings and existing reading progress remain intact.

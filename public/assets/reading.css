@@ -66,3 +66,11 @@ button:disabled { opacity: .45; cursor: default; }
 #readerLinkStatus:empty { display: none; }
 #readerLinkFallback { width: 100%; padding: 12px; color: #fdf5e6; background: #20132f; border: 1px solid #b99447; }
 @media print { .reader-library-actions { display: none !important; } }
+
+/* One number beside each verse/name; the text can wrap independently. */
+.reader-verse-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+.reader-verse-row + .reader-verse-row { margin-top: 8px; }
+.reader-verse-row .slokam-text { min-width: 0; }
+.reader-verse-number { text-align: right; font-size: var(--reader-font-size); line-height: 2; font-variant-numeric: tabular-nums; color: #ffdf85; }
+body.grandham .reader-verse-number { color: #5a3413; }
+@media print { .reader-verse-number { color: #000; } }
