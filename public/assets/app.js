@@ -285,13 +285,11 @@ function toggleGrandham() {
     gaEvent('grandham_toggle', { on: on });
 }
 function initGrandham() {
-    let saved = '0';
-    try { saved = localStorage.getItem('grandham') || '0'; } catch (e) {}
-    if (saved === '1') {
-        document.body.classList.add('grandham');
-        const t = document.getElementById('grandhamToggle');
-        if (t) t.classList.add('on');
-    }
+    let enabled = true;
+    try { enabled = localStorage.getItem('grandham') !== '0'; } catch (e) {}
+    document.body.classList.toggle('grandham', enabled);
+    const t = document.getElementById('grandhamToggle');
+    if (t) t.classList.toggle('on', enabled);
 }
 
 

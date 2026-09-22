@@ -19,3 +19,8 @@ Publish through the repository's existing automatic deployment after pushing mai
 ## Reading layout follow-up
 
 Implemented: one right-side number per verse, individual Ashtottaram names numbered 1-108, and removal of duplicate block/end counters. Grouped verses split for display when their paragraph count matches the labeled range; other ranges retain their source label. Section headings and existing reading progress remain intact.
+
+
+## Phase 3 ? interface cleanup
+
+Implemented: ????? ???? is the default for new visitors while saved preferences are respected; home cards use a compact two-column library on larger screens and one column on phones; mobile header actions retain clear text labels; reading controls, search, navigation, favorites, and sharing are grouped into one panel; reset controls and devotional counters are placed in expandable sections; decorative motion and oversized card icons were reduced.

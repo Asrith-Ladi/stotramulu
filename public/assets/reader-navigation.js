@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
         link.textContent = heading.textContent;
         nav.appendChild(link);
     });
-    home.prepend(nav);
+    home.querySelector('.welcome-section').after(nav);
     // Preserve existing card styling while enabling keyboard activation.
     document.querySelectorAll('.card[onclick], .meaning-toggle[onclick]').forEach(el => {
         el.tabIndex = 0;

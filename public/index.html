@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="assets/reading.css">
 </head>
 <body>
+<script>
+    try { document.body.classList.toggle('grandham', localStorage.getItem('grandham') !== '0'); }
+    catch (e) { document.body.classList.add('grandham'); }
+</script>
 
 <div class="bg-pattern"></div>
 <div class="bg-mesh"></div>
@@ -566,7 +570,7 @@
     </div>
 
     <!-- Pradakshina Counter (today by default; pick any date) -->
-    <div class="home-counter-section">
+    <details class="home-counter-section practice-details"><summary>&#3114;&#3149;&#3120;&#3110;&#3093;&#3149;&#3127;&#3135;&#3107; &#3122;&#3142;&#3093;&#3149;&#3093;</summary>
         <div class="counter-card">
             <div class="counter-head">
                 <span class="counter-name">🕉️ ప్రదక్షిణలు / Pradakshinalu</span>
@@ -584,7 +588,7 @@
                 <button class="count-btn" onclick="bumpHomePradakshina(1)" aria-label="పెంచు">＋</button>
             </div>
         </div>
-    </div>
+    </details>
 
     <!-- SECTION 1: Sahasranamavali -->
     <div class="cards-section" data-cat="sahasranama">
@@ -860,6 +864,7 @@
     </div>
 
     <!-- Per-stotram Parayana Counter -->
+    <details class="reader-practice practice-details"><summary>&#3114;&#3134;&#3120;&#3134;&#3119;&#3107; &#3122;&#3142;&#3093;&#3149;&#3093;</summary>
     <div class="counter-card stotram-counter-card">
         <div class="counter-head">
             <span class="counter-name">📖 <span id="stotramCounterLabel">పారాయణం</span></span>
@@ -878,7 +883,9 @@
         </div>
     </div>
 
+    </details>
     <div class="origin-block" id="originBlock"></div>
+    <section class="reader-tool-panel" aria-label="Reading tools"><h3>&#3114;&#3108;&#3112; &#3128;&#3134;&#3111;&#3112;&#3134;&#3122;&#3137;</h3>
     <div class="controls">
         <div class="font-control">
             <label>అక్షరాలు:</label>
@@ -894,8 +901,6 @@
             <label>📜 గ్రంథ రూపం</label>
             <div class="toggle-switch"></div>
         </div>
-        <button class="font-btn read-clear-btn" onclick="resetReading()"
-                title="చదివిన గుర్తులు తీసేయి / Clear read marks" aria-label="Clear read marks">🧽</button>
         <div class="reader-search">
             <span class="rs-icon">🔎</span>
             <input type="text" class="rs-input" id="readerSearchInput"
@@ -921,6 +926,8 @@
         <p id="readerLinkStatus" role="status" aria-live="polite"></p>
         <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
     </div>
+    <details class="reader-more"><summary>??? ???????</summary><button type="button" class="clear-reading-button" onclick="resetReading()">?????? ???????? ????????</button></details>
+    </section>
     <details class="source-details" id="sourceDetails"><summary>మూలాలు &amp; పాఠం వివరాలు</summary><div id="sourceContent"></div></details>
     <div class="slokam-container" id="slokamContainer"></div>
 </div>
