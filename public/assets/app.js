@@ -1,5 +1,3 @@
-
-
 // ============ STOTRAM DATA ============
 // Per-stotram data lives in data/stotras/<key>.js — each file registers
 // itself onto window.STOTRAS_DATA. Add a new stotram by creating a file
@@ -12,6 +10,7 @@ const meanings = Object.fromEntries(
     Object.entries(stotramConfig).map(([k, v]) => [k, v.meanings || {}])
 );
 
+
 // ============ APP ============
 let currentFontSize = 24;
 try {
@@ -19,6 +18,7 @@ try {
     if (Number.isFinite(saved) && saved >= 18 && saved <= 48) currentFontSize = saved;
 } catch (e) { /* Reading works when storage is unavailable. */ }
 let currentType = null;
+
 
 function createParticles() {
     const c = document.getElementById('particles');
@@ -32,6 +32,7 @@ function createParticles() {
     }
 }
 
+
 function openReader(type) {
     const cfg = stotramConfig[type];
     if (!cfg) return;
@@ -40,6 +41,7 @@ function openReader(type) {
     document.getElementById('readerLinkStatus').textContent = '';
     document.getElementById('readerLinkFallback').hidden = true;
 
+
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
@@ -47,13 +49,16 @@ function openReader(type) {
     gaEvent('screen_view', { screen_name: 'Reader: ' + type });
     gaEvent('open_stotram', { stotram: type });
 
+
     const ts = document.getElementById('readerTitleSection');
     ts.className = 'reader-title-section ' + cfg.theme;
     document.getElementById('readerTitle').textContent = cfg.title;
     document.getElementById('readerSubtitle').textContent = cfg.subtitle;
 
+
     const bg = document.getElementById('readerDeityBg');
     bg.innerHTML = `<svg style="width:100%;height:100%;color:${cfg.svgColor}"><use href="${cfg.svgId}"/></svg>`;
+
 
     const originEl = document.getElementById('originBlock');
     const originText = origins[type];
@@ -65,6 +70,7 @@ function openReader(type) {
         originEl.innerHTML = '';
     }
 
+
     renderSlokams(cfg.data, type);
     changeFontSize(0);
     setupReaderNavigation(type);
@@ -73,12 +79,14 @@ function openReader(type) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
 function goHome() {
     // close any open overlays/sheets and release scroll lock
     document.getElementById('searchOverlay').classList.remove('active');
     document.getElementById('daySheetOverlay').classList.remove('active');
     document.body.style.overflow = '';
     activeDay = null;
+
 
     document.getElementById('homePage').style.display = 'flex';
     document.getElementById('readerPage').classList.remove('active');
@@ -95,12 +103,15 @@ function goHome() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
 /* ============================================================
    THE COUNT AT THE END OF EACH LEAF
+
 
    A devotee reading a long stotram wants to know how far they have
    come, and the unit differs with what is being read — so the count
    printed at the end of every block does too:
+
 
      · అష్టోత్తరం   names.  Each block holds 4 of the 108, so the
                      leaves end 4, 8, 12 … 108. The ధ్యానం and
@@ -110,9 +121,11 @@ function goHome() {
                      that leaf and 40 slokas are behind you.
      · స్తోత్రం / హారతి  simply the block you are on: 1, 2, 3 …
 
+
    The hand-written label at the top of the block (ధ్యానం, "31-40",
    "1 - పీఠిక") is never touched; this only adds the count.
 ============================================================ */
+
 
 // Built-ins take their category from the home-page section their card sits
 // in; stotras added through the admin panel carry their own.
@@ -124,6 +137,7 @@ function stotramCategory(type) {
     if (sec && sec.dataset.cat) return sec.dataset.cat;
     return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
 }
+
 
 // Lines of actual text in a block.
 function countTextLines(text) {
@@ -143,6 +157,7 @@ function labelHighestNumber(label) {
     const nums = s.match(/\d+/g);
     return nums ? Math.max.apply(null, nums.map(Number)) : 0;
 }
+
 
 function slokamCounts(data, type) {
     const cat = stotramCategory(type);
@@ -170,6 +185,7 @@ function slokamCounts(data, type) {
     }
     return data.map((item, i) => String(i + 1));               // incremental
 }
+
 
 function renderSlokams(data, type) {
     const c = document.getElementById('slokamContainer');
@@ -201,6 +217,7 @@ function renderSlokams(data, type) {
         c.appendChild(b);
     });
 }
+
 
 /* ============================================================
    READ MARKS — tap a slokam to highlight it as already read, so an
@@ -247,6 +264,7 @@ async function resetReading() {
     clearReaderSearch();
 }
 
+
 function changeFontSize(d) {
     currentFontSize = Math.max(18, Math.min(48, currentFontSize + d));
     document.getElementById('fontSizeDisplay').textContent = currentFontSize;
@@ -256,6 +274,7 @@ function changeFontSize(d) {
     document.querySelectorAll('[onclick="changeFontSize(-2)"]').forEach(b => b.disabled = currentFontSize <= 18);
     document.querySelectorAll('[onclick="changeFontSize(2)"]').forEach(b => b.disabled = currentFontSize >= 48);
 }
+
 
 function toggleMeanings() {
     const enabled = !document.body.classList.contains('show-meanings');
@@ -267,6 +286,7 @@ function toggleMeanings() {
     if (q && q.value.trim()) onReaderSearch(q.value);
 }
 
+
 function initMeaningsToggle() {
     let saved = '0';
     try { saved = localStorage.getItem('showMeanings') || '0'; } catch (e) {}
@@ -275,6 +295,7 @@ function initMeaningsToggle() {
         document.getElementById('meaningToggle').classList.add('on');
     }
 }
+
 
 /* ============================================================
    గ్రంథ రూపం — palm-leaf (తాళపత్రం) reading mode. Each slokam becomes
@@ -299,9 +320,11 @@ function initGrandham() {
     }
 }
 
+
 /* ============================================================
    IN-STOTRAM SEARCH — highlight matches in slokam text + Artham,
    step through with ↑/↓ (or Shift+Enter / Enter), Esc to clear.
+
 
    Telugu queries: literal substring.
    English queries: phonetic — "padmanabha" matches "పద్మనాభ" by
@@ -312,6 +335,7 @@ let readerMatches = [];
 let readerMatchIdx = 0;
 let readerSearchTimer = null;       // debounce handle (typing fires after 250ms pause)
 let readerScrolledOnce = false;     // whether user has scrolled to a match in the current result set
+
 
 // Telugu consonants → single Roman letter (retroflex/dental + aspirated/non
 // collapse on purpose — casual Roman typists don't distinguish them).
@@ -356,10 +380,12 @@ function isAsciiQuery(q) {
     return /[a-zA-Z]/.test(q) && !/[ఀ-౿]/.test(q);
 }
 
+
 function onReaderSearch(query) {
     const q = (query || '').trim();
     const clearBtn = document.getElementById('readerSearchClear');
     if (clearBtn) clearBtn.style.display = q ? '' : 'none';
+
 
     // Strip any existing highlights, then rejoin adjacent text nodes.
     document.querySelectorAll('#slokamContainer mark').forEach(m => {
@@ -369,9 +395,11 @@ function onReaderSearch(query) {
     document.querySelectorAll('#slokamContainer .slokam-text, #slokamContainer .slokam-meaning')
         .forEach(el => el.normalize());
 
+
     readerMatches = [];
     readerMatchIdx = 0;
     if (!q) { updateMatchCount(); updateNavButtons(); return; }
+
 
     const ascii = isAsciiQuery(q);
     const querySkel = ascii ? romanSkeleton(q) : null;
@@ -380,12 +408,14 @@ function onReaderSearch(query) {
         updateMatchCount(); updateNavButtons(); return;
     }
 
+
     const includeMeanings = document.body.classList.contains('show-meanings');
     const sel = includeMeanings
         ? '#slokamContainer .slokam-text, #slokamContainer .slokam-meaning'
         : '#slokamContainer .slokam-text';
     const targets = document.querySelectorAll(sel);
     const lowerQ = q.toLowerCase();
+
 
     targets.forEach(el => {
         const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
@@ -394,6 +424,7 @@ function onReaderSearch(query) {
         textNodes.forEach(tn => {
             const text = tn.nodeValue;
             const parent = tn.parentNode;
+
 
             if (ascii) {
                 // Word-level phonetic match. Each whitespace-separated token's
@@ -441,6 +472,7 @@ function onReaderSearch(query) {
         });
     });
 
+
     if (readerMatches.length) {
         readerMatches[0].classList.add('current');
         // Don't auto-scroll on every keystroke — only on Enter / ↓ / ↑.
@@ -451,6 +483,7 @@ function onReaderSearch(query) {
     updateNavButtons();
 }
 
+
 function updateMatchCount() {
     const el = document.getElementById('readerSearchCount');
     if (!el) return;
@@ -460,6 +493,7 @@ function updateNavButtons() {
     const has = readerMatches.length > 0;
     document.querySelectorAll('.reader-search .rs-nav').forEach(b => b.disabled = !has);
 }
+
 
 function nextSearchMatch() {
     if (!readerMatches.length) return;
@@ -514,6 +548,7 @@ function clearReaderSearch() {
     onReaderSearch('');
 }
 
+
 // Mic for in-stotram search: speak in Telugu, transcript drops into the
 // search box and runs the literal-match path. Reuses the same SpeechRecognition
 // API that powers the home-page search and feedback form.
@@ -546,9 +581,11 @@ function startReaderVoice() {
     try { rec.start(); btn && btn.classList.add('listening'); } catch (e) { /* already running */ }
 }
 
+
 window.addEventListener('scroll', () => {
     document.getElementById('scrollTopBtn').classList.toggle('visible', window.scrollY > 400);
 });
+
 
 /* ============================================================
    SEARCH + VOICE
@@ -568,6 +605,7 @@ function buildSearchIndex() {
     });
 }
 let searchIndex = [];
+
 
 function openSearch() {
     if (!searchIndex.length) searchIndex = buildSearchIndex();
@@ -611,6 +649,7 @@ function pickSearch(type) {
     openReader(type);
 }
 
+
 let recognition = null;
 function initVoice() {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -644,6 +683,7 @@ function startVoice() {
     } catch (e) { /* already started */ }
 }
 
+
 /* ============================================================
    POOJA TRACK : calendar + pradakshina/japa counters + mokkulu
    All data stored locally on the device (localStorage).
@@ -674,6 +714,7 @@ function setTrack(next) {
     } catch (e) {}
 }
 
+
 const teMonths = ['జనవరి','ఫిబ్రవరి','మార్చి','ఏప్రిల్','మే','జూన్','జూలై','ఆగస్టు','సెప్టెంబర్','అక్టోబర్','నవంబర్','డిసెంబర్'];
 const teWeekdays = ['ఆది','సోమ','మంగళ','బుధ','గురు','శుక్ర','శని'];
 function ymd(d) {
@@ -681,8 +722,10 @@ function ymd(d) {
 }
 function todayStr() { return ymd(new Date()); }
 
+
 let trackMonths = [];   // oldest -> newest (current month last)
 let monthIdx = 0;       // currently viewed month index
+
 
 function openTrack() {
     document.getElementById('homePage').style.display = 'none';
@@ -698,6 +741,7 @@ function openTrack() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
 function buildMonths() {
     trackMonths = [];
     const now = new Date();
@@ -708,12 +752,14 @@ function buildMonths() {
     monthIdx = trackMonths.length - 1;           // default = current month
 }
 
+
 function dayHasData(dateStr) {
     const d = track.days[dateStr];
     if (!d) return false;
     if (d.pradakshina > 0) return true;
     return Array.isArray(d.japa) && d.japa.some(j => j.count > 0);
 }
+
 
 function renderMonths() {
     const strip = document.getElementById('monthStrip');
@@ -762,6 +808,7 @@ function shiftMonth(dir) {
     updateMonthView();
 }
 
+
 /* ---- Day detail sheet ---- */
 let activeDay = null;
 function openDay(dateStr) {
@@ -802,9 +849,11 @@ function renderDaySheet() {
         </div>`;
     }).join('');
 
+
     const chips = buildSearchIndex().slice(0, 6).map(s =>
         `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
     ).join('');
+
 
     document.getElementById('sheetBody').innerHTML = `
         <div class="counter-card">
@@ -820,7 +869,7 @@ function renderDaySheet() {
         </div>
         <div class="track-card-title" style="margin-top:20px;">📿 పారాయణం / జపం</div>
         ${japaHtml || '<div class="track-empty">ఇంకా ఏ పారాయణం జోడించలేదు. క్రింద నుండి ఎంచుకోండి 👇</div>'}
-        `<span class="add-chip" onclick="addJapa('${s.title.replace(/'/g, "\\'")}')">＋ ${s.title}</span>`
+       <div class="chip-row">${chips}<span class="add-chip" onclick="addJapaCustom()">＋ వేరే…</span></div>
     `;
 }
 function bumpPradakshina(delta) {
@@ -853,6 +902,7 @@ function editTarget(i) {
     const val = prompt('ఎన్ని సార్లు చేయాలి? (లక్ష్యం)', j.target || 11);
     if (val !== null) { j.target = Math.max(0, parseInt(val) || 0); saveTrack(); renderDaySheet(); }
 }
+
 
 /* ---- Mokkulu (vows) + reminders ---- */
 function addMokku() {
@@ -910,6 +960,7 @@ function escapeHtml(s) {
     return s.replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
 }
 
+
 /* ============================================================
    siteConfirm — an in-app confirmation dialog, styled like the rest
    of the site, instead of the browser's plain "localhost says…" box.
@@ -932,6 +983,7 @@ function siteConfirm(message, opts) {
             '<button class="sc-btn ' + (opts.danger ? 'danger' : 'primary') + '" data-yes>' + escapeHtml(okLabel) + '</button>' +
             '</div></div>';
 
+
         let done = false;
         function finish(val) {
             if (done) return;
@@ -946,16 +998,19 @@ function siteConfirm(message, opts) {
             else if (e.key === 'Enter') { e.preventDefault(); finish(true); }
         }
 
+
         ov.querySelector('[data-no]') && (ov.querySelector('[data-no]').onclick = () => finish(false));
         ov.querySelector('[data-yes]').onclick = () => finish(true);
         ov.addEventListener('click', (e) => { if (e.target === ov) finish(false); });
         document.addEventListener('keydown', onKey);
+
 
         document.body.appendChild(ov);
         requestAnimationFrame(() => ov.classList.add('show'));
         ov.querySelector('[data-yes]').focus();
     });
 }
+
 
 // Single-button message box (replaces alert()). Returns a Promise so callers
 // can await it, but ignoring the result is fine too.
@@ -980,10 +1035,12 @@ function showDueReminders() {
     }
 }
 
+
 // close search with Escape
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { closeSearch(); closeDay(); closeFeedback(); }
 });
+
 
 /* ============================================================
    BACKUP / RESTORE  (Option A — a file on the user's own device)
@@ -1032,6 +1089,7 @@ function handleRestoreFile(input) {
     reader.readAsText(file);
 }
 
+
 /* ============================================================
    FEEDBACK  (type + name + message; contact optional, voice-fill)
    Submissions go to Firestore, and the admin reads them inside the
@@ -1039,9 +1097,11 @@ function handleRestoreFile(input) {
    Entries are queued on the device first and retried if the phone is
    offline, so nothing is lost.
 
+
    The old Google Apps Script / Sheet route has been removed — Firestore
    replaces it. It also exposed a public script URL anyone could POST to.
 ============================================================ */
+
 
 function openFeedback() {
     resetFeedbackBox();
@@ -1061,6 +1121,7 @@ function resetFeedbackBox() {
         el.value = ''; el.classList.remove('invalid');
     });
 }
+
 
 // Generic voice-to-field helper (used by each 🎤 button)
 function listenInto(inputId, btn, append) {
@@ -1082,12 +1143,14 @@ function listenInto(inputId, btn, append) {
     try { rec.start(); btn && btn.classList.add('listening'); } catch (e) {}
 }
 
+
 function submitFeedback() {
     const nameEl = document.getElementById('fbName');
     const numEl = document.getElementById('fbNumber');
     const msgEl = document.getElementById('fbMessage');
     const errEl = document.getElementById('fbError');
     [nameEl, numEl, msgEl].forEach(el => el.classList.remove('invalid'));
+
 
     const name = nameEl.value.trim();
     const contact = numEl.value.trim();          // phone OR email, now optional
@@ -1096,14 +1159,17 @@ function submitFeedback() {
     const type = typeEl ? typeEl.value : 'other';
     const missing = [];
 
+
     if (!name) { nameEl.classList.add('invalid'); missing.push('పేరు'); }
     if (!message) { msgEl.classList.add('invalid'); missing.push('అభిప్రాయం'); }
+
 
     if (missing.length) {
         errEl.textContent = '⚠️ దయచేసి నింపండి: ' + missing.join(', ');
         return;
     }
     errEl.textContent = '';
+
 
     // Context captured automatically so a report is actionable — without this a
     // "there is a mistake" message gives no clue where to look.
@@ -1122,6 +1188,7 @@ function submitFeedback() {
         at: new Date().toISOString()
     };
 
+
     // Queue it on this device first, then try to send. If the phone is offline
     // or Firestore hiccups, the entry stays queued and is retried on the next
     // visit — so a message is never silently lost. (This replaces the old
@@ -1129,12 +1196,14 @@ function submitFeedback() {
     queueFeedback(payload);
     flushFeedback();
 
+
     // thank-you
     document.getElementById('fbForm').style.display = 'none';
     document.getElementById('fbThanks').style.display = 'block';
     gaEvent('feedback_submit', { type });
     setTimeout(closeFeedback, 2200);
 }
+
 
 /* ---- feedback queue: survives offline, retried on next load ---- */
 const FB_QUEUE_KEY = 'feedbackQueue_v1';
@@ -1181,6 +1250,7 @@ function withTimeout(promise, ms) {
     });
 }
 
+
 /* ============================================================
    ANALYTICS (GA4) — anonymous usage. Single-page app, so we
    fire a screen_view as the user moves between views, plus a
@@ -1191,6 +1261,7 @@ function gaEvent(name, params) {
     try { if (window.gtag) gtag('event', name, params || {}); } catch (e) {}
 }
 
+
 /* ============================================================
    HOME + STOTRAM COUNTERS (pradakshina + per-stotram parayana)
    Both reuse the same track.days[date] storage as the Track page.
@@ -1199,11 +1270,13 @@ function gaEvent(name, params) {
 let homeSelectedDate = todayStr();
 let stotramSelectedDate = todayStr();
 
+
 function ensureDay(dateStr) {
     if (!track.days[dateStr]) track.days[dateStr] = { pradakshina: 0, japa: [], parayana: {} };
     if (!track.days[dateStr].parayana) track.days[dateStr].parayana = {};
     return track.days[dateStr];
 }
+
 
 function initHomePradakshina() {
     const picker = document.getElementById('homeDatePicker');
@@ -1228,6 +1301,7 @@ function bumpHomePradakshina(delta) {
     saveTrack();
     renderHomePradakshina();
 }
+
 
 function initStotramCounter(type, title) {
     stotramSelectedDate = todayStr();
@@ -1257,6 +1331,7 @@ function bumpStotramParayana(delta) {
     saveTrack();
     renderStotramCounter();
 }
+
 
 async function resetHomePradakshina() {
     const d = track.days[homeSelectedDate];
@@ -1299,6 +1374,7 @@ async function resetJapa(i) {
     saveTrack();
     renderDaySheet();
 }
+
 
 createParticles();
 initMeaningsToggle();
