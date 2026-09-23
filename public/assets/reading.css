@@ -274,3 +274,92 @@ body.grandham .reader-section-label { color: #573416; }
 .collapsible-section-heading::after{content:'\2304';grid-column:2;grid-row:1 / span 2;justify-self:center;color:#ffdf85;font-size:28px;line-height:1;transform:rotate(-90deg)}
 .collapsible-section-heading.is-open::after{transform:rotate(0)}
 .cards-grid[hidden]{display:none!important}
+
+/* Compact Home navigation: one options disclosure and one category picker. */
+.home-actions-toggle {
+    width: min(100%, 1100px);
+    min-height: 64px;
+    margin: 0 auto 10px;
+    padding: 12px 18px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 4px 16px;
+    color: #ffdf85;
+    text-align: left;
+    font-family: inherit;
+    border: 1px solid #71562f;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #24192d, #18111f);
+    cursor: pointer;
+}
+.home-actions-toggle span { font-size: 1.05rem; font-weight: 700; }
+.home-actions-toggle small { color: #f5e0a3; opacity: .76; }
+.home-actions-toggle::after {
+    content: '\2304';
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    font-size: 26px;
+    line-height: 1;
+    transform: rotate(-90deg);
+    transition: transform .2s ease;
+}
+.home-actions-toggle.is-open::after { transform: rotate(0); }
+.home-actions-toggle:focus-visible,
+.library-selector select:focus-visible,
+.collapsible-section-heading:focus-visible {
+    outline: 3px solid #ffdf85;
+    outline-offset: 3px;
+}
+.home-primary-actions[hidden] { display: none !important; }
+.home-primary-actions { margin-top: 0; margin-bottom: 10px; }
+
+.library-navigation.library-selector {
+    display: grid;
+    grid-template-columns: auto minmax(220px, 420px);
+    justify-content: center;
+    align-items: center;
+    gap: 10px 16px;
+    width: min(100%, 1100px);
+    margin: 0 auto 16px;
+}
+.library-selector label { color: #f5e0a3; font-weight: 700; }
+.library-selector select {
+    width: 100%;
+    min-height: 50px;
+    padding: 8px 42px 8px 14px;
+    color: #fff4d0;
+    font: 600 1rem 'Noto Sans Telugu', sans-serif;
+    border: 1px solid #8d6d36;
+    border-radius: 12px;
+    background: #24192d;
+    cursor: pointer;
+}
+.library-selector option { color: #24170d; background: #fff7e7; }
+
+.cards-section { scroll-margin-top: 100px; }
+.collapsible-section-heading { margin-block: 12px; }
+.collapsible-section-heading:hover { border-color: #b88a38; background: rgba(212, 168, 67, .06); }
+
+@media (max-width: 600px) {
+    .home-actions-toggle {
+        grid-template-columns: minmax(0, 1fr) 34px;
+        margin-bottom: 8px;
+    }
+    .home-actions-toggle small {
+        grid-column: 1;
+        font-size: .76rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .library-navigation.library-selector {
+        grid-template-columns: 1fr;
+        justify-items: stretch;
+        padding: 10px;
+    }
+    .library-selector label { font-size: .88rem; }
+}
+@media print {
+    .home-actions-toggle, .library-selector { display: none !important; }
+}

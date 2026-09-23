@@ -205,19 +205,48 @@ function setupReaderNavigation(type) {
 }
 document.addEventListener('DOMContentLoaded', () => {
     const home = document.getElementById('homePage');
+    const actions = home.querySelector('.home-primary-actions');
+    actions.id = 'homePrimaryActions';
+
+    const actionsToggle = document.createElement('button');
+    actionsToggle.type = 'button';
+    actionsToggle.className = 'home-actions-toggle';
+    actionsToggle.setAttribute('aria-controls', actions.id);
+    const actionsLabel = document.createElement('span');
+    actionsLabel.textContent = '☰ ముఖ్య ఎంపికలు';
+    const actionsHint = document.createElement('small');
+    actionsHint.textContent = 'వెతకండి · ఇష్టమైనవి · సైన్ ఇన్ · జపమాల';
+    actionsToggle.append(actionsLabel, actionsHint);
+    const setActionsOpen = open => {
+        actions.hidden = !open;
+        actionsToggle.classList.toggle('is-open', open);
+        actionsToggle.setAttribute('aria-expanded', String(open));
+    };
+    actionsToggle.addEventListener('click', () => setActionsOpen(actions.hidden));
+    actions.before(actionsToggle);
+    setActionsOpen(false);
+
     const nav = document.createElement('nav');
-    nav.className = 'library-navigation';
+    nav.className = 'library-navigation library-selector';
     nav.setAttribute('aria-label', 'స్తోత్రాల విభాగాలు');
+    const categoryLabel = document.createElement('label');
+    categoryLabel.htmlFor = 'libraryCategorySelect';
+    categoryLabel.textContent = 'విభాగం ఎంచుకోండి';
+    const categorySelect = document.createElement('select');
+    categorySelect.id = 'libraryCategorySelect';
+
     home.querySelectorAll('.cards-section').forEach((section, i) => {
         section.id ||= 'library-section-' + i;
         const heading = section.querySelector('.section-title');
         if (!heading) return;
-        const link = document.createElement('a');
-        link.href = '#' + section.id;
-        link.textContent = heading.textContent;
-        nav.appendChild(link);
+        const option = document.createElement('option');
+        option.value = section.id;
+        option.textContent = heading.textContent;
+        categorySelect.appendChild(option);
     });
-    home.querySelector('.home-primary-actions').after(nav);
+    nav.append(categoryLabel, categorySelect);
+    actions.after(nav);
+
     home.querySelectorAll('.cards-section').forEach((section, index) => {
         const grid = section.querySelector('.cards-grid');
         const divider = section.querySelector('.section-divider');
@@ -228,17 +257,29 @@ document.addEventListener('DOMContentLoaded', () => {
         divider.setAttribute('role', 'button');
         divider.setAttribute('aria-controls', grid.id);
         const setOpen = open => {
+            if (open) {
+                home.querySelectorAll('.cards-section').forEach(other => {
+                    if (other !== section && other._setOpen) other._setOpen(false);
+                });
+                categorySelect.value = section.id;
+            }
             grid.hidden = !open;
             divider.classList.toggle('is-open', open);
             divider.setAttribute('aria-expanded', String(open));
         };
+        section._setOpen = setOpen;
         const toggle = () => setOpen(grid.hidden);
         divider.addEventListener('click', toggle);
         divider.addEventListener('keydown', event => {
             if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
         });
         setOpen(index === 0);
-        nav.querySelector('a[href="#' + section.id + '"]')?.addEventListener('click', () => setOpen(true));
+    });
+    categorySelect.addEventListener('change', () => {
+        const section = document.getElementById(categorySelect.value);
+        if (!section) return;
+        section._setOpen?.(true);
+        section.scrollIntoView({behavior:'smooth', block:'start'});
     });
     renderRecentReading();
     document.querySelectorAll('.card[onclick], .meaning-toggle[onclick]').forEach(el => {
