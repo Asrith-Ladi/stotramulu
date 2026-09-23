@@ -51,3 +51,8 @@ Verified every published verse in the selected Shiva and Ganesha Sahasranamam ed
 ## Phase 8 — section navigation
 
 Added large section buttons to long Sahasranamam readers. Shiva readers can jump to the introduction, Sahasranama, or phalashruti; Ganesha readers can jump to the Sahasranama or phalashruti. Invalid section metadata is ignored, buttons use the existing precise verse jump behavior, and the controls collapse to one easy-to-tap column on phones.
+
+
+## Phase 9 — consistent long-reading navigation
+
+Extended direct section buttons to Vishnu and Lalitha Sahasranamam. Vishnu now separates meditation/introduction, the 107-verse main stotram, and phalashruti/samarpana. Lalitha separates its four meditation verses from the 183-verse main stotram. The section labels describe the selected published scope and use the same accessible mobile controls introduced in Phase 8.

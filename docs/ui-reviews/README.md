@@ -86,3 +86,14 @@ These screenshots use temporary numbered outlines to show what changed. The outl
 2. Confirm they jump to verses 1, 31, and 154 respectively.
 3. Open the Ganesha Sahasranamam and confirm its two buttons jump to verses 1 and 171.
 4. Confirm other stotrams do not show an empty section area.
+## Phase 9 — Vishnu and Lalitha sections
+
+![Phone view highlighting Vishnu reading sections](phase9-vishnu-sections-mobile.png)
+
+**Where:** Below the verse selector in the Vishnu and Lalitha reading tools.
+
+**What to test:**
+
+1. In Vishnu Sahasranamam, confirm the three buttons jump to meditation/introduction, verse 1, and phalashruti.
+2. In Lalitha Sahasranamam, confirm the two buttons jump to meditation and verse 1.
+3. Confirm the regular verse selector and Continue button still work after each section jump.

@@ -49,6 +49,8 @@ assert.match(data.shivasahasram.origin,/31–153/);
 assert.match(data.ganeshasahasram.origin,/1–170/);
 assert.equal(JSON.stringify(data.shivasahasram.sections.map(section=>section.index)),'[0,30,153]');
 assert.equal(JSON.stringify(data.ganeshasahasram.sections.map(section=>section.index)),'[0,170]');
+assert.equal(JSON.stringify(data.vishnu.sections.map(section=>section.index)),'[0,6,43]');
+assert.equal(JSON.stringify(data.lalitha.sections.map(section=>section.index)),'[0,4]');
 assert.ok(/readerSectionNav/.test(fs.readFileSync('public/index.html','utf8')));
 assert.ok(/sourceStatusBadge/.test(fs.readFileSync('public/index.html','utf8')));
 for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js'))) {
