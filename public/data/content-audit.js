@@ -312,5 +312,7 @@ window.CONTENT_AUDIT = {
       }
     ],
     "needsReview": false
-  }
+  },
+  "rama108": {"reviewedOn":"2026-09-23","status":"verified","note":"All 108 names were count-checked and retained in source order after Telugu-script conversion.","sources":[{"label":"Sanskrit Documents — Rama 108 names","url":"https://sanskritdocuments.org/doc_raama/rama108.html"}],"needsReview":false},
+  "subrahmanya108": {"reviewedOn":"2026-09-23","status":"verified","note":"All 108 names were count-checked and retained in source order after Telugu-script conversion.","sources":[{"label":"Sanskrit Documents — Subrahmanya 108 names","url":"https://sanskritdocuments.org/doc_subrahmanya/subra108.html"}],"needsReview":false}
 };

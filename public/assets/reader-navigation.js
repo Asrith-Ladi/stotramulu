@@ -218,6 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
         nav.appendChild(link);
     });
     home.querySelector('.home-primary-actions').after(nav);
+    home.querySelectorAll('.cards-section').forEach((section, index) => {
+        const grid = section.querySelector('.cards-grid');
+        const divider = section.querySelector('.section-divider');
+        if (!grid || !divider) return;
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = 'home-section-toggle';
+        const setOpen = open => { grid.hidden = !open; button.setAttribute('aria-expanded', String(open)); button.textContent = open ? '− మూసివేయండి' : '+ తెరవండి'; };
+        button.onclick = () => setOpen(grid.hidden); divider.appendChild(button); setOpen(index === 0);
+        nav.querySelector('a[href="#' + section.id + '"]')?.addEventListener('click', () => setOpen(true));
+    });
     renderRecentReading();
     document.querySelectorAll('.card[onclick], .meaning-toggle[onclick]').forEach(el => {
         el.tabIndex = 0;

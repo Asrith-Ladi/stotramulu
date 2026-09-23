@@ -56,3 +56,6 @@ Added large section buttons to long Sahasranamam readers. Shiva readers can jump
 ## Phase 9 — consistent long-reading navigation
 
 Extended direct section buttons to Vishnu and Lalitha Sahasranamam. Vishnu now separates meditation/introduction, the 107-verse main stotram, and phalashruti/samarpana. Lalitha separates its four meditation verses from the 183-verse main stotram. The section labels describe the selected published scope and use the same accessible mobile controls introduced in Phase 8.
+## Phase 10 — more Ashtottarams and shorter Home
+
+Added source-counted Rama and Subrahmanya Ashtottarams, each with 108 individually numbered names. Home content categories can now be opened or minimized by tapping a 48px control. Only the first category starts open; Ashtottarams, Stotrams, and Harathulu start collapsed, and tapping a category shortcut opens that section before scrolling to it. Generated review screenshots were intentionally skipped to reduce image-generation usage; the behavior and testing steps are documented here.

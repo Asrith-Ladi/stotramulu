@@ -267,3 +267,5 @@ body.grandham .reading-position-bar progress::-webkit-progress-bar { background:
 body.grandham .reader-section-label { color: #573416; }
 @media (max-width: 600px) { .reader-section-navigation { grid-template-columns: 1fr; } }
 @media print { .reader-section-navigation { display: none !important; } }
+
+.home-section-toggle{margin-left:auto;min-height:48px;padding:8px 14px;border:1px solid #b99447;border-radius:10px;background:#20132f;color:#fdf5e6;cursor:pointer}.section-divider{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.section-divider .section-sub{flex-basis:100%}.cards-grid[hidden]{display:none!important}
