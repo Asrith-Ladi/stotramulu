@@ -1,4 +1,4 @@
-/* Accessible reader controls; no network dependency. */
+﻿/* Accessible reader controls; no network dependency. */
 const READER_POSITION_KEY = 'stotramReaderPositions';
 let readerPositionObserver = null;
 let visibleVerseIndexes = new Set();
@@ -222,10 +222,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = section.querySelector('.cards-grid');
         const divider = section.querySelector('.section-divider');
         if (!grid || !divider) return;
-        const button = document.createElement('button');
-        button.type = 'button'; button.className = 'home-section-toggle';
-        const setOpen = open => { grid.hidden = !open; button.setAttribute('aria-expanded', String(open)); button.textContent = open ? '− మూసివేయండి' : '+ తెరవండి'; };
-        button.onclick = () => setOpen(grid.hidden); divider.appendChild(button); setOpen(index === 0);
+        grid.id ||= section.id + '-cards';
+        divider.classList.add('collapsible-section-heading');
+        divider.tabIndex = 0;
+        divider.setAttribute('role', 'button');
+        divider.setAttribute('aria-controls', grid.id);
+        const setOpen = open => {
+            grid.hidden = !open;
+            divider.classList.toggle('is-open', open);
+            divider.setAttribute('aria-expanded', String(open));
+        };
+        const toggle = () => setOpen(grid.hidden);
+        divider.addEventListener('click', toggle);
+        divider.addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
+        });
+        setOpen(index === 0);
         nav.querySelector('a[href="#' + section.id + '"]')?.addEventListener('click', () => setOpen(true));
     });
     renderRecentReading();
