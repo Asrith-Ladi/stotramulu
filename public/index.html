@@ -544,20 +544,6 @@
             <h1>శ్రీ దివ్య స్తోత్రములు</h1>
             <div class="header-sub">Sri Divya Stotramu</div>
         </div>
-        <div class="header-actions" id="headerActions">
-            <button class="header-pill" onclick="openSearch()" title="వెతకండి / Search" aria-label="Search">
-                <span class="ico">🔍</span><span class="label">వెతకండి</span>
-            </button>
-            <button class="header-pill" onclick="openJapamala()" title="జపమాల / Japamala" aria-label="Japamala">
-                <span class="ico">📿</span><span class="label">జపమాల</span>
-            </button>
-            <button class="header-pill" onclick="openTrack()" title="నా పూజా ట్రాక్" aria-label="Track">
-                <span class="ico">🗓️</span><span class="label">ట్రాక్</span>
-            </button>
-            <button class="header-pill" onclick="openFeedback()" title="అభిప్రాయం / Feedback" aria-label="Feedback">
-                <span class="ico">💬</span><span class="label">అభిప్రాయం</span>
-            </button>
-        </div>
     </div>
 </header>
 
@@ -575,6 +561,8 @@
         <button type="button" onclick="document.getElementById('favoritesSection')?.scrollIntoView({behavior:'smooth'})"><span>ఇష్టమైనవి</span><small>మీ జాబితా</small></button>
         <button type="button" onclick="openAccount()"><span>సైన్ ఇన్ &amp; ట్రాక్</span><small>సేవ్ మరియు లెక్కలు</small></button>
         <button type="button" onclick="openJapamala()"><span>జపమాల</span><small>108 లెక్క</small></button>
+        <button type="button" onclick="openTrack()"><span>పూజా ట్రాక్</span><small>రోజువారీ నమోదు</small></button>
+        <button type="button" onclick="openFeedback()"><span>అభిప్రాయం</span><small>మీ సూచన పంపండి</small></button>
     </section>
 
     <!-- Pradakshina Counter (today by default; pick any date) -->
@@ -613,7 +601,7 @@
                     <h3>శ్రీ విష్ణు సహస్రనామం</h3>
                     <div class="card-sub">Sri Vishnu Sahasranamam</div>
                     <div class="card-desc">శ్రీ మహావిష్ణువు వెయ్యి దివ్య నామములు. మహాభారతంలో భీష్ముడు బోధించినవి.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card lalitha" onclick="openReader('lalitha')">
@@ -624,7 +612,7 @@
                     <h3>శ్రీ లలితా సహస్రనామం</h3>
                     <div class="card-sub">Sri Lalitha Sahasranamam</div>
                     <div class="card-desc">శ్రీ లలితా దేవి వెయ్యి దివ్య నామములు. బ్రహ్మాండ పురాణంలో వాగ్దేవతలు రచించినవి.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card shiva" onclick="openReader('shivasahasram')">
@@ -635,7 +623,7 @@
                     <h3>శ్రీ శివ సహస్రనామం</h3>
                     <div class="card-sub">Sri Shiva Sahasranamam</div>
                     <div class="card-desc">మహాభారత అనుశాసన పర్వంలోని 182 శ్లోకాల సంచిక.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card ganesha" onclick="openReader('ganeshasahasram')">
@@ -646,7 +634,7 @@
                     <h3>శ్రీ మహాగణపతి సహస్రనామం</h3>
                     <div class="card-sub">Sri Mahaganapati Sahasranamam</div>
                     <div class="card-desc">గణేశ పురాణ ఉపాసనా ఖణ్డంలోని 216 శ్లోకాల సంచిక.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
         </div>
@@ -667,7 +655,7 @@
                     <h3>శ్రీ విష్ణు అష్టోత్తరం</h3>
                     <div class="card-sub">Vishnu Ashtottaram</div>
                     <div class="card-desc">శ్రీ మహావిష్ణువు యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card lalitha" onclick="openReader('lalitha108')">
@@ -678,7 +666,7 @@
                     <h3>శ్రీ లలితా అష్టోత్తరం</h3>
                     <div class="card-sub">Lalitha Ashtottaram</div>
                     <div class="card-desc">శ్రీ లలితా దేవి యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card venkat" onclick="openReader('venkat108')">
@@ -689,7 +677,7 @@
                     <h3>శ్రీ వేంకటేశ్వర అష్టోత్తరం</h3>
                     <div class="card-sub">Venkateswara Ashtottaram</div>
                     <div class="card-desc">తిరుమల శ్రీవారి 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card ganesha" onclick="openReader('ganesha108')">
@@ -700,7 +688,7 @@
                     <h3>శ్రీ వినాయక అష్టోత్తరం</h3>
                     <div class="card-sub">Vinayaka Ashtottaram</div>
                     <div class="card-desc">విఘ్నేశ్వరుని యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card shiva" onclick="openReader('shiva108')">
@@ -711,7 +699,7 @@
                     <h3>శ్రీ శివ అష్టోత్తరం</h3>
                     <div class="card-sub">Shiva Ashtottaram</div>
                     <div class="card-desc">శ్రీ పరమశివుని యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card hanuman" onclick="openReader('hanuman108')">
@@ -722,7 +710,7 @@
                     <h3>శ్రీ హనుమాన్ అష్టోత్తరం</h3>
                     <div class="card-sub">Hanuman Ashtottaram</div>
                     <div class="card-desc">శ్రీ ఆంజనేయస్వామి 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card ayyappa" onclick="openReader('ayyappa108')">
@@ -733,7 +721,7 @@
                     <h3>శ్రీ అయ్యప్ప అష్టోత్తరం</h3>
                     <div class="card-sub">Ayyappa Ashtottaram</div>
                     <div class="card-desc">శ్రీ ధర్మశాస్త (అయ్యప్ప) స్వామి 108 నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card lakshmi" onclick="openReader('lakshmi108')">
@@ -744,7 +732,7 @@
                     <h3>శ్రీ లక్ష్మీ అష్టోత్తరం</h3>
                     <div class="card-sub">Lakshmi Ashtottaram</div>
                     <div class="card-desc">శ్రీ మహాలక్ష్మీ దేవి యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card durga" onclick="openReader('durga108')">
@@ -755,7 +743,7 @@
                     <h3>శ్రీ దుర్గా అష్టోత్తరం</h3>
                     <div class="card-sub">Durga Ashtottaram</div>
                     <div class="card-desc">శ్రీ దుర్గాదేవి యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card saibaba" onclick="openReader('sai108')">
@@ -766,7 +754,7 @@
                     <h3>శ్రీ సాయి అష్టోత్తరం</h3>
                     <div class="card-sub">Shirdi Sai Ashtottaram</div>
                     <div class="card-desc">శ్రీ షిర్డీ సాయిబాబా యొక్క 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card lalitha" onclick="openReader('saraswati108')">
@@ -777,7 +765,7 @@
                     <h3>శ్రీ సరస్వతీ అష్టోత్తరం</h3>
                     <div class="card-sub">Saraswati Ashtottaram</div>
                     <div class="card-desc">విద్యాదేవి సరస్వతీ దేవి 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card harati" onclick="openReader('surya108')">
@@ -788,11 +776,11 @@
                     <h3>శ్రీ సూర్య అష్టోత్తరం</h3>
                     <div class="card-sub">Surya Ashtottaram</div>
                     <div class="card-desc">సూర్య భగవానుని 108 దివ్య నామములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
-            <div class="card vishnu" onclick="openReader('rama108')"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🏹</span></div><h3>శ్రీ రామ అష్టోత్తరం</h3><div class="card-sub">Rama Ashtottaram</div><div class="card-desc">శ్రీరాముని 108 దివ్య నామాలు.</div><button class="card-btn">చదవండి →</button></div></div>
-            <div class="card shiva" onclick="openReader('subrahmanya108')"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🦚</span></div><h3>శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం</h3><div class="card-sub">Subrahmanya Ashtottaram</div><div class="card-desc">శ్రీ సుబ్రహ్మణ్యస్వామి 108 దివ్య నామాలు.</div><button class="card-btn">చదవండి →</button></div></div>
+            <div class="card vishnu" onclick="openReader('rama108')"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🏹</span></div><h3>శ్రీ రామ అష్టోత్తరం</h3><div class="card-sub">Rama Ashtottaram</div><div class="card-desc">శ్రీరాముని 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి →</span></div></div>
+            <div class="card shiva" onclick="openReader('subrahmanya108')"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🦚</span></div><h3>శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం</h3><div class="card-sub">Subrahmanya Ashtottaram</div><div class="card-desc">శ్రీ సుబ్రహ్మణ్యస్వామి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి →</span></div></div>
         </div>
     </div>
 
@@ -811,7 +799,7 @@
                     <h3>శ్రీ లింగాష్టకం</h3>
                     <div class="card-sub">Sri Lingashtakam</div>
                     <div class="card-desc">శ్రీ శివలింగమును స్తుతించే ఎనిమిది దివ్య శ్లోకములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card bilva" onclick="openReader('bilvashtakam')">
@@ -822,7 +810,7 @@
                     <h3>శ్రీ బిల్వాష్టకం</h3>
                     <div class="card-sub">Sri Bilvashtakam</div>
                     <div class="card-desc">శ్రీ శివునకు బిల్వపత్ర సమర్పణ మహిమ.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card venkat" onclick="openReader('suprabhatam')">
@@ -833,7 +821,7 @@
                     <h3>శ్రీ వేంకటేశ్వర సుప్రభాతం</h3>
                     <div class="card-sub">Sri Venkateswara Suprabhatam</div>
                     <div class="card-desc">శ్రీవారిని ప్రతిరోజూ మేల్కొలిపే సుప్రభాత శ్లోకములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card govinda" onclick="openReader('govinda')">
@@ -844,7 +832,7 @@
                     <h3>శ్రీ గోవింద నామావళి</h3>
                     <div class="card-sub">Sri Govinda Namalu</div>
                     <div class="card-desc">తిరుమల శ్రీవారి దివ్య గోవింద నామ మంత్రములు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card chalisa" onclick="openReader('chalisa')">
@@ -855,7 +843,7 @@
                     <h3>శ్రీ హనుమాన్ చాలీసా</h3>
                     <div class="card-sub">Hanuman Chalisa</div>
                     <div class="card-desc">తులసీదాస్ రచించిన శ్రీ హనుమాన్ 40 చౌపాయిలు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <!-- Manidweepa cards hidden until content is updated.
@@ -869,7 +857,7 @@
                     <h3>మణిద్వీప వర్ణన (శాస్త్రోక్తం)</h3>
                     <div class="card-sub">Manidweepa Varnana — Traditional</div>
                     <div class="card-desc">దేవీ భాగవతం ఆధారిత సంస్కృత-తెలుగు సాంప్రదాయిక రూపం.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card manidweepa" onclick="openReader('manidweepa2')">
@@ -880,7 +868,7 @@
                     <h3>మణిద్వీప వర్ణన (గేయ రూపం)</h3>
                     <div class="card-sub">Manidweepa Varnana — Popular Song</div>
                     <div class="card-desc">జనప్రియ తెలుగు భక్తి గేయ రూపం - ఆలాపన శైలి.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             -->
@@ -902,7 +890,7 @@
                     <h3>శ్రీ షిర్డీ సాయి హారతి</h3>
                     <div class="card-sub">Shirdi Sai Baba Aarti</div>
                     <div class="card-desc">శ్రీ సాయిబాబాకు సమర్పించే సాయంకాల హారతి.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card harati" onclick="openReader('jagadeeshaharati')">
@@ -913,7 +901,7 @@
                     <h3>జయ జగదీశ హరే హారతి</h3>
                     <div class="card-sub">Jaya Jagadisha Harathi</div>
                     <div class="card-desc">ఎనిమిది చరణాలతో ప్రసిద్ధ హారతి.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
             <div class="card ganesha" onclick="openReader('ganapatiharati')">
@@ -924,7 +912,7 @@
                     <h3>శ్రీ గణపతి మంగళ హారతి</h3>
                     <div class="card-sub">Ganapati Mangala Harathi</div>
                     <div class="card-desc">గణపతికి అర్పించే 18 మంగళ శ్లోకాలు.</div>
-                    <button class="card-btn">చదవండి →</button>
+                    <span class="card-action" aria-hidden="true">చదవండి →</span>
                 </div>
             </div>
         </div>

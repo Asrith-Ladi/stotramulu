@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const actionsLabel = document.createElement('span');
     actionsLabel.textContent = '☰ ముఖ్య ఎంపికలు';
     const actionsHint = document.createElement('small');
-    actionsHint.textContent = 'వెతకండి · ఇష్టమైనవి · సైన్ ఇన్ · జపమాల';
+    actionsHint.textContent = 'వెతకండి · జపమాల · ట్రాక్ · మరిన్ని';
     actionsToggle.append(actionsLabel, actionsHint);
     const setActionsOpen = open => {
         actions.hidden = !open;
