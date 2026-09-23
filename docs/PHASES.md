@@ -34,4 +34,4 @@ The home page now starts with four visible actions: Search, Favorites, Sign in &
 
 ## Phase 5 — reading continuity
 
-Implemented a sticky Previous/Next bar with the current verse number and a visual progress indicator. The reader automatically remembers the last visible verse on this device, the existing Continue button uses that position first, and Home shows one clear recently-read shortcut with the saved verse number. Saved positions are validated against the current text length and the feature degrades safely when browser storage or IntersectionObserver is unavailable.
+Implemented a compact sticky progress strip with the stotram title, current verse number, total count, and a clearly visible progress line. The reader automatically remembers the last visible verse on this device, the existing Continue button uses that position first, and Home shows one clear recently-read shortcut with the saved verse number. Saved positions are validated against the current text length and the feature degrades safely when browser storage or IntersectionObserver is unavailable.

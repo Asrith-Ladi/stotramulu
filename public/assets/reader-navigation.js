@@ -1,6 +1,5 @@
 /* Accessible reader controls; no network dependency. */
 const READER_POSITION_KEY = 'stotramReaderPositions';
-let currentVersePosition = 0;
 let readerPositionObserver = null;
 let visibleVerseIndexes = new Set();
 
@@ -38,12 +37,9 @@ function setCurrentVersePosition(index, save) {
     if (!currentType || !isReaderPositionKey(currentType)) return;
     const total = stotramConfig[currentType].data.length;
     const nextIndex = Math.max(0, Math.min(total - 1, Number(index) || 0));
-    currentVersePosition = nextIndex;
     const text = document.getElementById('readerProgressText');
     const bar = document.getElementById('readerProgressBar');
     const select = document.getElementById('verseJump');
-    const previous = document.getElementById('previousVerseButton');
-    const next = document.getElementById('nextVerseButton');
     if (text) text.textContent = `శ్లోకం ${nextIndex + 1} / ${total}`;
     if (bar) {
         bar.max = total;
@@ -51,8 +47,6 @@ function setCurrentVersePosition(index, save) {
         bar.setAttribute('aria-valuetext', `${nextIndex + 1} of ${total}`);
     }
     if (select) select.value = String(nextIndex);
-    if (previous) previous.disabled = nextIndex === 0;
-    if (next) next.disabled = nextIndex === total - 1;
     if (save) rememberReaderPosition(currentType, nextIndex);
 }
 function jumpToVerse(value) {
@@ -64,8 +58,6 @@ function jumpToVerse(value) {
     block.scrollIntoView({behavior: reduce ? 'instant' : 'smooth', block: 'start'});
     block.focus({preventScroll: true});
 }
-function previousVerse() { jumpToVerse(currentVersePosition - 1); }
-function nextVerse() { jumpToVerse(currentVersePosition + 1); }
 function resumeReading() {
     const saved = savedReaderPosition(currentType);
     if (saved !== null) return jumpToVerse(saved);
@@ -143,6 +135,7 @@ function renderRecentReading() {
 }
 function setupReaderNavigation(type) {
     const cfg = stotramConfig[type];
+    document.getElementById('readerProgressTitle').textContent = cfg.title;
     const select = document.getElementById('verseJump');
     select.replaceChildren();
     cfg.data.forEach((item, i) => {

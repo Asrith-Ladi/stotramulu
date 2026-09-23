@@ -1003,14 +1003,13 @@
     <details class="reader-more"><summary>ఇతర ఎంపికలు</summary><button type="button" class="clear-reading-button" onclick="resetReading()">చదివిన గుర్తులు తొలగించు</button></details>
     </section>
     <details class="source-details" id="sourceDetails"><summary>మూలాలు &amp; పాఠం వివరాలు</summary><div id="sourceContent"></div></details>
-    <nav class="reading-position-bar" aria-label="Verse navigation">
-        <button type="button" id="previousVerseButton" onclick="previousVerse()" aria-label="Previous verse">&#8592; మునుపటి</button>
-        <div class="reading-progress-wrap">
+    <div class="reading-position-bar" aria-label="Reading progress">
+        <div class="reading-progress-copy">
+            <span id="readerProgressTitle"></span>
             <span id="readerProgressText" aria-live="polite">శ్లోకం 1 / 1</span>
-            <progress id="readerProgressBar" value="1" max="1" aria-label="Reading progress"></progress>
         </div>
-        <button type="button" id="nextVerseButton" onclick="nextVerse()" aria-label="Next verse">తదుపరి &#8594;</button>
-    </nav>
+        <progress id="readerProgressBar" value="1" max="1" aria-label="Reading progress"></progress>
+    </div>
     <div class="slokam-container" id="slokamContainer"></div>
 </div>
 

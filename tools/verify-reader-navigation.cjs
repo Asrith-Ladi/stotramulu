@@ -8,8 +8,6 @@ const elements = {
     readerProgressText: {textContent: ''},
     readerProgressBar: {max: 0, value: 0, setAttribute(name, value) { this[name] = value; }},
     verseJump: {value: '', replaceChildren() {}, appendChild() {}},
-    previousVerseButton: {disabled: false},
-    nextVerseButton: {disabled: false}
 };
 for (let i = 0; i < 3; i++) {
     elements['verse-' + i] = {
@@ -80,13 +78,10 @@ sandbox.setCurrentVersePosition(1, false);
 assert.strictEqual(elements.readerProgressText.textContent, 'శ్లోకం 2 / 3');
 assert.strictEqual(elements.readerProgressBar.value, 2);
 assert.strictEqual(elements.readerProgressBar.max, 3);
-assert.strictEqual(elements.previousVerseButton.disabled, false);
-assert.strictEqual(elements.nextVerseButton.disabled, false);
 
-sandbox.nextVerse();
+sandbox.jumpToVerse(2);
 assert.strictEqual(elements['verse-2'].scrolled, true);
 assert.strictEqual(sandbox.savedReaderPosition('alpha'), 2);
-assert.strictEqual(elements.nextVerseButton.disabled, true);
 
 storage.set('stotramReaderPositions', '{bad json');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
@@ -94,4 +89,4 @@ storageFails = true;
 assert.doesNotThrow(() => sandbox.rememberReaderPosition('alpha', 0));
 assert.doesNotThrow(() => sandbox.loadReaderPositions());
 
-console.log('PASS: reader positions validate bounds, update progress, navigate, and tolerate unavailable storage.');
+console.log('PASS: reader positions validate bounds, update progress while scrolling, jump precisely, and tolerate unavailable storage.');
