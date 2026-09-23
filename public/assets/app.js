@@ -81,6 +81,7 @@ function openReader(type) {
 
 
 function goHome() {
+    stopReaderPositionTracking();
     // close any open overlays/sheets and release scroll lock
     document.getElementById('searchOverlay').classList.remove('active');
     document.getElementById('daySheetOverlay').classList.remove('active');

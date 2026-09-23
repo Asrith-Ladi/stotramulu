@@ -1,4 +1,4 @@
-﻿# Phase status
+# Phase status
 
 ## Phase 1 — content corrections and reading controls
 
@@ -31,3 +31,7 @@ Implemented: Grandham reading mode is the default for new visitors while saved p
 Implemented a first source-reviewed expansion: Mahabharata Shiva Sahasranama (182-verse edition), Ganesha Purana Mahaganapati Sahasranama (216-verse main text), Saraswati Ashtottara (108), Surya Ashtottara (108), Jaya Jagadisha Hare Harathi (refrain plus eight verses), and Ganapati Mangala Harathi (18 verses). Each reader includes its exact source link and edition note. Counts and source order are automated checks; this does not claim that alternate traditional editions are errors.
 
 The home page now starts with four visible actions: Search, Favorites, Sign in & Track, and Japamala. Sign in opens directly at the account controls. Category links remain together below these primary actions.
+
+## Phase 5 — reading continuity
+
+Implemented a sticky Previous/Next bar with the current verse number and a visual progress indicator. The reader automatically remembers the last visible verse on this device, the existing Continue button uses that position first, and Home shows one clear recently-read shortcut with the saved verse number. Saved positions are validated against the current text length and the feature degrades safely when browser storage or IntersectionObserver is unavailable.
