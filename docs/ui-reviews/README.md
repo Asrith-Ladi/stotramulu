@@ -57,3 +57,20 @@ These screenshots use temporary numbered outlines to show what changed. The outl
 1. Use the verse selector to go to verse 66.
 2. Confirm the first line contains **విజితాత్మాఽవిధేయాత్మా**.
 3. Confirm the number **66** appears once on the right.
+## Phase 7 — Sahasranamam scope
+
+### 1. Shiva section boundaries
+
+![Phone view highlighting the corrected Shiva section description](phase7-shiva-scope-mobile.png)
+
+**Where:** At the top of **శ్రీ శివ సహస్రనామ స్తోత్రం**, inside the origin panel.
+
+**What to test:** Confirm it identifies introduction 1–30, Sahasranama 31–153, and phalashruti/transmission 154–182.
+
+### 2. Ganesha section boundaries
+
+![Phone view highlighting the corrected Ganesha section description](phase7-ganesha-scope-mobile.png)
+
+**Where:** At the top of **శ్రీ మహాగణపతి సహస్రనామ స్తోత్రం**, inside the origin panel.
+
+**What to test:** Confirm it identifies Sahasranama 1–170 and phalashruti/closing verses 171–216.

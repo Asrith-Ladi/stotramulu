@@ -247,7 +247,8 @@ window.CONTENT_AUDIT = {
   },
   "shivasahasram": {
     "reviewedOn": "2026-09-23",
-    "note": "Mahabharata Anushasana Parva edition, verses 1-182. Verse order was checked before Telugu-script conversion. This is one of several Shiva Sahasranama textual traditions.",
+    "status": "verified",
+    "note": "Mahabharata Anushasana Parva edition, checked line by line after Telugu-script conversion. The complete 1–182 sequence contains an introduction (1–30), the Sahasranama (31–153), and phalashruti/transmission verses (154–182). This is one of several Shiva Sahasranama textual traditions.",
     "sources": [
       {
         "label": "Sanskrit Documents ? Mahabharata Shiva Sahasranama",
@@ -302,7 +303,8 @@ window.CONTENT_AUDIT = {
   },
   "ganeshasahasram": {
     "reviewedOn": "2026-09-23",
-    "note": "Ganesha Purana, Upasana Khanda, chapter 46 edition. The 216-verse main Sahasranama sequence is displayed; introductory ritual verses are outside this scope.",
+    "status": "verified",
+    "note": "Ganesha Purana, Upasana Khanda, chapter 46 edition, checked line by line after Telugu-script conversion. The Sahasranama ends at verse 170; verses 171–216 are phalashruti and closing material, including the supplemental 21-name offering in verses 210–212.",
     "sources": [
       {
         "label": "Sanskrit Documents ? Mahaganapati Sahasranama",

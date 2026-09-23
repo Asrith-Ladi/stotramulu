@@ -41,3 +41,8 @@ Implemented a compact sticky progress strip with the stotram title, current vers
 Completed a line-by-line collation of all 107 main Vishnu Sahasranamam verses against the selected Mahabharata edition, with a Telugu temple text as an independent comparison. Verse 66 was corrected from “విధేయాత్మా” to “అవిధేయాత్మా”; 13 remaining differences are recorded as accepted sandhi, script, or edition variants. The introductory and concluding material remains abbreviated, so the reader identifies this text as partially verified rather than fully verified.
 
 Every reader source panel now shows a visible status badge: verified, main text verified, variant review required, review pending, or locally overridden. This status describes the published edition and does not claim universal authenticity across traditions.
+
+
+## Phase 7 — Sahasranamam scope audit
+
+Verified every published verse in the selected Shiva and Ganesha Sahasranamam editions against their cited source files after Telugu-script conversion. No verse differences or numbering gaps were found. Corrected the reader descriptions to identify the actual sections: Shiva introduction 1–30, Sahasranama 31–153, phalashruti/transmission 154–182; Ganesha Sahasranama 1–170 and phalashruti/closing 171–216.

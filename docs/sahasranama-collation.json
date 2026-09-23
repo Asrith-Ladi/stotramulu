@@ -1,0 +1,43 @@
+{
+  "auditedOn": "2026-09-23",
+  "result": "pass",
+  "unexpectedDifferences": 0,
+  "editions": {
+    "shivasahasram": {
+      "source": "https://sanskritdocuments.org/doc_shiva/shivasahasMaha.html",
+      "numberedVerses": 182,
+      "sections": [
+        {
+          "verses": "1-30",
+          "scope": "introduction"
+        },
+        {
+          "verses": "31-153",
+          "scope": "sahasranama"
+        },
+        {
+          "verses": "154-182",
+          "scope": "phalashruti and transmission"
+        }
+      ]
+    },
+    "ganeshasahasram": {
+      "source": "https://sanskritdocuments.org/doc_ganesha/ganesha1000.html",
+      "numberedVerses": 216,
+      "sections": [
+        {
+          "verses": "1-170",
+          "scope": "sahasranama"
+        },
+        {
+          "verses": "171-216",
+          "scope": "phalashruti and closing verses"
+        },
+        {
+          "verses": "210-212",
+          "scope": "supplemental 21-name offering within the closing section"
+        }
+      ]
+    }
+  }
+}

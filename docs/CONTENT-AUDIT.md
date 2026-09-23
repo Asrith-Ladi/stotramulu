@@ -47,7 +47,7 @@ The comparison removes spacing, punctuation and numerals, folds Telugu nasal-con
 
 ## Technical checks
 
-Run node tools/verify.cjs and node tools/audit-vishnu.cjs. They check all 26 datasets, continuous 183/29/107 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
+Run node tools/verify.cjs, node tools/audit-vishnu.cjs, and node tools/audit-sahasranamas.cjs. They check all 26 datasets, continuous 183/29/107 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
 
 Fixed invalid quote/newline syntax that prevented `app.js` from loading. New reading editions use separate keys so existing marks cannot identify the wrong verses; old stored marks are preserved. Backup restore now preserves the reading data too. Cloud text overrides get a content-specific reading key and lose the bundled verification claim.
 
@@ -58,8 +58,8 @@ The interactive browser runtime remained unavailable because Windows sandbox set
 
 | Key | Published scope | Source and edition consideration |
 |---|---|---|
-| `ganeshasahasram` | 216 numbered main-text verses | Ganesha Purana, Upasana Khanda, chapter 46 edition. Introductory ritual verses are outside the published scope. |
-| `shivasahasram` | 182 numbered verses | Mahabharata Anushasana Parva edition from Sanskrit Documents. Other Shiva Sahasranama traditions exist, so the edition is named in the UI. |
+| `ganeshasahasram` | 216 numbered verses: Sahasranama 1–170; phalashruti/closing 171–216 | Ganesha Purana, Upasana Khanda, chapter 46 edition. Verses 210–212 contain a supplemental 21-name offering within the closing section. |
+| `shivasahasram` | 182 numbered verses: introduction 1–30; Sahasranama 31–153; phalashruti/transmission 154–182 | Mahabharata Anushasana Parva edition from Sanskrit Documents. Other Shiva Sahasranama traditions exist, so the edition is named in the UI. |
 | `saraswati108` | 108 names | Sanskrit Documents `sarasvatii108-5` edition; count and order checked. |
 | `surya108` | 108 names | Sanskrit Documents `suurya108` edition; the bija mantra and dhyana are excluded from the name count. |
 | `jagadeeshaharati` | Refrain, eight verses, closing refrain | Sanskrit Documents reviewed Sanskrit Arati edition, displayed in Telugu script. |
@@ -69,3 +69,8 @@ The Telugu script is generated from the cited Sanskrit text. No translations or 
 ## Phase 6 addition — 2026-09-23
 
 Vishnu Sahasranamam main verses 1–107 now have a reproducible line-by-line audit. The reader source panel also exposes edition status directly: verified, main text verified, variant review required, pending, or locally overridden.
+
+
+## Phase 7 addition — 2026-09-23
+
+The selected Shiva 1–182 and Ganesha 1–216 editions were regenerated independently from their cached source texts and compared with every published Telugu verse; both match with zero unexpected differences. Reader descriptions now distinguish the Sahasranama verses from introductions, phalashruti, transmission, and closing material instead of calling every numbered verse the main name sequence. The reproducible result is stored in `docs/sahasranama-collation.json`.

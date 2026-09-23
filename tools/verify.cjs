@@ -43,6 +43,10 @@ vishnuVerses.forEach((verse,index)=>assert.equal(verse.number,index+1));
 assert.match(vishnuVerses.find(verse=>verse.number===66).text,/విజితాత్మాఽవిధేయాత్మా/);
 assert.ok(data.vishnu.readingVersion);
 assert.equal(context.window.CONTENT_AUDIT.vishnu.status,'partial');
+assert.equal(context.window.CONTENT_AUDIT.shivasahasram.status,'verified');
+assert.equal(context.window.CONTENT_AUDIT.ganeshasahasram.status,'verified');
+assert.match(data.shivasahasram.origin,/31–153/);
+assert.match(data.ganeshasahasram.origin,/1–170/);
 assert.ok(/sourceStatusBadge/.test(fs.readFileSync('public/index.html','utf8')));
 for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js'))) {
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);
