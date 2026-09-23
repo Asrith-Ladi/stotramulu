@@ -66,6 +66,8 @@ const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/
 for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) if(match[1].trim()) new vm.Script(match[1]);
 for(const match of html.matchAll(/(?:src|href)="((?:assets|data)\/[^"?#]+)"/g)) assert.ok(fs.existsSync('public/'+match[1]),match[1]);
 const app=fs.readFileSync('public/assets/app.js','utf8');
+assert.ok(/function setHeaderActionsDisplay/.test(app));
+assert.ok(!/getElementById\('headerActions'\)\.style/.test(app),'removed header must not block reader rendering');
 const nodes={fontSizeDisplay:{},smaller:{},larger:{}};
 const storage=new Map([['readerFontSize','30']]);
 const sandbox={window:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:id=>nodes[id],documentElement:{style:{setProperty(){}}},querySelectorAll:sel=>sel.includes('-2')?[nodes.smaller]:sel.includes('(2)')?[nodes.larger]:[]}};

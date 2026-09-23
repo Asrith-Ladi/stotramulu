@@ -19,6 +19,11 @@ try {
 } catch (e) { /* Reading works when storage is unavailable. */ }
 let currentType = null;
 
+function setHeaderActionsDisplay(value) {
+    const actions = document.getElementById('headerActions');
+    if (actions) actions.style.display = value;
+}
+
 
 function createParticles() {
     const c = document.getElementById('particles');
@@ -45,7 +50,7 @@ function openReader(type) {
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'none';
+    setHeaderActionsDisplay('none');
     gaEvent('screen_view', { screen_name: 'Reader: ' + type });
     gaEvent('open_stotram', { stotram: type });
 
@@ -95,7 +100,7 @@ function goHome() {
     const jmPage = document.getElementById('japamalaPage');
     if (jmPage) jmPage.classList.remove('active');
     document.getElementById('backBtn').style.display = 'none';
-    document.getElementById('headerActions').style.display = 'flex';
+    setHeaderActionsDisplay('flex');
     document.getElementById('readerDeityBg').innerHTML = '';
     currentType = null;
     syncReaderRoute(null);
@@ -705,7 +710,7 @@ function openTrack() {
     document.getElementById('readerPage').classList.remove('active');
     document.getElementById('trackPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'none';
+    setHeaderActionsDisplay('none');
     gaEvent('screen_view', { screen_name: 'Track' });
     buildMonths();
     renderMonths();

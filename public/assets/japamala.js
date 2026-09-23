@@ -56,7 +56,7 @@ function openJapamala() {
     document.getElementById('trackPage').classList.remove('active');
     document.getElementById('japamalaPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
-    document.getElementById('headerActions').style.display = 'none';
+    setHeaderActionsDisplay('none');
     gaEvent('screen_view', { screen_name: 'Japamala' });
 
     buildJapamala();
