@@ -1,0 +1,100 @@
+{
+  "sources": [
+    "https://sanskritdocuments.org/doc_vishhnu/vsahasranew.html",
+    "https://www.ohtccwa.org/pooja_library/vishnu_sahasranamam_te"
+  ],
+  "editionScope": "Main stotram verses 1-107 only",
+  "localVerseCount": 107,
+  "referenceVerseCount": 107,
+  "exactAfterNormalization": 94,
+  "acceptedVariantCount": 13,
+  "unexpectedDifferenceCount": 0,
+  "verifiedVerseCount": 107,
+  "correction": {
+    "verse": 66,
+    "before": "విజితాత్మా విధేయాత్మా",
+    "after": "విజితాత్మాఽవిధేయాత్మా",
+    "basis": "Both comparison sources include the initial a in avidheyatma."
+  },
+  "normalization": "Spacing, danda marks, punctuation, numerals, joiners, common anusvara conjunct spelling, and Telugu la/lla are folded.",
+  "acceptedVariants": [
+    {
+      "number": 7,
+      "local": "అగ్రాహ్యః శాశ్వతో కృష్ణో లోహితాక్షః ప్రతర్దనః |\nప్రభూతస్త్రికకుబ్ధామ పవిత్రం మంగళం పరమ్ ||",
+      "reference": "అగ్రాహ్యః శాశ్వతః కృష్ణో లోహితాక్షః ప్రతర్దనః ।\nప్రభూతస్త్రికకుబ్ధామ పవిత్రం మఙ్గలం పరమ్",
+      "disposition": "Sandhi and anusvara spelling; the temple comparison agrees with the local reading."
+    },
+    {
+      "number": 12,
+      "local": "వసుర్వసుమనాః సత్యః సమాత్మా సమ్మితః సమః |\nఅమోఘః పుండరీకాక్షో వృషకర్మా వృషాకృతిః ||",
+      "reference": "వసుర్వసుమనాః సత్యః సమాత్మాఽసమ్మితః సమః ।\nఅమోఘః పుణ్డరీకాక్షో వృషకర్మా వృషాకృతిః",
+      "disposition": "Recorded edition difference: sammita/asammita. The temple comparison agrees with the local sammita reading."
+    },
+    {
+      "number": 38,
+      "local": "పద్మనాభోఽరవిందాక్షః పద్మగర్భః శరీరభృత్ |\nమహర్ధిరృద్ధో వృద్ధాత్మా మహాక్షో గరుడధ్వజః ||",
+      "reference": "పద్మనాభోఽరవిన్దాక్షః పద్మగర్భః శరీరభృత్ ।\nమహర్ద్ధిరృద్ధో వృద్ధాత్మా మహాక్షో గరుడధ్వజః",
+      "disposition": "Consonant-doubling orthography only: mahardhi/maharddhi."
+    },
+    {
+      "number": 42,
+      "local": "వ్యవసాయో వ్యవస్థానః సంస్థానః స్థానదో ధ్రువః |\nపరర్ధిః పరమస్పష్టస్తుష్టః పుష్టః శుభేక్షణః ||",
+      "reference": "వ్యవసాయో వ్యవస్థానః సంస్థానః స్థానదో ధ్రువః ।\nపరర్ద్ధిః పరమస్పష్టస్తుష్టః పుష్టః శుభేక్షణః",
+      "disposition": "Consonant-doubling orthography only: parardhi/pararddhi."
+    },
+    {
+      "number": 43,
+      "local": "రామో విరామో విరజో మార్గో నేయో నయోఽనయః |\nవీరః శక్తిమతాం శ్రేష్ఠో ధర్మో ధర్మవిదుత్తమః ||",
+      "reference": "రామో విరామో విరజో మార్గో నేయో నయోఽనయః । (విరామో విరతో)\nవీరః శక్తిమతాం శ్రేష్ఠో ధర్మో ధర్మవిదుత్తమః",
+      "disposition": "The source includes an inline alternate reading; the local text retains its main reading."
+    },
+    {
+      "number": 55,
+      "local": "జీవో వినయితా సాక్షీ ముకుందోఽమితవిక్రమః |\nఅంభోనిధిరనంతాత్మా మహోదధిశయోఽంతకః ||",
+      "reference": "వినియోజ్యః\n\nజీవో వినయితా సాక్షీ ముకున్దోఽమితవిక్రమః ।\nఅమ్భోనిధిరనన్తాత్మా మహోదధిశయోఽన్తకః",
+      "disposition": "The source carries an editorial viniyojyah note from verse 54 into extraction; the verse text agrees after ordinary script folding."
+    },
+    {
+      "number": 60,
+      "local": "భగవాన్ భగహానందీ వనమాలీ హలాయుధః |\nఆదిత్యో జ్యోతిరాదిత్యః సహిష్ణుర్గతిసత్తమః ||",
+      "reference": "భగవాన్ భగహాఽఽనన్దీ వనమాలీ హలాయుధః ।\nఆదిత్యో జ్యోతిరాదిత్యః సహిష్ణుర్గతిసత్తమః",
+      "disposition": "Avagraha and sandhi typography only."
+    },
+    {
+      "number": 61,
+      "local": "సుధన్వా ఖండపరశుర్దారుణో ద్రవిణప్రదః |\nదివిస్పృక్ సర్వదృగ్వ్యాసో వాచస్పతిరయోనిజః ||",
+      "reference": "సుధన్వా ఖణ్డపరశుర్దారుణో ద్రవిణప్రదః ।\nదివస్పృక్ సర్వదృగ్వ్యాసో వాచస్పతిరయోనిజః",
+      "disposition": "The source explicitly records divispṛk as an alternate; the local text uses that recorded variant."
+    },
+    {
+      "number": 62,
+      "local": "త్రిసామా సామగః సామ నిర్వాణం భేషజం భిషక్ |\nసన్న్యాసకృచ్ఛమః శాంతో నిష్ఠా శాంతిః పరాయణమ్ ||",
+      "reference": "(దివిస్పృక్)\n\nత్రిసామా సామగః సామ నిర్వాణం భేషజం భిషక్ ।\nసంన్యాసకృచ్ఛమః శాన్తో నిష్ఠా శాన్తిః పరాయణమ్",
+      "disposition": "The source carries the verse 61 alternate note into extraction; remaining differences are conjunct spelling."
+    },
+    {
+      "number": 65,
+      "local": "శ్రీదః శ్రీశః శ్రీనివాసః శ్రీనిధిః శ్రీవిభావనః |\nశ్రీధరః శ్రీకరః శ్రేయః శ్రీమాంల్లోకత్రయాశ్రయః ||",
+      "reference": "శ్రీదః శ్రీశః శ్రీనివాసః శ్రీనిధిః శ్రీవిభావనః ।\nశ్రీధరః శ్రీకరః శ్రేయః శ్రీమాఁల్లోకత్రయాశ్రయః",
+      "disposition": "Chandrabindu/anusvara typography only."
+    },
+    {
+      "number": 86,
+      "local": "సువర్ణబిందురక్షోభ్యః సర్వవాగీశ్వరేశ్వరః |\nమహాహృదో మహాగర్తో మహాభూతో మహానిధిః ||",
+      "reference": "సువర్ణబిన్దురక్షోభ్యః సర్వవాగీశ్వరేశ్వరః ।\nమహాహ్రదో మహాగర్తో మహాభూతో మహానిధిః",
+      "disposition": "Recorded hṛda/hrada edition difference; the temple comparison agrees with the local hṛda reading."
+    },
+    {
+      "number": 88,
+      "local": "సులభః సువ్రతః సిద్ధః శత్రుజిచ్ఛత్రుతాపనః |\nన్యగ్రోధోదుంబరోఽశ్వత్థశ్చాణూరాంధ్రనిషూదనః ||",
+      "reference": "సులభః సువ్రతః సిద్ధః శత్రుజిచ్ఛత్రుతాపనః ।\nన్యగ్రోధోఽదుమ్బరోఽశ్వత్థశ్చాణూరాన్ధ్రనిషూదనః",
+      "disposition": "Avagraha sandhi and conjunct spelling only."
+    },
+    {
+      "number": 105,
+      "local": "యజ్ఞభృద్యజ్ఞకృద్యజ్ఞీ యజ్ఞభుక్ యజ్ఞసాధనః |\nయజ్ఞాంతకృద్యజ్ఞగుహ్యమన్నమన్నాద ఏవ చ ||",
+      "reference": "యజ్ఞభృద్ యజ్ఞకృద్ యజ్ఞీ యజ్ఞభుగ్ యజ్ఞసాధనః ।\nయజ్ఞాన్తకృద్ యజ్ఞగుహ్యమన్నమన్నాద ఏవ చ",
+      "disposition": "Final-consonant sandhi reading bhuk/bhug; the temple comparison agrees with local bhuk."
+    }
+  ]
+}

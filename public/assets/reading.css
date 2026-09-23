@@ -19,6 +19,20 @@ button:disabled { opacity: .45; cursor: default; }
 .reader-navigation { background: #140d20; padding: 14px; border-radius: 14px; }
 .source-details { max-width: 850px; margin: 0 auto 24px; padding: 16px; color: #f5e0a3; background: #20132f; border-radius: 12px; line-height: 1.8; }
 .source-details summary { cursor: pointer; min-height: 44px; }
+.source-details summary { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.source-status-badge {
+    display: inline-flex; align-items: center; min-height: 30px; padding: 3px 9px;
+    border: 1px solid currentColor; border-radius: 999px; font-size: .78rem;
+    font-weight: 700; line-height: 1.4;
+}
+.source-status-badge.verified { color: #a8dfaa; background: #233a29; }
+.source-status-badge.partial { color: #ffe09a; background: #493817; }
+.source-status-badge.review, .source-status-badge.pending, .source-status-badge.override { color: #ffc2a8; background: #4a271e; }
+body.grandham .source-status-badge.verified { color: #285b2f; background: #dcebd2; }
+body.grandham .source-status-badge.partial { color: #694b0e; background: #f2dfaa; }
+body.grandham .source-status-badge.review,
+body.grandham .source-status-badge.pending,
+body.grandham .source-status-badge.override { color: #7c2d1e; background: #f2d1bb; }
 .source-details a { display: block; color: #ffdf85; padding: 8px 0; text-decoration: underline; }
 .source-details p { margin: 10px 0; }
 .slokam-block { scroll-margin-top: 110px; cursor: default; }

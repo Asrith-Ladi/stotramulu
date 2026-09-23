@@ -35,3 +35,9 @@ The home page now starts with four visible actions: Search, Favorites, Sign in &
 ## Phase 5 — reading continuity
 
 Implemented a compact sticky progress strip with the stotram title, current verse number, total count, and a clearly visible progress line. The reader automatically remembers the last visible verse on this device, the existing Continue button uses that position first, and Home shows one clear recently-read shortcut with the saved verse number. Saved positions are validated against the current text length and the feature degrades safely when browser storage or IntersectionObserver is unavailable.
+
+## Phase 6 — content trust and source status
+
+Completed a line-by-line collation of all 107 main Vishnu Sahasranamam verses against the selected Mahabharata edition, with a Telugu temple text as an independent comparison. Verse 66 was corrected from “విధేయాత్మా” to “అవిధేయాత్మా”; 13 remaining differences are recorded as accepted sandhi, script, or edition variants. The introductory and concluding material remains abbreviated, so the reader identifies this text as partially verified rather than fully verified.
+
+Every reader source panel now shows a visible status badge: verified, main text verified, variant review required, review pending, or locally overridden. This status describes the published edition and does not claim universal authenticity across traditions.

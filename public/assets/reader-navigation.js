@@ -146,7 +146,18 @@ function setupReaderNavigation(type) {
     });
     setCurrentVersePosition(0, false);
     startReaderPositionTracking();
-    const audit = cfg.__edited ? {needsReview:true, note:'ఈ పాఠం నిర్వాహకులు మార్చారు; స్థానిక మూల సమీక్ష ఈ సంచికకు వర్తించదు.', sources:[]} : (window.CONTENT_AUDIT || {})[type];
+    const audit = cfg.__edited ? {status:'override', needsReview:true, note:'ఈ పాఠం నిర్వాహకులు మార్చారు; స్థానిక మూల సమీక్ష ఈ సంచికకు వర్తించదు.', sources:[]} : (window.CONTENT_AUDIT || {})[type];
+    const statusKey = audit ? (audit.status || (audit.needsReview ? 'review' : 'verified')) : 'pending';
+    const statusLabels = {
+        verified: '✓ మూలంతో పరిశీలించబడింది',
+        partial: '◐ ప్రధాన పాఠం పరిశీలించబడింది',
+        review: '△ పాఠభేదాల సమీక్ష అవసరం',
+        pending: '△ మూల పరిశీలన పెండింగ్',
+        override: '△ స్థానికంగా మార్చిన పాఠం'
+    };
+    const status = document.getElementById('sourceStatusBadge');
+    status.className = 'source-status-badge ' + statusKey;
+    status.textContent = statusLabels[statusKey] || statusLabels.pending;
     const content = document.getElementById('sourceContent');
     content.replaceChildren();
     const note = document.createElement('p');

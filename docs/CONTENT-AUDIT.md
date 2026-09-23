@@ -1,4 +1,4 @@
-﻿# Content audit — 21 September 2026
+# Content audit — 21 September 2026
 
 This review covers all 20 bundled stotram files (18 visible and two hidden Manidweepa drafts). It is not a blanket certification of authenticity. Confirmed omissions were corrected; uncertain editions, spelling, attribution and meanings are explicitly flagged. The live Firestore content was not inspected or changed: an admin override can still replace a bundled text. The reader now distinguishes overridden content from this audit.
 
@@ -8,7 +8,7 @@ This review covers all 20 bundled stotram files (18 visible and two hidden Manid
 | --- | --- | --- |
 | Lalitha Sahasranamam | Serious omissions inside ranges labelled 41–80 and 81–183; the labels overstated completeness. | Restored the main text as 183 individually numbered entries and four dhyana verses. Number 183 includes the final half-verse and concluding line. Source: [Sanskrit Documents](https://sanskritdocuments.org/doc_devii/lalita.html), Sanskrit rendered into Telugu script. [Vaidika Vignanam](https://vignanam.org/telugu/sree-lalita-sahasra-nama-stotram.html) used for additional reference checks. Purvapeethika, nyasa and phalashruti remain outside this edition and are now explicitly identified as excluded. |
 | Venkateswara Suprabhatam | Only 19 numbered entries; the end jumped to verses corresponding to 28–29. An earlier verse was also corrupted. | Replaced with all 29 Sanskrit verses in Telugu script from [Stotra Nidhi](https://stotranidhi.com/venkateshwara-suprabhatam-in-telugu/). No modern commentary copied. The separate Stotram, Prapatti and Mangalasasanam are not included. [TTD publication](https://ebooks.tirumala.org/downloads/sri_venkatewara_suprabatham_new.pdf) is a recommended institutional review source, not a completed PDF collation. |
-| Vishnu Sahasranamam | 107 main-text paragraphs; 105 opening anchors matched the normalized reference. Introductory material and phalashruti are abbreviated. | Retained and flagged. Opening-anchor agreement does not establish full-verse accuracy. Compare the complete [Sanskrit Documents edition](https://sanskritdocuments.org/doc_vishhnu/vsahasranew.html); prioritize full-line review next. |
+| Vishnu Sahasranamam | All 107 main-text verses were collated line by line against the selected Mahabharata edition. Verse 66 was missing the initial **అ** in **అవిధేయాత్మా**. | Corrected verse 66 and versioned the reading state. Thirteen remaining normalized differences are documented sandhi, script, or edition variants; the [temple comparison](https://www.ohtccwa.org/pooja_library/vishnu_sahasranamam_te) supports the retained local readings where the selected [Sanskrit Documents edition](https://sanskritdocuments.org/doc_vishhnu/vsahasranew.html) differs. Introductory material and phalashruti remain abbreviated, so the edition is marked partially verified. See vishnu-collation.json. |
 | Lingashtakam | Eight verses and phalashruti present; known wording differences occur between editions. | Retained. For example, verse 7 has vinashita versus vinashana; [Sanskrit Documents](https://sanskritdocuments.org/doc_shiva/lingashh.html) explicitly records a variant. Also checked [Vaidika Vignanam](https://vignanam.org/mobile/telugu/lingashtakam.html). |
 | Bilvashtakam | Eight verses, but substantial selection/order differences from the comparison edition. | Flagged; do not assume a different recension is automatically wrong. Needs identification of the actual source edition. [Reference](https://sanskritdocuments.org/doc_shiva/bilvaashhtaka.html). |
 | Hanuman Chalisa | All 40 chaupais present with opening/closing dohas. Telugu spellings often Sanskritize Awadhi pronunciation. | Retained and flagged for pronunciation review against [reference](https://sanskritdocuments.org/doc_hanumaana/hanuman40.html). Automatic string differences here are especially unreliable as omission evidence. |
@@ -47,14 +47,14 @@ The comparison removes spacing, punctuation and numerals, folds Telugu nasal-con
 
 ## Technical checks
 
-Run `node tools/verify.cjs`. It checks all 20 datasets, continuous 183/29 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
+Run node tools/verify.cjs and node tools/audit-vishnu.cjs. They check all 26 datasets, continuous 183/29/107 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
 
 Fixed invalid quote/newline syntax that prevented `app.js` from loading. New reading editions use separate keys so existing marks cannot identify the wrong verses; old stored marks are preserved. Backup restore now preserves the reading data too. Cloud text overrides get a content-specific reading key and lose the bundled verification claim.
 
-Browser visual/device testing could not run because the browser runtime failed during Windows sandbox setup. No claim of WCAG conformance, mobile visual QA, or expert Sanskrit/Telugu proofreading is made. Before release, test 320/360/390 px widths, 200% text, 400% desktop zoom, Telugu font loading, keyboard navigation, Android/iOS scrolling, and cloud-overridden editions.
+The interactive browser runtime remained unavailable because Windows sandbox setup failed. Phase 5 was rendered at 390 px in the installed headless browser and the review screenshots are stored in docs/ui-reviews; this is visual evidence for those views, not Android/iOS device certification. No claim of WCAG conformance or expert Sanskrit/Telugu proofreading is made. Before release, test 320/360/390 px widths, 200% text, 400% desktop zoom, Telugu font loading, keyboard navigation, Android/iOS scrolling, and cloud-overridden editions.
 
 
-## Phase 4 additions ? 2026-09-23
+## Phase 4 additions — 2026-09-23
 
 | Key | Published scope | Source and edition consideration |
 |---|---|---|
@@ -66,3 +66,6 @@ Browser visual/device testing could not run because the browser runtime failed d
 | `ganapatiharati` | 18 verses | Sanskrit Documents Ganapati Mangala Malika edition, displayed in Telugu script. |
 
 The Telugu script is generated from the cited Sanskrit text. No translations or modern explanatory prose were copied. Source links remain visible beside each text so readers can compare the selected edition.
+## Phase 6 addition — 2026-09-23
+
+Vishnu Sahasranamam main verses 1–107 now have a reproducible line-by-line audit. The reader source panel also exposes edition status directly: verified, main text verified, variant review required, pending, or locally overridden.

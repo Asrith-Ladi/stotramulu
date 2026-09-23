@@ -141,12 +141,17 @@ window.CONTENT_AUDIT = {
     "needsReview": true
   },
   "vishnu": {
-    "reviewedOn": "2026-09-21",
-    "note": "ప్రధాన భాగంలో 107 శ్లోకాలు ఉన్నాయి. ప్రారంభ పాఠం, ఫలశ్రుతి సంక్షిప్తంగా ఉన్నాయి. పదాల పూర్తి సమీక్ష ఇంకా అవసరం.",
+    "reviewedOn": "2026-09-23",
+    "status": "partial",
+    "note": "ప్రధాన స్తోత్రం 1–107 శ్లోకాలు Sanskrit Documents మహాభారత సంచికతో పంక్తులవారీగా పరిశీలించబడ్డాయి. 66వ శ్లోకంలో తప్పిపోయిన ‘అ’ అక్షరం సరిచేయబడింది: విధేయాత్మా → అవిధేయాత్మా. ఇతర తేడాలు లిపి, సంధి లేదా నమోదైన పాఠభేదాలుగా ఉంచబడ్డాయి. పూర్వపీఠిక, న్యాసం మరియు ఫలశ్రుతి ఈ సంచికలో సంక్షిప్తంగా ఉన్నందున మొత్తం పాఠానికి పాక్షిక ధృవీకరణ స్థితి చూపబడుతుంది.",
     "sources": [
       {
-        "label": "Sanskrit Documents — Vishnu",
+        "label": "Sanskrit Documents — Mahabharata main-text edition",
         "url": "https://sanskritdocuments.org/doc_vishhnu/vsahasranew.html"
+      },
+      {
+        "label": "Olympia Hindu Temple — Telugu comparison",
+        "url": "https://www.ohtccwa.org/pooja_library/vishnu_sahasranamam_te"
       }
     ],
     "needsReview": true

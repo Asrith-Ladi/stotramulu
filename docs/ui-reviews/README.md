@@ -30,3 +30,30 @@ These screenshots use temporary numbered outlines to show what changed. The outl
 2. Return to Home.
 3. Confirm **చివరిగా చదివింది** shows the same stotram and position.
 4. Tap the card and confirm it returns to that saved slokam.
+
+## Phase 6 — Vishnu text trust
+
+### 1. Source verification status
+
+![Phone view highlighting the Vishnu source verification badge](phase6-source-status-mobile.png)
+
+**Where:** In the Vishnu Sahasranamam reader, inside **మూలాలు & పాఠం వివరాలు**.
+
+**What to test:**
+
+1. Open **శ్రీ విష్ణు సహస్రనామ స్తోత్రం**.
+2. Scroll below the reading tools.
+3. Confirm the badge says **ప్రధాన పాఠం పరిశీలించబడింది**.
+4. Expand the section and confirm both comparison sources are listed.
+
+### 2. Corrected verse 66
+
+![Phone view highlighting corrected Vishnu verse 66](phase6-vishnu-verse66-mobile.png)
+
+**Where:** Vishnu Sahasranamam, verse 66.
+
+**What to test:**
+
+1. Use the verse selector to go to verse 66.
+2. Confirm the first line contains **విజితాత్మాఽవిధేయాత్మా**.
+3. Confirm the number **66** appears once on the right.
