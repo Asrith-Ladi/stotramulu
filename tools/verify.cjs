@@ -13,6 +13,10 @@ const data = context.window.STOTRAS_DATA;
 assert.equal(Object.keys(data).length,28);
 for (const [key,cfg] of Object.entries(data)) {
     assert.ok(context.window.CONTENT_AUDIT[key],key+' has a review note');
+    const audit=context.window.CONTENT_AUDIT[key];
+    assert.match(audit.reviewedOn,/^20\d{2}-\d{2}-\d{2}$/,key+' review date');
+    assert.ok(Array.isArray(audit.sources)&&audit.sources.length,key+' source list');
+    audit.sources.forEach(source=>assert.match(source.url,/^https:\/\//,key+' source URL'));
     assert.ok(cfg.data.every(b=>b.number&&b.text&&b.text.trim()),key+' has no empty verses');
     for (const idx of Object.keys(cfg.meanings||{})) assert.ok(cfg.data[Number(idx)],key+' meaning index');
     if (/108$/.test(key)) {
@@ -28,6 +32,8 @@ for (const [key,count] of [['lalitha',183],['suprabhatam',29],['shivasahasram',1
     assert.ok(data[key].readingVersion);
     assert.ok(verses.every(v=>!/[a-zA-Z<>]/.test(v.text)),key+' has no extraction debris');
 }
+assert.equal(context.window.CONTENT_AUDIT.lalitha.status,'verified');
+assert.match(context.window.CONTENT_AUDIT.lalitha.scope,/1–182/);
 assert.match(data.lalitha.data.find(v=>v.number==='79').text,/తాపత్రయ/);
 assert.match(data.lalitha.data.find(v=>v.number==='182').text,/ఆబాల/);
 assert.match(data.suprabhatam.data.find(v=>v.number==='20').text,/త్వద్గోపుర/);

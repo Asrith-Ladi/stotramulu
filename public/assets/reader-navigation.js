@@ -1,4 +1,4 @@
-﻿/* Accessible reader controls; no network dependency. */
+/* Accessible reader controls; no network dependency. */
 const READER_POSITION_KEY = 'stotramReaderPositions';
 let readerPositionObserver = null;
 let visibleVerseIndexes = new Set();
@@ -190,6 +190,13 @@ function setupReaderNavigation(type) {
     const note = document.createElement('p');
     note.textContent = audit ? audit.note : 'ఈ పాఠం మూల ధృవీకరణ ఇంకా పూర్తికాలేదు. Source review pending.';
     content.appendChild(note);
+    if (audit && (audit.reviewedOn || audit.scope)) {
+        const meta = document.createElement('p');
+        meta.className = 'source-review-meta';
+        const reviewed = audit.reviewedOn ? 'చివరి పరిశీలన: ' + audit.reviewedOn : '';
+        meta.textContent = [reviewed, audit.scope].filter(Boolean).join(' · ');
+        content.appendChild(meta);
+    }
     for (const source of (audit && audit.sources) || []) {
         const link = document.createElement('a');
         link.href = source.url;

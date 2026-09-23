@@ -74,3 +74,11 @@ Vishnu Sahasranamam main verses 1–107 now have a reproducible line-by-line aud
 ## Phase 7 addition — 2026-09-23
 
 The selected Shiva 1–182 and Ganesha 1–216 editions were regenerated independently from their cached source texts and compared with every published Telugu verse; both match with zero unexpected differences. Reader descriptions now distinguish the Sahasranama verses from introductions, phalashruti, transmission, and closing material instead of calling every numbered verse the main name sequence. The reproducible result is stored in `docs/sahasranama-collation.json`.
+
+## Phase 11 addition — 23 September 2026
+
+The Lalitha main text now has a reproducible source collation in tools/audit-lalitha.cjs. The selected source explicitly numbers verses 1–182, followed by an unnumbered concluding verse (శ్రీశివా ... లలితాంబికా). The reader labels that conclusion as 183 for continuous navigation. The audit confirms that source verses 1–182 and the conclusion are all present, in order, with zero unexpected differences after script conversion. This result is recorded in docs/lalitha-collation.json.
+
+The source panel now shows the last review date and edition-scope note when available. Verification also requires every bundled text to have a valid review date and at least one HTTPS source link.
+
+The older Namavali comparison was rerun. Every bundled Ashtottaram contains exactly 108 నమః invocations. The detailed comparison remains in docs/namavali-comparison.json: close spelling agreement is not treated as proof of a common edition, and traditional repeated names are not removed automatically. Rama, Subrahmanya, Saraswati, and Surya are source-order conversions with 108 names; the earlier lists that diverge from their comparison edition remain visibly marked for review.

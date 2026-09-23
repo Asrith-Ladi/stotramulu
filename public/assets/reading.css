@@ -363,3 +363,18 @@ body.grandham .reader-section-label { color: #573416; }
 @media print {
     .home-actions-toggle, .library-selector { display: none !important; }
 }
+
+.source-review-meta {
+    margin: 8px 0 12px;
+    padding: 9px 11px;
+    color: #f1dfb4;
+    font-size: .86rem;
+    line-height: 1.55;
+    border-left: 3px solid #b88a38;
+    background: rgba(212, 168, 67, .08);
+}
+body.grandham .source-review-meta {
+    color: #4b2d13;
+    border-left-color: #7b4a20;
+    background: rgba(88, 50, 18, .08);
+}

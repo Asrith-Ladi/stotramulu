@@ -1,7 +1,9 @@
 /* Review scope, not a blanket authenticity certification. */
 window.CONTENT_AUDIT = {
   "lalitha": {
-    "reviewedOn": "2026-09-21",
+    "reviewedOn": "2026-09-23",
+    "status": "verified",
+    "scope": "Selected source numbers the main text 1–182 and leaves the concluding verse unnumbered; this reader displays that conclusion as verse 183. All are present.",
     "note": "నాలుగు ధ్యాన శ్లోకాలు, ప్రధాన స్తోత్రం 1–183 పునరుద్ధరించబడ్డాయి. Sanskrit Documents సంస్కృత పాఠం ఆధారంగా తెలుగు లిపిలో అందించబడింది. పూర్వపీఠిక, న్యాసం, ఫలశ్రుతి చేర్చలేదు.",
     "sources": [
       {
