@@ -52,3 +52,17 @@ Run `node tools/verify.cjs`. It checks all 20 datasets, continuous 183/29 verse 
 Fixed invalid quote/newline syntax that prevented `app.js` from loading. New reading editions use separate keys so existing marks cannot identify the wrong verses; old stored marks are preserved. Backup restore now preserves the reading data too. Cloud text overrides get a content-specific reading key and lose the bundled verification claim.
 
 Browser visual/device testing could not run because the browser runtime failed during Windows sandbox setup. No claim of WCAG conformance, mobile visual QA, or expert Sanskrit/Telugu proofreading is made. Before release, test 320/360/390 px widths, 200% text, 400% desktop zoom, Telugu font loading, keyboard navigation, Android/iOS scrolling, and cloud-overridden editions.
+
+
+## Phase 4 additions ? 2026-09-23
+
+| Key | Published scope | Source and edition consideration |
+|---|---|---|
+| `ganeshasahasram` | 216 numbered main-text verses | Ganesha Purana, Upasana Khanda, chapter 46 edition. Introductory ritual verses are outside the published scope. |
+| `shivasahasram` | 182 numbered verses | Mahabharata Anushasana Parva edition from Sanskrit Documents. Other Shiva Sahasranama traditions exist, so the edition is named in the UI. |
+| `saraswati108` | 108 names | Sanskrit Documents `sarasvatii108-5` edition; count and order checked. |
+| `surya108` | 108 names | Sanskrit Documents `suurya108` edition; the bija mantra and dhyana are excluded from the name count. |
+| `jagadeeshaharati` | Refrain, eight verses, closing refrain | Sanskrit Documents reviewed Sanskrit Arati edition, displayed in Telugu script. |
+| `ganapatiharati` | 18 verses | Sanskrit Documents Ganapati Mangala Malika edition, displayed in Telugu script. |
+
+The Telugu script is generated from the cited Sanskrit text. No translations or modern explanatory prose were copied. Source links remain visible beside each text so readers can compare the selected edition.

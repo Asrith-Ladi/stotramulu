@@ -21,5 +21,13 @@
     "bilvashtakam": "https://sanskritdocuments.org/doc_shiva/bilvaashhtaka.html",
     "lingashtakam": "https://sanskritdocuments.org/doc_shiva/lingashh.html",
     "chalisa": "https://sanskritdocuments.org/doc_hanumaana/hanuman40.html"
+  },
+  "phase4": {
+    "shiva": "https://sanskritdocuments.org/doc_shiva/shivasahasMaha.html",
+    "saraswati": "https://sanskritdocuments.org/doc_devii/sarasvatii108-5.html",
+    "surya": "https://sanskritdocuments.org/doc_z_misc_navagraha/suurya108.html",
+    "jagadisha": "https://sanskritdocuments.org/doc_vishhnu/jayajagadIshaAratI.html",
+    "ganapati": "https://sanskritdocuments.org/doc_ganesha/gaNapatimangalamAlikAstotram.html",
+    "ganeshasahasram": "https://sanskritdocuments.org/doc_ganesha/ganesha1000.html"
   }
 }

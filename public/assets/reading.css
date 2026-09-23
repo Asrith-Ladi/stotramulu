@@ -167,3 +167,31 @@ body.grandham .reader-verse-number { color: #40240e; font-weight: 700; }
     .reader-tool-panel .reader-search .rs-count { flex: 1 1 100%; text-align: left; }
 }
 @media print { .reader-tool-panel, .practice-details { display: none !important; } }
+
+
+/* Phase 4: clear first-screen choices. */
+.home-primary-actions {
+    width: min(100%, 1100px); display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;
+    margin: 12px auto 10px;
+}
+.home-primary-actions button {
+    min-height: 72px; padding: 12px 14px; border: 1px solid #8a6932;
+    border-radius: 14px; background: #21172b; color: #fff7e6;
+    cursor: pointer; text-align: left;
+}
+.home-primary-actions button:first-child { background: linear-gradient(135deg, #7f5a16, #b0832f); color: #fff; }
+.home-primary-actions span { display: block; font-size: 1.05rem; font-weight: 700; }
+.home-primary-actions small { display: block; margin-top: 3px; color: inherit; opacity: .82; font-size: .83rem; }
+.home-primary-actions button:hover { border-color: #ffdf85; }
+.library-navigation { margin-top: 10px; }
+.cloud-auth { scroll-margin-top: 110px; }
+@media (max-width: 700px) {
+    .home-primary-actions { grid-template-columns: 1fr 1fr; }
+    .home-primary-actions button { min-height: 68px; }
+}
+@media (max-width: 380px) {
+    .home-primary-actions { grid-template-columns: 1fr; }
+    .home-primary-actions button { min-height: 58px; }
+}
+@media print { .home-primary-actions { display: none !important; } }

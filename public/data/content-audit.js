@@ -239,5 +239,71 @@ window.CONTENT_AUDIT = {
       }
     ],
     "needsReview": true
+  },
+  "shivasahasram": {
+    "reviewedOn": "2026-09-23",
+    "note": "Mahabharata Anushasana Parva edition, verses 1-182. Verse order was checked before Telugu-script conversion. This is one of several Shiva Sahasranama textual traditions.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Mahabharata Shiva Sahasranama",
+        "url": "https://sanskritdocuments.org/doc_shiva/shivasahasMaha.html"
+      }
+    ],
+    "needsReview": false
+  },
+  "saraswati108": {
+    "reviewedOn": "2026-09-23",
+    "note": "All 108 names were extracted in source order, count-checked, and converted to Telugu script.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Saraswati 108 names",
+        "url": "https://sanskritdocuments.org/doc_devii/sarasvatii108-5.html"
+      }
+    ],
+    "needsReview": false
+  },
+  "surya108": {
+    "reviewedOn": "2026-09-23",
+    "note": "All 108 names were count-checked in source order. The bija mantra and meditation verses are outside the displayed name count.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Surya 108 names",
+        "url": "https://sanskritdocuments.org/doc_z_misc_navagraha/suurya108.html"
+      }
+    ],
+    "needsReview": false
+  },
+  "jagadeeshaharati": {
+    "reviewedOn": "2026-09-23",
+    "note": "The reviewed source edition contains a refrain, eight numbered verses, and a closing refrain; all are included in Telugu script.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Jaya Jagadisha Hare Arati",
+        "url": "https://sanskritdocuments.org/doc_vishhnu/jayajagadIshaAratI.html"
+      }
+    ],
+    "needsReview": false
+  },
+  "ganapatiharati": {
+    "reviewedOn": "2026-09-23",
+    "note": "All 18 verses of the cited Ganapati Mangala Malika edition are included in source order and Telugu script.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Ganapati Mangala Malika",
+        "url": "https://sanskritdocuments.org/doc_ganesha/gaNapatimangalamAlikAstotram.html"
+      }
+    ],
+    "needsReview": false
+  },
+  "ganeshasahasram": {
+    "reviewedOn": "2026-09-23",
+    "note": "Ganesha Purana, Upasana Khanda, chapter 46 edition. The 216-verse main Sahasranama sequence is displayed; introductory ritual verses are outside this scope.",
+    "sources": [
+      {
+        "label": "Sanskrit Documents ? Mahaganapati Sahasranama",
+        "url": "https://sanskritdocuments.org/doc_ganesha/ganesha1000.html"
+      }
+    ],
+    "needsReview": false
   }
 };

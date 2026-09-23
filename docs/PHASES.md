@@ -23,4 +23,11 @@ Implemented: one right-side number per verse, individual Ashtottaram names numbe
 
 ## Phase 3 ? interface cleanup
 
-Implemented: ????? ???? is the default for new visitors while saved preferences are respected; home cards use a compact two-column library on larger screens and one column on phones; mobile header actions retain clear text labels; reading controls, search, navigation, favorites, and sharing are grouped into one panel; reset controls and devotional counters are placed in expandable sections; decorative motion and oversized card icons were reduced.
+Implemented: Grandham reading mode is the default for new visitors while saved preferences are respected; home cards use a compact two-column library on larger screens and one column on phones; mobile header actions retain clear text labels; reading controls, search, navigation, favorites, and sharing are grouped into one panel; reset controls and devotional counters are placed in expandable sections; decorative motion and oversized card icons were reduced.
+
+
+## Phase 4 ? verified catalog expansion and home clarity
+
+Implemented a first source-reviewed expansion: Mahabharata Shiva Sahasranama (182-verse edition), Ganesha Purana Mahaganapati Sahasranama (216-verse main text), Saraswati Ashtottara (108), Surya Ashtottara (108), Jaya Jagadisha Hare Harathi (refrain plus eight verses), and Ganapati Mangala Harathi (18 verses). Each reader includes its exact source link and edition note. Counts and source order are automated checks; this does not claim that alternate traditional editions are errors.
+
+The home page now starts with four visible actions: Search, Favorites, Sign in & Track, and Japamala. Sign in opens directly at the account controls. Category links remain together below these primary actions.

@@ -714,6 +714,15 @@ function openTrack() {
 }
 
 
+function openAccount() {
+    openTrack();
+    requestAnimationFrame(() => {
+        const account = document.getElementById('cloudAuthBox');
+        if (account) account.closest('.track-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+
 function buildMonths() {
     trackMonths = [];
     const now = new Date();

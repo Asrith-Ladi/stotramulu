@@ -10,7 +10,7 @@ for (const file of fs.readdirSync('public/data/stotras').filter(f=>f.endsWith('.
 }
 vm.runInContext(fs.readFileSync('public/data/content-audit.js','utf8'),context);
 const data = context.window.STOTRAS_DATA;
-assert.equal(Object.keys(data).length,20);
+assert.equal(Object.keys(data).length,26);
 for (const [key,cfg] of Object.entries(data)) {
     assert.ok(context.window.CONTENT_AUDIT[key],key+' has a review note');
     assert.ok(cfg.data.every(b=>b.number&&b.text&&b.text.trim()),key+' has no empty verses');
@@ -20,7 +20,7 @@ for (const [key,cfg] of Object.entries(data)) {
         assert.equal(count,108,key+' name count (not an authenticity test)');
     }
 }
-for (const [key,count] of [['lalitha',183],['suprabhatam',29]]) {
+for (const [key,count] of [['lalitha',183],['suprabhatam',29],['shivasahasram',182],['ganeshasahasram',216]]) {
     const verses=data[key].data.filter(b=>/^\d+$/.test(b.number));
     assert.equal(verses.length,count);
     verses.forEach((v,i)=>assert.equal(Number(v.number),i+1));
@@ -55,4 +55,4 @@ assert.equal(vm.runInContext("readingKey('shiva108')",sandbox),'shiva108');
 sandbox.localStorage.setItem=()=>{throw Error('storage blocked');};vm.runInContext('changeFontSize(2)',sandbox);assert.equal(nodes.fontSizeDisplay.textContent,20);
 include('function countTextLines','function labelHighestNumber');
 assert.equal(vm.runInContext("countTextLines('a\\r\\nb\\n')",sandbox),2);
-console.log('PASS: all 20 datasets, 183/29 verse sequences, 108-name counts, meaning indexes, frontend/inline syntax, asset links, font persistence/bounds/storage failure, reading-version isolation, line counts.');
+console.log('PASS: all 26 datasets, 183/29 verse sequences, 108-name counts, meaning indexes, frontend/inline syntax, asset links, font persistence/bounds/storage failure, reading-version isolation, line counts.');

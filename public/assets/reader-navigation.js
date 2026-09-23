@@ -45,10 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const nav = document.createElement('nav');
     nav.className = 'library-navigation';
     nav.setAttribute('aria-label', 'స్తోత్రాల విభాగాలు');
-    const search = document.createElement('button');
-    search.textContent = 'స్తోత్రం వెతకండి / Search';
-    search.onclick = () => openSearch();
-    nav.appendChild(search);
     home.querySelectorAll('.cards-section').forEach((section, i) => {
         section.id ||= 'library-section-' + i;
         const heading = section.querySelector('.section-title');

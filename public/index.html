@@ -569,6 +569,14 @@
         <p>Choose a Stotram to read</p>
     </div>
 
+
+    <section class="home-primary-actions" aria-label="ముఖ్య ఎంపికలు">
+        <button type="button" onclick="openSearch()"><span>వెతకండి</span><small>స్తోత్రం పేరు</small></button>
+        <button type="button" onclick="document.getElementById('favoritesSection')?.scrollIntoView({behavior:'smooth'})"><span>ఇష్టమైనవి</span><small>మీ జాబితా</small></button>
+        <button type="button" onclick="openAccount()"><span>సైన్ ఇన్ &amp; ట్రాక్</span><small>సేవ్ మరియు లెక్కలు</small></button>
+        <button type="button" onclick="openJapamala()"><span>జపమాల</span><small>108 లెక్క</small></button>
+    </section>
+
     <!-- Pradakshina Counter (today by default; pick any date) -->
     <details class="home-counter-section practice-details"><summary>&#3114;&#3149;&#3120;&#3110;&#3093;&#3149;&#3127;&#3135;&#3107; &#3122;&#3142;&#3093;&#3149;&#3093;</summary>
         <div class="counter-card">
@@ -616,6 +624,28 @@
                     <h3>శ్రీ లలితా సహస్రనామం</h3>
                     <div class="card-sub">Sri Lalitha Sahasranamam</div>
                     <div class="card-desc">శ్రీ లలితా దేవి వెయ్యి దివ్య నామములు. బ్రహ్మాండ పురాణంలో వాగ్దేవతలు రచించినవి.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
+            <div class="card shiva" onclick="openReader('shivasahasram')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#5088b0"><use href="#svg-shiva"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">🔱</span></div>
+                    <h3>శ్రీ శివ సహస్రనామం</h3>
+                    <div class="card-sub">Sri Shiva Sahasranamam</div>
+                    <div class="card-desc">మహాభారత అనుశాసన పర్వంలోని 182 శ్లోకాల సంచిక.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
+            <div class="card ganesha" onclick="openReader('ganeshasahasram')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#e08040"><use href="#svg-ganesha"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">🐘</span></div>
+                    <h3>శ్రీ మహాగణపతి సహస్రనామం</h3>
+                    <div class="card-sub">Sri Mahaganapati Sahasranamam</div>
+                    <div class="card-desc">గణేశ పురాణ ఉపాసనా ఖణ్డంలోని 216 శ్లోకాల సంచిక.</div>
                     <button class="card-btn">చదవండి →</button>
                 </div>
             </div>
@@ -739,6 +769,28 @@
                     <button class="card-btn">చదవండి →</button>
                 </div>
             </div>
+            <div class="card lalitha" onclick="openReader('saraswati108')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#d8b24c"><use href="#svg-lalitha"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">📚</span></div>
+                    <h3>శ్రీ సరస్వతీ అష్టోత్తరం</h3>
+                    <div class="card-sub">Saraswati Ashtottaram</div>
+                    <div class="card-desc">విద్యాదేవి సరస్వతీ దేవి 108 దివ్య నామములు.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
+            <div class="card harati" onclick="openReader('surya108')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#e69b30"><use href="#svg-diya"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">☀️</span></div>
+                    <h3>శ్రీ సూర్య అష్టోత్తరం</h3>
+                    <div class="card-sub">Surya Ashtottaram</div>
+                    <div class="card-desc">సూర్య భగవానుని 108 దివ్య నామములు.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -851,6 +903,28 @@
                     <button class="card-btn">చదవండి →</button>
                 </div>
             </div>
+            <div class="card harati" onclick="openReader('jagadeeshaharati')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#ffaa3c"><use href="#svg-diya"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">🪔</span></div>
+                    <h3>జయ జగదీశ హరే హారతి</h3>
+                    <div class="card-sub">Jaya Jagadisha Harathi</div>
+                    <div class="card-desc">ఎనిమిది చరణాలతో ప్రసిద్ధ హారతి.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
+            <div class="card ganesha" onclick="openReader('ganapatiharati')">
+                <div class="card-bg"></div>
+                <svg class="card-deity-svg" style="color:#e08040"><use href="#svg-ganesha"/></svg>
+                <div class="card-content">
+                    <div class="card-icon-wrap"><span class="deity-icon">🐘</span></div>
+                    <h3>శ్రీ గణపతి మంగళ హారతి</h3>
+                    <div class="card-sub">Ganapati Mangala Harathi</div>
+                    <div class="card-desc">గణపతికి అర్పించే 18 మంగళ శ్లోకాలు.</div>
+                    <button class="card-btn">చదవండి →</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -926,7 +1000,7 @@
         <p id="readerLinkStatus" role="status" aria-live="polite"></p>
         <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
     </div>
-    <details class="reader-more"><summary>??? ???????</summary><button type="button" class="clear-reading-button" onclick="resetReading()">?????? ???????? ????????</button></details>
+    <details class="reader-more"><summary>ఇతర ఎంపికలు</summary><button type="button" class="clear-reading-button" onclick="resetReading()">చదివిన గుర్తులు తొలగించు</button></details>
     </section>
     <details class="source-details" id="sourceDetails"><summary>మూలాలు &amp; పాఠం వివరాలు</summary><div id="sourceContent"></div></details>
     <div class="slokam-container" id="slokamContainer"></div>
@@ -1160,6 +1234,13 @@
 <script src="data/stotras/govinda.js"></script>
 <script src="data/stotras/manidweepa.js"></script>
 <script src="data/stotras/manidweepa2.js"></script>
+
+<script src="data/stotras/ganeshasahasram.js"></script>
+<script src="data/stotras/shivasahasram.js"></script>
+<script src="data/stotras/saraswati108.js"></script>
+<script src="data/stotras/surya108.js"></script>
+<script src="data/stotras/jagadeeshaharati.js"></script>
+<script src="data/stotras/ganapatiharati.js"></script>
 
 <script src="data/content-audit.js"></script>
 <script src="assets/reader-navigation.js"></script>

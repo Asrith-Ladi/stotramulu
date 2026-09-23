@@ -4,7 +4,7 @@ const sources=require('./reference-sources.json');
 fs.mkdirSync('tools/references',{recursive:true});
 fs.writeFileSync('tools/references/name-sources.json',JSON.stringify(sources.names,null,2));
 fs.writeFileSync('tools/references/other-sources.json',JSON.stringify(sources.other,null,2));
-const urls={...sources.texts,...sources.other,...Object.fromEntries(Object.entries(sources.names).map(([k,p])=>[k,'https://sanskritdocuments.org/'+p]))};
+const urls={...sources.texts,...sources.other,...Object.fromEntries(Object.entries(sources.phase4||{}).map(([k,u])=>['phase4-'+k,u])),...Object.fromEntries(Object.entries(sources.names).map(([k,p])=>[k,'https://sanskritdocuments.org/'+p]))};
 (async()=>{
     let failed=false;
     for(const [key,url]of Object.entries(urls)) {
