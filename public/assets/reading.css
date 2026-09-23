@@ -255,3 +255,15 @@ body.grandham .reading-position-bar progress::-webkit-progress-bar { background:
     .reading-position-bar progress { height: 12px; }
 }
 @media print { .reading-position-bar, .recent-reading-section { display: none !important; } }
+
+/* Phase 8: direct section jumps for long readings. */
+.reader-section-navigation {
+    flex: 1 1 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px; width: 100%; padding-top: 4px;
+}
+.reader-section-navigation[hidden] { display: none; }
+.reader-section-label { grid-column: 1 / -1; color: #f5e0a3; font-weight: 700; }
+.reader-section-navigation button { width: 100%; min-height: 48px; }
+body.grandham .reader-section-label { color: #573416; }
+@media (max-width: 600px) { .reader-section-navigation { grid-template-columns: 1fr; } }
+@media print { .reader-section-navigation { display: none !important; } }

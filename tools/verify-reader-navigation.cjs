@@ -28,7 +28,7 @@ const sandbox = {
     Math,
     currentType: 'alpha',
     stotramConfig: {
-        alpha: {title: 'Alpha', data: [{number: '1'}, {number: '2'}, {number: '3'}]}
+        alpha: {title: 'Alpha', sections: [{label: 'Start', index: 0}, {label: 'End', index: 2}, {label: 'Bad', index: 8}], data: [{number: '1'}, {number: '2'}, {number: '3'}]}
     },
     localStorage: {
         getItem(key) {
@@ -63,6 +63,10 @@ vm.runInContext(fs.readFileSync('public/assets/reader-navigation.js', 'utf8'), s
 
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
 assert.strictEqual(sandbox.savedReaderPosition('missing'), null);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.readerSections('alpha'))), [
+    {label: 'Start', index: 0}, {label: 'End', index: 2}
+]);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.readerSections('missing'))), []);
 
 storage.set('stotramReaderPositions', JSON.stringify({positions: {alpha: 99}, recent: {type: 'alpha', index: 99}}));
 assert.strictEqual(sandbox.savedReaderPosition('alpha'), null);
@@ -82,6 +86,9 @@ assert.strictEqual(elements.readerProgressBar.max, 3);
 sandbox.jumpToVerse(2);
 assert.strictEqual(elements['verse-2'].scrolled, true);
 assert.strictEqual(sandbox.savedReaderPosition('alpha'), 2);
+sandbox.jumpToSection(1);
+assert.strictEqual(elements['verse-1'].scrolled, true);
+assert.strictEqual(sandbox.savedReaderPosition('alpha'), 1);
 
 storage.set('stotramReaderPositions', '{bad json');
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
@@ -89,4 +96,4 @@ storageFails = true;
 assert.doesNotThrow(() => sandbox.rememberReaderPosition('alpha', 0));
 assert.doesNotThrow(() => sandbox.loadReaderPositions());
 
-console.log('PASS: reader positions validate bounds, update progress while scrolling, jump precisely, and tolerate unavailable storage.');
+console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, and unavailable storage is tolerated.');

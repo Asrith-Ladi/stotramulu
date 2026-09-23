@@ -49,6 +49,16 @@ function setCurrentVersePosition(index, save) {
     if (select) select.value = String(nextIndex);
     if (save) rememberReaderPosition(currentType, nextIndex);
 }
+function readerSections(type) {
+    const cfg = stotramConfig[type];
+    if (!cfg || !Array.isArray(cfg.sections)) return [];
+    return cfg.sections.filter(section => section && typeof section.label === 'string' &&
+        Number.isInteger(Number(section.index)) && Number(section.index) >= 0 && Number(section.index) < cfg.data.length)
+        .map(section => ({label: section.label, index: Number(section.index)}));
+}
+function jumpToSection(value) {
+    jumpToVerse(value);
+}
 function jumpToVerse(value) {
     const index = Number(value);
     const block = document.getElementById('verse-' + index);
@@ -138,6 +148,23 @@ function setupReaderNavigation(type) {
     document.getElementById('readerProgressTitle').textContent = cfg.title;
     const select = document.getElementById('verseJump');
     select.replaceChildren();
+    const sectionNav = document.getElementById('readerSectionNav');
+    const sections = readerSections(type);
+    sectionNav.replaceChildren();
+    sectionNav.hidden = sections.length === 0;
+    if (sections.length) {
+        const label = document.createElement('span');
+        label.className = 'reader-section-label';
+        label.textContent = 'విభాగానికి వెళ్లండి';
+        sectionNav.appendChild(label);
+        sections.forEach(section => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.textContent = section.label;
+            button.onclick = () => jumpToSection(section.index);
+            sectionNav.appendChild(button);
+        });
+    }
     cfg.data.forEach((item, i) => {
         const option = document.createElement('option');
         option.value = i;

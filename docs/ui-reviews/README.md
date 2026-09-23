@@ -74,3 +74,15 @@ These screenshots use temporary numbered outlines to show what changed. The outl
 **Where:** At the top of **శ్రీ మహాగణపతి సహస్రనామ స్తోత్రం**, inside the origin panel.
 
 **What to test:** Confirm it identifies Sahasranama 1–170 and phalashruti/closing verses 171–216.
+## Phase 8 — section navigation
+
+![Phone view highlighting direct section buttons](phase8-section-navigation-mobile.png)
+
+**Where:** In the reading tools of the Shiva and Ganesha Sahasranamam readers, below the verse selector.
+
+**What to test:**
+
+1. Open the Shiva Sahasranamam and tap each of the three section buttons.
+2. Confirm they jump to verses 1, 31, and 154 respectively.
+3. Open the Ganesha Sahasranamam and confirm its two buttons jump to verses 1 and 171.
+4. Confirm other stotrams do not show an empty section area.

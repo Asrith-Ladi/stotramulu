@@ -47,6 +47,9 @@ assert.equal(context.window.CONTENT_AUDIT.shivasahasram.status,'verified');
 assert.equal(context.window.CONTENT_AUDIT.ganeshasahasram.status,'verified');
 assert.match(data.shivasahasram.origin,/31–153/);
 assert.match(data.ganeshasahasram.origin,/1–170/);
+assert.equal(JSON.stringify(data.shivasahasram.sections.map(section=>section.index)),'[0,30,153]');
+assert.equal(JSON.stringify(data.ganeshasahasram.sections.map(section=>section.index)),'[0,170]');
+assert.ok(/readerSectionNav/.test(fs.readFileSync('public/index.html','utf8')));
 assert.ok(/sourceStatusBadge/.test(fs.readFileSync('public/index.html','utf8')));
 for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js'))) {
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);

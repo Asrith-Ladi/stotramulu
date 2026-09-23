@@ -46,3 +46,8 @@ Every reader source panel now shows a visible status badge: verified, main text 
 ## Phase 7 — Sahasranamam scope audit
 
 Verified every published verse in the selected Shiva and Ganesha Sahasranamam editions against their cited source files after Telugu-script conversion. No verse differences or numbering gaps were found. Corrected the reader descriptions to identify the actual sections: Shiva introduction 1–30, Sahasranama 31–153, phalashruti/transmission 154–182; Ganesha Sahasranama 1–170 and phalashruti/closing 171–216.
+
+
+## Phase 8 — section navigation
+
+Added large section buttons to long Sahasranamam readers. Shiva readers can jump to the introduction, Sahasranama, or phalashruti; Ganesha readers can jump to the Sahasranama or phalashruti. Invalid section metadata is ignored, buttons use the existing precise verse jump behavior, and the controls collapse to one easy-to-tap column on phones.
