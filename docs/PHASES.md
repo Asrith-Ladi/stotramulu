@@ -67,3 +67,7 @@ Implemented compact content counts inside the existing category headings and cat
 ## Phase 16 — verified Arunachaleshvara and Aishwarya Lakshmi names
 
 Added two independently source-counted Ashtottarams with 108 names each. The Arunachaleshvara generator explicitly excludes the source's separate opening Ganesha invocation; Aishwarya Lakshmi uses the complete standalone 108-name list. The content-build scripts now share one Namavali conversion and validation module.
+
+## Phase 17 — recent reading history
+
+Expanded the single recent-reading shortcut into a compact list of up to three prayers. Each item keeps its own last valid verse, reopening a prayer moves it to the front without duplicates, existing single-item storage migrates automatically, and invalid or removed content is omitted. The list uses three columns on wider screens and one clear column on phones.

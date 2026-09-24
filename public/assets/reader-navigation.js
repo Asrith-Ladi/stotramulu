@@ -21,11 +21,14 @@ function isReaderPositionKey(type) {
 function loadReaderPositions() {
     try {
         const value = JSON.parse(localStorage.getItem(READER_POSITION_KEY) || '{}');
+        const recent = value && value.recent && typeof value.recent === 'object' ? value.recent : null;
+        const history = value && Array.isArray(value.history) ? value.history : (recent ? [recent] : []);
         return {
             positions: value && value.positions && typeof value.positions === 'object' ? value.positions : {},
-            recent: value && value.recent && typeof value.recent === 'object' ? value.recent : null
+            recent,
+            history: history.filter(item => item && typeof item === 'object').slice(0, 3)
         };
-    } catch (_) { return {positions: {}, recent: null}; }
+    } catch (_) { return {positions: {}, recent: null, history: []}; }
 }
 function savedReaderPosition(type) {
     if (!isReaderPositionKey(type)) return null;
@@ -37,9 +40,12 @@ function rememberReaderPosition(type, index) {
     const nextIndex = Number(index);
     if (!Number.isInteger(nextIndex) || nextIndex < 0 || nextIndex >= stotramConfig[type].data.length) return;
     const stored = loadReaderPositions();
-    if (stored.positions[type] === nextIndex && stored.recent && stored.recent.type === type && stored.recent.index === nextIndex) return;
+    const first = stored.history[0];
+    if (stored.positions[type] === nextIndex && first && first.type === type && Number(first.index) === nextIndex) return;
+    const entry = {type, index: nextIndex, updatedAt: Date.now()};
     stored.positions[type] = nextIndex;
-    stored.recent = {type, index: nextIndex, updatedAt: Date.now()};
+    stored.recent = entry;
+    stored.history = [entry, ...stored.history.filter(item => item.type !== type)].slice(0, 3);
     try { localStorage.setItem(READER_POSITION_KEY, JSON.stringify(stored)); }
     catch (_) { return; }
     renderRecentReading();
@@ -111,22 +117,32 @@ function startReaderPositionTracking() {
     }, {rootMargin: '-12% 0px -55% 0px', threshold: 0.01});
     document.querySelectorAll('.slokam-block').forEach(block => readerPositionObserver.observe(block));
 }
-function openRecentReading() {
-    const recent = loadReaderPositions().recent;
-    if (!recent || !isReaderPositionKey(recent.type)) return;
-    const index = Number(recent.index);
-    if (!Number.isInteger(index) || index < 0 || index >= stotramConfig[recent.type].data.length) return;
-    openReader(recent.type);
-    requestAnimationFrame(() => jumpToVerse(index));
+function recentReaderEntries() {
+    const stored = loadReaderPositions();
+    const candidates = stored.history.length ? stored.history : (stored.recent ? [stored.recent] : []);
+    const seen = new Set();
+    return candidates.filter(item => {
+        if (!item || seen.has(item.type) || !isReaderPositionKey(item.type)) return false;
+        const index = Number(item.index);
+        if (!Number.isInteger(index) || index < 0 || index >= stotramConfig[item.type].data.length) return false;
+        seen.add(item.type);
+        return true;
+    }).slice(0, 3).map(item => ({type: item.type, index: Number(item.index)}));
+}
+function openRecentReading(type, index) {
+    let entry = {type, index: Number(index)};
+    if (!type) entry = recentReaderEntries()[0];
+    if (!entry || !isReaderPositionKey(entry.type)) return;
+    if (!Number.isInteger(entry.index) || entry.index < 0 || entry.index >= stotramConfig[entry.type].data.length) return;
+    openReader(entry.type);
+    requestAnimationFrame(() => jumpToVerse(entry.index));
 }
 function renderRecentReading() {
     const home = document.getElementById('homePage');
     if (!home) return;
     let section = document.getElementById('recentReadingSection');
-    const recent = loadReaderPositions().recent;
-    const valid = recent && isReaderPositionKey(recent.type) && Number.isInteger(Number(recent.index)) &&
-        Number(recent.index) >= 0 && Number(recent.index) < stotramConfig[recent.type].data.length;
-    if (!valid) {
+    const entries = recentReaderEntries();
+    if (!entries.length) {
         if (section) section.remove();
         return;
     }
@@ -139,17 +155,22 @@ function renderRecentReading() {
     section.replaceChildren();
     const heading = document.createElement('h2');
     heading.id = 'recentReadingTitle';
-    heading.textContent = 'చివరిగా చదివింది';
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.onclick = openRecentReading;
-    const cfg = stotramConfig[recent.type];
-    const title = document.createElement('span');
-    title.textContent = cfg.title;
-    const detail = document.createElement('small');
-    detail.textContent = `శ్లోకం ${Number(recent.index) + 1} / ${cfg.data.length} నుండి కొనసాగించండి`;
-    button.append(title, detail);
-    section.append(heading, button);
+    heading.textContent = 'ఇటీవల చదివినవి';
+    const list = document.createElement('div');
+    list.className = 'recent-reading-list';
+    entries.forEach(entry => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.onclick = () => openRecentReading(entry.type, entry.index);
+        const cfg = stotramConfig[entry.type];
+        const title = document.createElement('span');
+        title.textContent = cfg.title;
+        const detail = document.createElement('small');
+        detail.textContent = 'శ్లోకం ' + (entry.index + 1) + ' / ' + cfg.data.length + ' నుండి కొనసాగించండి';
+        button.append(title, detail);
+        list.appendChild(button);
+    });
+    section.append(heading, list);
     const categoryNav = home.querySelector('.library-navigation');
     if (categoryNav) categoryNav.after(section);
     else home.querySelector('.home-primary-actions').after(section);

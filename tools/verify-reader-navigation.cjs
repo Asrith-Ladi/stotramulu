@@ -28,7 +28,9 @@ const sandbox = {
     Math,
     currentType: 'alpha',
     stotramConfig: {
-        alpha: {title: 'Alpha', sections: [{label: 'Start', index: 0}, {label: 'End', index: 2}, {label: 'Bad', index: 8}], data: [{number: '1'}, {number: '2'}, {number: '3'}]}
+        alpha: {title: 'Alpha', sections: [{label: 'Start', index: 0}, {label: 'End', index: 2}, {label: 'Bad', index: 8}], data: [{number: '1'}, {number: '2'}, {number: '3'}]},
+        beta: {title: 'Beta', data: [{number: '1'}]},
+        gamma: {title: 'Gamma', data: [{number: '1'}]}
     },
     localStorage: {
         getItem(key) {
@@ -61,7 +63,7 @@ sandbox.window.IntersectionObserver = sandbox.IntersectionObserver;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync('public/assets/reader-navigation.js', 'utf8'), sandbox);
 
-assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null, history: []});
 assert.strictEqual(sandbox.loadLibraryCategory(), '');
 sandbox.rememberLibraryCategory('library-section-2');
 assert.strictEqual(sandbox.loadLibraryCategory(), 'library-section-2');
@@ -82,6 +84,16 @@ const saved = JSON.parse(storage.get('stotramReaderPositions'));
 assert.deepStrictEqual(saved.positions, {alpha: 1});
 assert.strictEqual(saved.recent.type, 'alpha');
 assert.strictEqual(saved.recent.index, 1);
+assert.deepStrictEqual(saved.history.map(item => item.type), ['alpha']);
+sandbox.rememberReaderPosition('beta', 0);
+sandbox.rememberReaderPosition('gamma', 0);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.recentReaderEntries())), [
+    {type: 'gamma', index: 0},
+    {type: 'beta', index: 0},
+    {type: 'alpha', index: 1}
+]);
+sandbox.rememberReaderPosition('alpha', 1);
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions().history.map(item => item.type))), ['alpha', 'gamma', 'beta']);
 
 sandbox.setCurrentVersePosition(1, false);
 assert.strictEqual(elements.readerProgressText.textContent, 'శ్లోకం 2 / 3');
@@ -96,11 +108,11 @@ assert.strictEqual(elements['verse-1'].scrolled, true);
 assert.strictEqual(sandbox.savedReaderPosition('alpha'), 1);
 
 storage.set('stotramReaderPositions', '{bad json');
-assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
+assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null, history: []});
 storageFails = true;
 assert.doesNotThrow(() => sandbox.rememberReaderPosition('alpha', 0));
 assert.doesNotThrow(() => sandbox.loadReaderPositions());
 assert.doesNotThrow(() => sandbox.rememberLibraryCategory('library-section-1'));
 assert.strictEqual(sandbox.loadLibraryCategory(), '');
 
-console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, category memory works, and unavailable storage is tolerated.');
+console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, three-item recent history and category memory work, and unavailable storage is tolerated.');

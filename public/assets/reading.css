@@ -242,6 +242,8 @@ body.grandham .reading-position-bar progress::-webkit-progress-bar { background:
     border: 1px solid #8a6932; border-radius: 16px; background: #181023;
 }
 .recent-reading-section h2 { margin: 0 0 10px; color: #f5e0a3; font-size: 1.15rem; }
+.recent-reading-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.recent-reading-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .recent-reading-section button {
     display: grid; gap: 3px; width: 100%; min-height: 64px; padding: 12px 16px;
     border: 1px solid #b99447; border-radius: 12px; background: #2b1b3d;
@@ -250,6 +252,7 @@ body.grandham .reading-position-bar progress::-webkit-progress-bar { background:
 .recent-reading-section button span { font-size: 1.05rem; font-weight: 700; }
 .recent-reading-section button small { color: #e2c985; font-size: .9rem; }
 @media (max-width: 600px) {
+    .recent-reading-list { grid-template-columns: 1fr; }
     .reading-position-bar { top: 4px; padding: 9px 11px; }
     .reading-progress-copy { gap: 8px; font-size: .9rem; }
     .reading-position-bar progress { height: 12px; }
