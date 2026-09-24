@@ -59,6 +59,14 @@ function readerRowsHtml(rows) {
 function renderSlokams(data, type) {
     const c = document.getElementById('slokamContainer');
     c.innerHTML = '';
+    if (!Array.isArray(data) || data.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'reader-empty-state';
+        empty.setAttribute('role', 'status');
+        empty.textContent = 'ఈ పాఠం ప్రస్తుతం అందుబాటులో లేదు. దయచేసి హోమ్‌కు వెళ్లి మరొక పాఠాన్ని ఎంచుకోండి.';
+        c.appendChild(empty);
+        return false;
+    }
     const meaningSet = (type && meanings[type]) || {};
     const read = readSet(type);
     const rows = numberedReaderRows(data, type);
@@ -82,6 +90,7 @@ function renderSlokams(data, type) {
         b.appendChild(mark);
         c.appendChild(b);
     });
+    return true;
 }
 
 
@@ -355,7 +364,7 @@ function updateMatchCount() {
 }
 function updateNavButtons() {
     const has = readerMatches.length > 0;
-    document.querySelectorAll('.reader-search .rs-nav').forEach(b => b.disabled = !has);
+    document.querySelectorAll('.reader-search .rs-nav').forEach(b => { b.disabled = !has; b.hidden = !has; });
 }
 
 

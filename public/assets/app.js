@@ -22,6 +22,7 @@ let currentType = null;
 
 
 function createParticles() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const c = document.getElementById('particles');
     for (let i = 0; i < 35; i++) {
         const p = document.createElement('div');

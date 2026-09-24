@@ -564,3 +564,30 @@ body.grandham .source-review-meta {
 @media print {
     .reader-options, .reader-tool-panel-compact, .reader-after-content { display: none !important; }
 }
+
+.reader-empty-state {
+    width: min(100%, 760px);
+    margin: 20px auto;
+    padding: 28px 20px;
+    color: #fff2cf;
+    font-size: 1.05rem;
+    line-height: 1.8;
+    text-align: center;
+    border: 1px solid #9b7334;
+    border-radius: 14px;
+    background: #25182d;
+}
+.reader-search .rs-nav[hidden] { display: none !important; }
+
+@media (max-width: 390px) {
+    .reader-page { padding-inline: 8px; }
+    .reader-title-section { padding: 16px 12px; }
+    .reader-tool-panel.reader-tool-panel-compact { padding: 9px; }
+    .reader-search { padding: 6px 8px; gap: 5px; }
+    .reader-search .rs-icon { display: none; }
+    .reader-search .rs-input { flex-basis: 120px; }
+    .reader-options-content { padding: 9px; }
+    .reading-position-bar { border-radius: 9px; }
+    .slokam-block { padding-inline: 13px; }
+    .reader-verse-row { column-gap: 8px; }
+}

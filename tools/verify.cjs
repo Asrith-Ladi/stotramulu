@@ -62,6 +62,7 @@ assert.ok(/sourceStatusBadge/.test(fs.readFileSync('public/index.html','utf8')))
 for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js'))) {
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);
 }
+execFileSync(process.execPath,['tools/verify-reader-smoke.cjs']);
 const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
 assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
 assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');

@@ -29,5 +29,6 @@ Run:
 - node tools/verify.cjs
 - node tools/verify-reader-navigation.cjs
 - node tools/verify-library.cjs
+- node tools/verify-reader-smoke.cjs
 
 The primary verifier checks script syntax and asset links, requires app.js to remain below 700 lines, and confirms that reader and tracking responsibilities remain in their dedicated modules.
