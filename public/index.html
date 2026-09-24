@@ -927,73 +927,78 @@
         <p id="readerSubtitle"></p>
     </div>
 
-    <!-- Per-stotram Parayana Counter -->
-    <details class="reader-practice practice-details"><summary>&#3114;&#3134;&#3120;&#3134;&#3119;&#3107; &#3122;&#3142;&#3093;&#3149;&#3093;</summary>
-    <div class="counter-card stotram-counter-card">
-        <div class="counter-head">
-            <span class="counter-name">📖 <span id="stotramCounterLabel">పారాయణం</span></span>
-            <div class="counter-actions">
-                <input type="date" class="counter-date-picker" id="stotramDatePicker" onchange="onStotramDateChange(this.value)" title="తేదీ ఎంచుకోండి">
-                <button class="counter-reset" onclick="resetStotramParayana()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+    <section class="reader-tool-panel reader-tool-panel-compact" aria-label="Reading tools">
+        <h3>చదవడానికి</h3>
+        <div class="controls">
+            <div class="font-control">
+                <label>అక్షరాలు:</label>
+                <button class="font-btn" onclick="changeFontSize(-2)" aria-label="అక్షరాలు చిన్నవి / Smaller text">−</button>
+                <span class="font-size-display" id="fontSizeDisplay" aria-live="polite">24</span>
+                <button class="font-btn" onclick="changeFontSize(2)" aria-label="అక్షరాలు పెద్దవి / Larger text">+</button>
+            </div>
+            <div class="reader-search">
+                <span class="rs-icon">🔎</span>
+                <input type="text" class="rs-input" id="readerSearchInput"
+                       placeholder="పాఠంలో వెతకండి…"
+                       oninput="onReaderSearchInput(this.value)"
+                       onkeydown="onReaderSearchKey(event)"
+                       autocomplete="off">
+                <span class="rs-count" id="readerSearchCount"></span>
+                <button class="rs-mic" id="readerMicBtn" onclick="startReaderVoice()" title="మాట్లాడి వెతకండి / Voice search" aria-label="Voice">🎤</button>
+                <button class="rs-nav" onclick="prevSearchMatch()" title="మునుపటి ఫలితం" aria-label="Previous match">↑</button>
+                <button class="rs-nav" onclick="nextSearchMatch()" title="తదుపరి ఫలితం" aria-label="Next match">↓</button>
+                <button class="rs-clear" id="readerSearchClear" onclick="clearReaderSearch()" title="వెతుకులాటను తొలగించు" aria-label="Clear" style="display:none">✕</button>
             </div>
         </div>
-        <div class="counter-row">
-            <button class="count-btn" onclick="bumpStotramParayana(-1)" aria-label="తగ్గించు">−</button>
-            <div class="count-center">
-                <div class="count-display" id="stotramParayanaCount">0</div>
-                <div class="count-target" style="cursor:default;text-decoration:none;">Parayana</div>
-            </div>
-            <button class="count-btn" onclick="bumpStotramParayana(1)" aria-label="పెంచు">＋</button>
-        </div>
-    </div>
-
-    </details>
-    <div class="origin-block" id="originBlock"></div>
-    <section class="reader-tool-panel" aria-label="Reading tools"><h3>&#3114;&#3108;&#3112; &#3128;&#3134;&#3111;&#3112;&#3134;&#3122;&#3137;</h3>
-    <div class="controls">
-        <div class="font-control">
-            <label>అక్షరాలు:</label>
-            <button class="font-btn" onclick="changeFontSize(-2)" aria-label="అక్షరాలు చిన్నవి / Smaller text">−</button>
-            <span class="font-size-display" id="fontSizeDisplay" aria-live="polite">24</span>
-            <button class="font-btn" onclick="changeFontSize(2)" aria-label="అక్షరాలు పెద్దవి / Larger text">+</button>
-        </div>
-        <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
-            <label>అర్థం చూపించు</label>
-            <div class="toggle-switch"></div>
-        </div>
-        <div class="meaning-toggle grandham-toggle" id="grandhamToggle" onclick="toggleGrandham()">
-            <label>📜 గ్రంథ రూపం</label>
-            <div class="toggle-switch"></div>
-        </div>
-        <div class="reader-search">
-            <span class="rs-icon">🔎</span>
-            <input type="text" class="rs-input" id="readerSearchInput"
-                   placeholder="తెలుగు లేదా English (e.g. padmanabha)…"
-                   oninput="onReaderSearchInput(this.value)"
-                   onkeydown="onReaderSearchKey(event)"
-                   autocomplete="off">
-            <span class="rs-count" id="readerSearchCount"></span>
-            <button class="rs-mic" id="readerMicBtn" onclick="startReaderVoice()" title="మాట్లాడి వెతకండి / Voice search" aria-label="Voice">🎤</button>
-            <button class="rs-nav" onclick="prevSearchMatch()" title="మునుపటి మ్యాచ్ (Shift+Enter)" aria-label="Previous match">↑</button>
-            <button class="rs-nav" onclick="nextSearchMatch()" title="తదుపరి మ్యాచ్ (Enter)" aria-label="Next match">↓</button>
-            <button class="rs-clear" id="readerSearchClear" onclick="clearReaderSearch()" title="మూసివేయి (Esc)" aria-label="Clear" style="display:none">✕</button>
-        </div>
-    </div>
-    <nav class="reader-navigation" aria-label="పఠన మార్గదర్శి">
-        <label for="verseJump">శ్లోకానికి వెళ్ళండి</label>
-        <select id="verseJump" onchange="jumpToVerse(this.value)"></select>
-        <button type="button" onclick="resumeReading()">చదవడం కొనసాగించు</button>
-            <div class="reader-section-navigation" id="readerSectionNav" hidden></div>
-    </nav>
-    <div class="reader-library-actions">
-        <button type="button" id="favoriteButton" onclick="toggleFavorite()" aria-pressed="false">☆ ఇష్టమైనవాటిలో చేర్చు</button>
-        <button type="button" onclick="copyReaderLink()">లింక్ కాపీ చేయండి</button>
-        <p id="readerLinkStatus" role="status" aria-live="polite"></p>
-        <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
-    </div>
-    <details class="reader-more"><summary>ఇతర ఎంపికలు</summary><button type="button" class="clear-reading-button" onclick="resetReading()">చదివిన గుర్తులు తొలగించు</button></details>
     </section>
-    <details class="source-details" id="sourceDetails"><summary><span id="sourceStatusBadge" class="source-status-badge"></span><span>మూలాలు &amp; పాఠం వివరాలు</span></summary><div id="sourceContent"></div></details>
+
+    <details class="reader-options">
+        <summary><span>⚙ పఠన ఎంపికలు</span><small>అర్థం, గ్రంథ రూపం, శ్లోకం, సేవ్, లెక్క</small></summary>
+        <div class="reader-options-content">
+            <div class="reader-toggle-row">
+                <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
+                    <label>అర్థం చూపించు</label><div class="toggle-switch"></div>
+                </div>
+                <div class="meaning-toggle grandham-toggle" id="grandhamToggle" onclick="toggleGrandham()">
+                    <label>📜 గ్రంథ రూపం</label><div class="toggle-switch"></div>
+                </div>
+            </div>
+            <nav class="reader-navigation" aria-label="పఠన మార్గదర్శి">
+                <label for="verseJump">శ్లోకానికి వెళ్లండి</label>
+                <select id="verseJump" onchange="jumpToVerse(this.value)"></select>
+                <button type="button" onclick="resumeReading()">చదవడం కొనసాగించు</button>
+                <div class="reader-section-navigation" id="readerSectionNav" hidden></div>
+            </nav>
+            <div class="reader-library-actions">
+                <button type="button" id="favoriteButton" onclick="toggleFavorite()" aria-pressed="false">☆ ఇష్టమైనవాటిలో చేర్చు</button>
+                <button type="button" onclick="copyReaderLink()">లింక్ కాపీ చేయండి</button>
+                <button type="button" class="clear-reading-button" onclick="resetReading()">చదివిన గుర్తులు తొలగించు</button>
+                <p id="readerLinkStatus" role="status" aria-live="polite"></p>
+                <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
+            </div>
+            <section class="reader-practice reader-option-group" aria-label="పారాయణ లెక్క">
+                <h4>పారాయణ లెక్క</h4>
+                <div class="counter-card stotram-counter-card">
+                    <div class="counter-head">
+                        <span class="counter-name">📖 <span id="stotramCounterLabel">పారాయణం</span></span>
+                        <div class="counter-actions">
+                            <input type="date" class="counter-date-picker" id="stotramDatePicker" onchange="onStotramDateChange(this.value)" title="తేదీ ఎంచుకోండి">
+                            <button class="counter-reset" onclick="resetStotramParayana()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+                        </div>
+                    </div>
+                    <div class="counter-row">
+                        <button class="count-btn" onclick="bumpStotramParayana(-1)" aria-label="తగ్గించు">−</button>
+                        <div class="count-center">
+                            <div class="count-display" id="stotramParayanaCount">0</div>
+                            <div class="count-target">Parayana</div>
+                        </div>
+                        <button class="count-btn" onclick="bumpStotramParayana(1)" aria-label="పెంచు">＋</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </details>
+
     <div class="reading-position-bar" aria-label="Reading progress">
         <div class="reading-progress-copy">
             <span id="readerProgressTitle"></span>
@@ -1002,8 +1007,16 @@
         <progress id="readerProgressBar" value="1" max="1" aria-label="Reading progress"></progress>
     </div>
     <div class="slokam-container" id="slokamContainer"></div>
-</div>
 
+    <details class="origin-details reader-after-content">
+        <summary>📜 ఉద్భవం &amp; ప్రాముఖ్యత</summary>
+        <div class="origin-block" id="originBlock"></div>
+    </details>
+    <details class="source-details reader-after-content" id="sourceDetails">
+        <summary><span id="sourceStatusBadge" class="source-status-badge"></span><span>మూలాలు &amp; పాఠం వివరాలు</span></summary>
+        <div id="sourceContent"></div>
+    </details>
+</div>
 <!-- ============ SEARCH OVERLAY ============ -->
 <div class="search-overlay" id="searchOverlay">
     <div class="search-box">
