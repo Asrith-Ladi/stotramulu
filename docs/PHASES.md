@@ -63,3 +63,7 @@ Added source-counted Rama and Subrahmanya Ashtottarams, each with 108 individual
 ## Phase 15 — clearer growing library
 
 Implemented compact content counts inside the existing category headings and category selector, without adding another Home button. Home remembers the last opened category on the device, restores it on the next visit, and safely falls back to the first category when the saved value is missing, invalid, or browser storage is unavailable.
+
+## Phase 16 — verified Arunachaleshvara and Aishwarya Lakshmi names
+
+Added two independently source-counted Ashtottarams with 108 names each. The Arunachaleshvara generator explicitly excludes the source's separate opening Ganesha invocation; Aishwarya Lakshmi uses the complete standalone 108-name list. The content-build scripts now share one Namavali conversion and validation module.

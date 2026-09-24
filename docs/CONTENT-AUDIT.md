@@ -47,7 +47,7 @@ The comparison removes spacing, punctuation and numerals, folds Telugu nasal-con
 
 ## Technical checks
 
-Run node tools/verify.cjs, node tools/audit-vishnu.cjs, and node tools/audit-sahasranamas.cjs. They check all 26 datasets, continuous 183/29/107 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
+Run node tools/verify.cjs, node tools/audit-vishnu.cjs, and node tools/audit-sahasranamas.cjs. They check all 32 datasets, continuous 183/29/107 verse sequences, missing/duplicate verse entries, 108-name counts, meaning indexes, frontend and inline script syntax, local asset paths, font persistence/bounds, unavailable storage and reading-edition isolation. These checks passed.
 
 Fixed invalid quote/newline syntax that prevented `app.js` from loading. New reading editions use separate keys so existing marks cannot identify the wrong verses; old stored marks are preserved. Backup restore now preserves the reading data too. Cloud text overrides get a content-specific reading key and lose the bundled verification claim.
 
@@ -91,3 +91,12 @@ The older Namavali comparison was rerun. Every bundled Ashtottaram contains exac
 | vijayalakshmi108 | 108 names | Section 6, Vijaya Lakshmi, from the same collection. Count and source order were checked before Telugu-script conversion. |
 
 The collection page also contains other Lakshmi sections with apparent 102–113 నమః entries, depending on the section, so those were not silently trimmed or padded to 108. An Ardhanarishvara candidate was excluded because its 108 numbered pairs contain separate Shiva and Shakti invocations and do not map cleanly to this reader's one-name-per-number format. Both exclusions preserve the source instead of forcing it into the UI's count rule.
+
+## Phase 16 additions — 24 September 2026
+
+| Key | Published scope | Source and edition consideration |
+|---|---|---|
+| arunachala108 | 108 numbered names | Shri Lakshmana Bhagavan's Arunachaleshvara Namavali. The separate opening Ganesha invocation is preserved in the source record but excluded from the numbered name list. |
+| aishwaryalakshmi108 | 108 names | Standalone Aishwarya Lakshmi edition; count and source order checked before Telugu-script conversion. |
+
+Both generated files must pass the exact 108-invocation check. Phase 14 and Phase 16 now share one Devanagari-to-Telugu Namavali generator so extraction, grouping, and output rules remain consistent.
