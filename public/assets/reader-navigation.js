@@ -1,5 +1,16 @@
 /* Accessible reader controls; no network dependency. */
 const READER_POSITION_KEY = 'stotramReaderPositions';
+const LIBRARY_CATEGORY_KEY = 'stotramLibraryCategory';
+
+function loadLibraryCategory() {
+    try { return localStorage.getItem(LIBRARY_CATEGORY_KEY) || ''; }
+    catch (_) { return ''; }
+}
+function rememberLibraryCategory(sectionId) {
+    if (typeof sectionId !== 'string' || !sectionId) return;
+    try { localStorage.setItem(LIBRARY_CATEGORY_KEY, sectionId); }
+    catch (_) {}
+}
 let readerPositionObserver = null;
 let visibleVerseIndexes = new Set();
 
@@ -246,14 +257,22 @@ document.addEventListener('DOMContentLoaded', () => {
         section.id ||= 'library-section-' + i;
         const heading = section.querySelector('.section-title');
         if (!heading) return;
+        const title = heading.textContent.trim();
+        const count = section.querySelectorAll('.card').length;
+        const countBadge = document.createElement('span');
+        countBadge.className = 'section-count';
+        countBadge.textContent = String(count);
+        countBadge.setAttribute('aria-label', count + ' స్తోత్రాలు');
+        heading.appendChild(countBadge);
         const option = document.createElement('option');
         option.value = section.id;
-        option.textContent = heading.textContent;
+        option.textContent = title + ' — ' + count;
         categorySelect.appendChild(option);
     });
     nav.append(categoryLabel, categorySelect);
     actions.after(nav);
 
+    const preferredCategory = loadLibraryCategory();
     home.querySelectorAll('.cards-section').forEach((section, index) => {
         const grid = section.querySelector('.cards-grid');
         const divider = section.querySelector('.section-divider');
@@ -263,12 +282,13 @@ document.addEventListener('DOMContentLoaded', () => {
         divider.tabIndex = 0;
         divider.setAttribute('role', 'button');
         divider.setAttribute('aria-controls', grid.id);
-        const setOpen = open => {
+        const setOpen = (open, remember = true) => {
             if (open) {
                 home.querySelectorAll('.cards-section').forEach(other => {
-                    if (other !== section && other._setOpen) other._setOpen(false);
+                    if (other !== section && other._setOpen) other._setOpen(false, false);
                 });
                 categorySelect.value = section.id;
+                if (remember) rememberLibraryCategory(section.id);
             }
             grid.hidden = !open;
             divider.classList.toggle('is-open', open);
@@ -280,8 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
         divider.addEventListener('keydown', event => {
             if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
         });
-        setOpen(index === 0);
+        setOpen(section.id === preferredCategory || (!preferredCategory && index === 0), false);
     });
+    if (!home.querySelector('.collapsible-section-heading.is-open')) {
+        home.querySelector('.cards-section')?._setOpen?.(true, false);
+    }
     categorySelect.addEventListener('change', () => {
         const section = document.getElementById(categorySelect.value);
         if (!section) return;

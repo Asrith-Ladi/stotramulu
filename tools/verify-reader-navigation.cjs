@@ -62,6 +62,11 @@ vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync('public/assets/reader-navigation.js', 'utf8'), sandbox);
 
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null});
+assert.strictEqual(sandbox.loadLibraryCategory(), '');
+sandbox.rememberLibraryCategory('library-section-2');
+assert.strictEqual(sandbox.loadLibraryCategory(), 'library-section-2');
+sandbox.rememberLibraryCategory('');
+assert.strictEqual(sandbox.loadLibraryCategory(), 'library-section-2');
 assert.strictEqual(sandbox.savedReaderPosition('missing'), null);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.readerSections('alpha'))), [
     {label: 'Start', index: 0}, {label: 'End', index: 2}
@@ -95,5 +100,7 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions()))
 storageFails = true;
 assert.doesNotThrow(() => sandbox.rememberReaderPosition('alpha', 0));
 assert.doesNotThrow(() => sandbox.loadReaderPositions());
+assert.doesNotThrow(() => sandbox.rememberLibraryCategory('library-section-1'));
+assert.strictEqual(sandbox.loadLibraryCategory(), '');
 
-console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, and unavailable storage is tolerated.');
+console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, category memory works, and unavailable storage is tolerated.');

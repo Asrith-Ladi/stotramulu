@@ -59,3 +59,7 @@ Extended direct section buttons to Vishnu and Lalitha Sahasranamam. Vishnu now s
 ## Phase 10 — more Ashtottarams and shorter Home
 
 Added source-counted Rama and Subrahmanya Ashtottarams, each with 108 individually numbered names. Home content categories can now be opened or minimized by tapping anywhere on the section heading; a small chevron shows the state without adding another button. Only the first category starts open; Ashtottarams, Stotrams, and Harathulu start collapsed, and tapping a category shortcut opens that section before scrolling to it. Generated review screenshots were intentionally skipped to reduce image-generation usage; the behavior and testing steps are documented here.
+
+## Phase 15 — clearer growing library
+
+Implemented compact content counts inside the existing category headings and category selector, without adding another Home button. Home remembers the last opened category on the device, restores it on the next visit, and safely falls back to the first category when the saved value is missing, invalid, or browser storage is unavailable.

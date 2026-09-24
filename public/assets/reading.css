@@ -269,7 +269,8 @@ body.grandham .reader-section-label { color: #573416; }
 @media print { .reader-section-navigation { display: none !important; } }
 
 .collapsible-section-heading{display:grid;grid-template-columns:minmax(0,1fr) 48px;align-items:center;gap:2px 10px;min-height:64px;padding:10px 12px;border:1px solid #71562f;border-radius:14px;cursor:pointer}
-.collapsible-section-heading .section-title{grid-column:1;grid-row:1}
+.collapsible-section-heading .section-title{grid-column:1;grid-row:1;display:flex;align-items:center;gap:9px}
+.section-count{display:inline-grid;place-items:center;min-width:30px;height:26px;padding:0 8px;border:1px solid #8d6d36;border-radius:999px;color:#f5e0a3;font:700 .78rem/1 'Noto Sans Telugu',sans-serif;background:rgba(212,168,67,.08)}
 .collapsible-section-heading .section-sub{grid-column:1;grid-row:2}
 .collapsible-section-heading::after{content:'\2304';grid-column:2;grid-row:1 / span 2;justify-self:center;color:#ffdf85;font-size:28px;line-height:1;transform:rotate(-90deg)}
 .collapsible-section-heading.is-open::after{transform:rotate(0)}
