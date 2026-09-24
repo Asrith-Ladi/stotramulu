@@ -82,3 +82,12 @@ The Lalitha main text now has a reproducible source collation in tools/audit-lal
 The source panel now shows the last review date and edition-scope note when available. Verification also requires every bundled text to have a valid review date and at least one HTTPS source link.
 
 The older Namavali comparison was rerun. Every bundled Ashtottaram contains exactly 108 నమః invocations. The detailed comparison remains in docs/namavali-comparison.json: close spelling agreement is not treated as proof of a common edition, and traditional repeated names are not removed automatically. Rama, Subrahmanya, Saraswati, and Surya are source-order conversions with 108 names; the earlier lists that diverge from their comparison edition remain visibly marked for review.
+
+## Phase 14 additions — 24 September 2026
+
+| Key | Published scope | Source and edition consideration |
+|---|---|---|
+| adilakshmi108 | 108 names | Section 1, Adi Lakshmi, from the cited Ashtalakshmi collection. Count and source order were checked before Telugu-script conversion. |
+| vijayalakshmi108 | 108 names | Section 6, Vijaya Lakshmi, from the same collection. Count and source order were checked before Telugu-script conversion. |
+
+The collection page also contains other Lakshmi sections with apparent 102–113 నమః entries, depending on the section, so those were not silently trimmed or padded to 108. An Ardhanarishvara candidate was excluded because its 108 numbered pairs contain separate Shiva and Shakti invocations and do not map cleanly to this reader's one-name-per-number format. Both exclusions preserve the source instead of forcing it into the UI's count rule.

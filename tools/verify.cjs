@@ -10,7 +10,7 @@ for (const file of fs.readdirSync('public/data/stotras').filter(f=>f.endsWith('.
 }
 vm.runInContext(fs.readFileSync('public/data/content-audit.js','utf8'),context);
 const data = context.window.STOTRAS_DATA;
-assert.equal(Object.keys(data).length,28);
+assert.equal(Object.keys(data).length,30);
 for (const [key,cfg] of Object.entries(data)) {
     assert.ok(context.window.CONTENT_AUDIT[key],key+' has a review note');
     const audit=context.window.CONTENT_AUDIT[key];
@@ -93,4 +93,4 @@ assert.equal(vm.runInContext("readingKey('shiva108')",sandbox),'shiva108');
 sandbox.localStorage.setItem=()=>{throw Error('storage blocked');};vm.runInContext('changeFontSize(2)',sandbox);assert.equal(nodes.fontSizeDisplay.textContent,20);
 include('function countTextLines','function labelHighestNumber');
 assert.equal(vm.runInContext("countTextLines('a\\r\\nb\\n')",sandbox),2);
-console.log('PASS: all 28 datasets, 183/29/107 verse sequences, 108-name counts, meaning indexes, frontend/inline syntax, asset links, font persistence/bounds/storage failure, reading-version isolation, line counts.');
+console.log('PASS: all 30 datasets, 183/29/107 verse sequences, 108-name counts, meaning indexes, frontend/inline syntax, asset links, font persistence/bounds/storage failure, reading-version isolation, line counts.');
