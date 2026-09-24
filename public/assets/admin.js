@@ -191,7 +191,7 @@
         '<h3>' + escapeHtml(cfg.title) + '</h3>' +
         '<div class="card-sub">' + escapeHtml(cfg.subtitle || '') + '</div>' +
         '<div class="card-desc">' + escapeHtml(desc) + '</div>' +
-        '<button class="card-btn">చదవండి →</button>' +
+        '<span class="card-action" aria-hidden="true">చదవండి →</span>' +
       '</div>';
     grid.appendChild(div);
   }

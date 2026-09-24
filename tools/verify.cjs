@@ -63,17 +63,24 @@ for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js')))
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);
 }
 const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
+assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
+assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');
+assert.ok(!/card-btn/.test(html+fs.readFileSync('public/assets/admin.js','utf8')),'nested card buttons stay removed');
 for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) if(match[1].trim()) new vm.Script(match[1]);
 for(const match of html.matchAll(/(?:src|href)="((?:assets|data)\/[^"?#]+)"/g)) assert.ok(fs.existsSync('public/'+match[1]),match[1]);
 const app=fs.readFileSync('public/assets/app.js','utf8');
-assert.ok(/function setHeaderActionsDisplay/.test(app));
-assert.ok(!/getElementById\('headerActions'\)\.style/.test(app),'removed header must not block reader rendering');
+const reader=fs.readFileSync('public/assets/reader.js','utf8');
+const tracking=fs.readFileSync('public/assets/tracking.js','utf8');
+assert.ok(app.split(/\r?\n/).length < 700,'app.js stays focused');
+assert.match(reader,/function renderSlokams/);
+assert.match(tracking,/function openTrack/);
+assert.ok(!/headerActions/.test(app+fs.readFileSync('public/assets/japamala.js','utf8')+html),'removed header code stays deleted');
 const nodes={fontSizeDisplay:{},smaller:{},larger:{}};
 const storage=new Map([['readerFontSize','30']]);
 const sandbox={window:{},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{getElementById:id=>nodes[id],documentElement:{style:{setProperty(){}}},querySelectorAll:sel=>sel.includes('-2')?[nodes.smaller]:sel.includes('(2)')?[nodes.larger]:[]}};
 vm.createContext(sandbox);
 vm.runInContext('const stotramConfig = '+JSON.stringify(data)+';\n'+app.slice(app.indexOf('let currentFontSize'),app.indexOf('function createParticles')),sandbox);
-function include(from,to){vm.runInContext(app.slice(app.indexOf(from),app.indexOf(to,app.indexOf(from))),sandbox);}
+function include(from,to){vm.runInContext(reader.slice(reader.indexOf(from),reader.indexOf(to,reader.indexOf(from))),sandbox);}
 include('function changeFontSize','function toggleMeanings');
 include('function readingKey','function readSet');
 vm.runInContext('changeFontSize(0)',sandbox);assert.equal(nodes.fontSizeDisplay.textContent,30);

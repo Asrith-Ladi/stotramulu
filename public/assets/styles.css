@@ -331,29 +331,8 @@ body {
 .card .card-desc { font-size: 14.5px; color: var(--cream); opacity: 0.55; line-height: 1.85; margin-bottom: 26px; flex: 1; }
 
 /* PREMIUM GOLD BUTTON */
-.card .card-btn {
-    padding: 12px 36px; border-radius: 30px; font-size: 16px;
-    font-family: 'Noto Sans Telugu', sans-serif; font-weight: 600;
-    border: 1px solid rgba(245, 224, 163, 0.4);
-    cursor: pointer; transition: all 0.3s ease;
-    letter-spacing: 1.5px; margin-top: auto;
-    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-bright) 100%);
-    background-size: 200% auto;
-    color: #2a1808;
-    box-shadow:
-        0 4px 15px rgba(212, 168, 67, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-    position: relative; overflow: hidden;
-}
-.card .card-btn:hover {
-    background-position: right center;
-    transform: scale(1.05) translateY(-2px);
-    box-shadow:
-        0 8px 25px rgba(212, 168, 67, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-}
+
+
 
 /* Reader Page */
 .reader-page {
@@ -761,27 +740,12 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 .header-slot-left { justify-self: start; }
 .header-titles { text-align: center; min-width: 0; }
-.header-actions { justify-self: end; display: flex; gap: 10px; z-index: 5; }
+
 /* override the original absolute back-btn positioning */
 .back-btn { position: static !important; transform: none !important; left: auto !important; top: auto !important; }
-.header-pill {
-    display: flex; align-items: center; gap: 8px;
-    padding: 11px 18px; border-radius: 30px; cursor: pointer; white-space: nowrap;
-    font-family: 'Noto Sans Telugu', sans-serif; font-size: 16px; font-weight: 600;
-    color: var(--gold-light);
-    background: linear-gradient(135deg, rgba(212,168,67,0.18), rgba(212,168,67,0.05));
-    border: 1px solid rgba(212,168,67,0.45);
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(245,224,163,0.15);
-    transition: all 0.3s ease;
-}
-.header-pill .ico { font-size: 20px; }
-.header-pill:hover {
-    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
-    color: #2a1808; transform: scale(1.05);
-    border-color: var(--gold-bright);
-    box-shadow: 0 0 18px rgba(212,168,67,0.45);
-}
+
+
+
 
 /* ---- Search overlay ---- */
 .search-overlay {
@@ -1465,9 +1429,9 @@ html, body { overflow-x: hidden; max-width: 100%; }
     .header h1 { font-size: 24px; letter-spacing: 2px; }
     .header-om { font-size: 15px; letter-spacing: 6px; }
     .header-sub { font-size: 10px; letter-spacing: 3px; }
-    .header-pill .label { display: none; }      /* icon-only buttons */
-    .header-pill { padding: 11px; }
-    .header-pill .ico { font-size: 22px; }
+      /* icon-only buttons */
+
+
     .back-btn { padding: 9px 16px; font-size: 15px; }
     .track-section-head h2 { font-size: 23px; }
     .reader-page, .track-page { padding-left: 14px; padding-right: 14px; }
@@ -1481,8 +1445,8 @@ html, body { overflow-x: hidden; max-width: 100%; }
     .header h1 { font-size: 19px; letter-spacing: 1px; }
     .header-om { font-size: 13px; letter-spacing: 4px; }
     .back-btn { padding: 8px 12px; font-size: 14px; }
-    .header-pill { padding: 9px; }
-    .header-pill .ico { font-size: 20px; }
+
+
     .count-display { font-size: 40px; }
     .count-btn { width: 58px; height: 58px; font-size: 28px; }
     .cal-day { font-size: 15px; }
@@ -1539,10 +1503,7 @@ body {
 .card:active { transform: scale(0.988); }
 
 /* 6. Comfortable minimum tap targets (Apple/Google both advise ~44px) */
-.header-pill, .count-btn, .track-btn, .month-arrow, .counter-reset,
-.jm-btn-count, .jm-btn-reset, .sc-btn, .card-btn {
-    min-height: 44px;
-}
+
 
 /* ---------------- phones ---------------- */
 @media (max-width: 600px) {
@@ -1576,8 +1537,7 @@ body {
 
 /* ---------------- print: clean paper, no decoration ---------------- */
 @media print {
-    .bg-pattern, .bg-mesh, .particles, .header-actions, .back-btn,
-    .scroll-top-btn, .admin-fab, .controls, .counter-card { display: none !important; }
+
     body { background: #fff; color: #000; }
     .slokam-text, .slokam-meaning { color: #000 !important; }
 }
