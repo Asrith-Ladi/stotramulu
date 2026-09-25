@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#100916">
+    <meta name="theme-color" content="#173e35">
     <meta name="description" content="తెలుగు స్తోత్రాలు, సహస్రనామాలు, అష్టోత్తరాలు మరియు హారతులు — సులభంగా చదవడానికి ఒకే చోట.">
     <title>శ్రీ దివ్య స్తోత్రములు</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@300;400;500;600;700&family=Noto+Serif+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="assets/japamala-3d.css">
 </head>
 <body class="grandham">
+<a class="skip-link" href="#homePage">ప్రధాన విషయానికి వెళ్ళండి / Skip to content</a>
 
 <div class="bg-pattern"></div>
 <div class="bg-mesh"></div>
@@ -541,29 +542,55 @@
             <button class="back-btn" id="backBtn" onclick="goHome()">← వెనుకకు</button>
         </div>
         <div class="header-titles">
-            <div class="header-om">✦ ॐ ✦</div>
+            <div class="header-om" aria-hidden="true">ఓం</div>
             <h1>శ్రీ దివ్య స్తోత్రములు</h1>
             <div class="header-sub">Sri Divya Stotramulu</div>
         </div>
+        <div class="header-utilities"><button type="button" onclick="openSearch()" aria-label="స్తోత్రాలు వెతకండి / Search">⌕ <span>వెతకండి</span></button><button type="button" onclick="openAccount()">నా ఖాతా <span lang="en">/ Account</span></button></div>
     </div>
+    <nav class="site-navigation" aria-label="ప్రధాన మార్గదర్శి / Main navigation">
+        <a href="#homePage" data-home-target="homePage">ముఖపుట <small>Home</small></a>
+        <a href="#library" data-home-target="library">స్తోత్రాలు <small>Library</small></a>
+        <a href="#favoritesSection" data-home-target="favoritesSection">ఇష్టమైనవి <small>Saved</small></a>
+        <a href="#practice" data-home-target="practice">నా సాధన <small>Practice</small></a>
+    </nav>
 </header>
 
 <!-- Home Page -->
-<div class="home-page" id="homePage">
-    <div class="welcome-section">
-        <span class="om-symbol">ॐ</span>
-        <h2>స్తోత్రమును ఎంచుకోండి</h2>
-        <p>Choose a Stotram to read</p>
-    </div>
+<div class="home-page" id="homePage" role="main" tabindex="-1">
+    <section class="welcome-section" aria-labelledby="welcomeTitle">
+        <div class="welcome-copy">
+            <span class="eyebrow">నిత్య పారాయణం · A MOMENT OF DEVOTION</span>
+            <h2 id="welcomeTitle">మనసుకు శాంతి.<br>ప్రతి రోజూ భక్తి.</h2>
+            <p>మీకు ఇష్టమైన స్తోత్రాలు, ఒకే చోట.<br>చదవండి. స్మరించండి. ప్రశాంతంగా గడపండి.</p>
+            <a class="primary-link" href="#library">స్తోత్రాలు చదవండి <span aria-hidden="true">↗</span></a>
+            <span class="hero-note">తెలుగులో పఠనం · మీ వేగంలో సాధన</span>
+        </div>
+        <div class="hero-art" aria-hidden="true">
+            <svg viewBox="0 0 440 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs><radialGradient id="lampGlow"><stop stop-color="#eac780" stop-opacity=".24"/><stop offset="1" stop-color="#eac780" stop-opacity="0"/></radialGradient><linearGradient id="lampBrass" x1="120" y1="220" x2="330" y2="310" gradientUnits="userSpaceOnUse"><stop stop-color="#f0d59c"/><stop offset=".5" stop-color="#b58c49"/><stop offset="1" stop-color="#dec087"/></linearGradient></defs>
+                <circle cx="220" cy="170" r="165" fill="url(#lampGlow)"/>
+                <path d="M78 328V169a142 142 0 01284 0v159M93 328V169a127 127 0 01254 0v159" stroke="#ddbe80" stroke-opacity=".3"/>
+                <path d="M112 328V172a108 108 0 01216 0v156" stroke="#ddbe80" stroke-opacity=".16"/>
+                <circle cx="220" cy="165" r="86" stroke="#ddbe80" stroke-opacity=".2" stroke-dasharray="2 8"/>
+                <path d="M220 106c-10 26-31 39-24 59 4 13 14 18 24 17 18-2 29-15 23-34-3-12-15-22-23-42Z" fill="#f1ce83" class="diya-flame"/>
+                <path d="M220 140c-4 14-15 23-9 32 7 10 19 3 19-6 0-8-7-17-10-26Z" fill="#fff4cf"/>
+                <path d="M136 208q84 14 168 0-14 53-84 53t-84-53Z" fill="url(#lampBrass)"/>
+                <ellipse cx="220" cy="208" rx="84" ry="12" stroke="#f0d59c" stroke-width="3"/>
+                <path d="M220 183v25" stroke="#f3d8a1" stroke-width="4" stroke-linecap="round"/>
+                <path d="M212 260v29l-40 20h96l-40-20v-29" fill="url(#lampBrass)"/>
+                <ellipse cx="220" cy="323" rx="94" ry="9" fill="#091e18" opacity=".35"/>
+                <path d="M162 311h116" stroke="#e2c18a" stroke-width="4" stroke-linecap="round"/>
+                <path d="M47 210h20m-10-10v20M377 128h14m-7-7v14" stroke="#ddbe80" stroke-opacity=".7"/>
+            </svg>
+            <span>శుభం భూయాత్</span>
+        </div>
+    </section>
 
-
-    <section class="home-primary-actions" aria-label="ముఖ్య ఎంపికలు">
-        <button type="button" onclick="openSearch()"><span>వెతకండి</span><small>స్తోత్రం పేరు</small></button>
-        <button type="button" onclick="document.getElementById('favoritesSection')?.scrollIntoView({behavior:'smooth'})"><span>ఇష్టమైనవి</span><small>మీ జాబితా</small></button>
-        <button type="button" onclick="openAccount()"><span>సైన్ ఇన్ &amp; ట్రాక్</span><small>సేవ్ మరియు లెక్కలు</small></button>
-        <button type="button" onclick="openJapamala()"><span>జపమాల</span><small>108 లెక్క</small></button>
-        <button type="button" onclick="openTrack()"><span>పూజా ట్రాక్</span><small>రోజువారీ నమోదు</small></button>
-        <button type="button" onclick="openFeedback()"><span>అభిప్రాయం</span><small>మీ సూచన పంపండి</small></button>
+    <section class="home-primary-actions" id="practice" aria-label="నా సాధన / My practice">
+        <div class="practice-intro"><span class="eyebrow">A DAILY RITUAL</span><h2>నా సాధన</h2><p>చిన్న అడుగులు. నిత్య అనుబంధం.</p></div>
+        <button type="button" onclick="openJapamala()"><span class="practice-symbol" aria-hidden="true">◉</span><span>జపమాల</span><small>108 నామాల జపం · Japa mala</small><span class="practice-arrow" aria-hidden="true">↗</span></button>
+        <button type="button" onclick="openTrack()"><span class="practice-symbol" aria-hidden="true">▦</span><span>పూజా ట్రాక్</span><small>రోజువారీ నమోదు · Daily practice</small><span class="practice-arrow" aria-hidden="true">↗</span></button>
     </section>
 
     <!-- Pradakshina Counter (today by default; pick any date) -->
@@ -1002,13 +1029,6 @@
         </div>
     </details>
 
-    <div class="reading-position-bar" aria-label="Reading progress">
-        <div class="reading-progress-copy">
-            <span id="readerProgressTitle"></span>
-            <span id="readerProgressText" aria-live="polite">శ్లోకం 1 / 1</span>
-        </div>
-        <progress id="readerProgressBar" value="1" max="1" aria-label="Reading progress"></progress>
-    </div>
     <div class="slokam-container" id="slokamContainer"></div>
 
     <details class="origin-details reader-after-content">
@@ -1280,6 +1300,7 @@
 <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
 
 <div class="footer">
+    <button type="button" class="footer-feedback" onclick="openFeedback()">మీ సూచనలు / Share feedback ↗</button>
     <div class="divider"></div>
     ॐ నమః శివాయ | ॐ నమో నారాయణాయ | ॐ శ్రీ మాత్రే నమః
 </div>
@@ -1337,5 +1358,6 @@
 <script src="assets/admin.js"></script>
 <script src="assets/weekday.js"></script>
 <script src="assets/library.js"></script>
+<script src="assets/experience.js"></script>
 </body>
 </html>

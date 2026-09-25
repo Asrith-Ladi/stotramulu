@@ -54,15 +54,7 @@ function setCurrentVersePosition(index, save) {
     if (!currentType || !isReaderPositionKey(currentType)) return;
     const total = stotramConfig[currentType].data.length;
     const nextIndex = Math.max(0, Math.min(total - 1, Number(index) || 0));
-    const text = document.getElementById('readerProgressText');
-    const bar = document.getElementById('readerProgressBar');
     const select = document.getElementById('verseJump');
-    if (text) text.textContent = `శ్లోకం ${nextIndex + 1} / ${total}`;
-    if (bar) {
-        bar.max = total;
-        bar.value = nextIndex + 1;
-        bar.setAttribute('aria-valuetext', `${nextIndex + 1} of ${total}`);
-    }
     if (select) select.value = String(nextIndex);
     if (save) rememberReaderPosition(currentType, nextIndex);
 }
@@ -172,12 +164,11 @@ function renderRecentReading() {
     });
     section.append(heading, list);
     const categoryNav = home.querySelector('.library-navigation');
-    if (categoryNav) categoryNav.after(section);
+    if (categoryNav) home.querySelector('.welcome-section').after(section);
     else home.querySelector('.home-primary-actions').after(section);
 }
 function setupReaderNavigation(type) {
     const cfg = stotramConfig[type];
-    document.getElementById('readerProgressTitle').textContent = cfg.title;
     const select = document.getElementById('verseJump');
     select.replaceChildren();
     const sectionNav = document.getElementById('readerSectionNav');
@@ -245,93 +236,56 @@ function setupReaderNavigation(type) {
 document.addEventListener('DOMContentLoaded', () => {
     const home = document.getElementById('homePage');
     const actions = home.querySelector('.home-primary-actions');
-    actions.id = 'homePrimaryActions';
-
-    const actionsToggle = document.createElement('button');
-    actionsToggle.type = 'button';
-    actionsToggle.className = 'home-actions-toggle';
-    actionsToggle.setAttribute('aria-controls', actions.id);
-    const actionsLabel = document.createElement('span');
-    actionsLabel.textContent = '☰ ముఖ్య ఎంపికలు';
-    const actionsHint = document.createElement('small');
-    actionsHint.textContent = 'వెతకండి · జపమాల · ట్రాక్ · మరిన్ని';
-    actionsToggle.append(actionsLabel, actionsHint);
-    const setActionsOpen = open => {
-        actions.hidden = !open;
-        actionsToggle.classList.toggle('is-open', open);
-        actionsToggle.setAttribute('aria-expanded', String(open));
-    };
-    actionsToggle.addEventListener('click', () => setActionsOpen(actions.hidden));
-    actions.before(actionsToggle);
-    setActionsOpen(false);
-
     const nav = document.createElement('nav');
-    nav.className = 'library-navigation library-selector';
-    nav.setAttribute('aria-label', 'స్తోత్రాల విభాగాలు');
-    const categoryLabel = document.createElement('label');
-    categoryLabel.htmlFor = 'libraryCategorySelect';
-    categoryLabel.textContent = 'విభాగం ఎంచుకోండి';
-    const categorySelect = document.createElement('select');
-    categorySelect.id = 'libraryCategorySelect';
-
-    home.querySelectorAll('.cards-section').forEach((section, i) => {
-        section.id ||= 'library-section-' + i;
-        const heading = section.querySelector('.section-title');
-        if (!heading) return;
-        const title = heading.textContent.trim();
-        const count = section.querySelectorAll('.card').length;
-        const countBadge = document.createElement('span');
-        countBadge.className = 'section-count';
-        countBadge.textContent = String(count);
-        countBadge.setAttribute('aria-label', count + ' స్తోత్రాలు');
-        heading.appendChild(countBadge);
-        const option = document.createElement('option');
-        option.value = section.id;
-        option.textContent = title + ' — ' + count;
-        categorySelect.appendChild(option);
-    });
-    nav.append(categoryLabel, categorySelect);
-    actions.after(nav);
-
-    const preferredCategory = loadLibraryCategory();
-    home.querySelectorAll('.cards-section').forEach((section, index) => {
-        const grid = section.querySelector('.cards-grid');
-        const divider = section.querySelector('.section-divider');
-        if (!grid || !divider) return;
-        grid.id ||= section.id + '-cards';
-        divider.classList.add('collapsible-section-heading');
-        divider.tabIndex = 0;
-        divider.setAttribute('role', 'button');
-        divider.setAttribute('aria-controls', grid.id);
-        const setOpen = (open, remember = true) => {
-            if (open) {
-                home.querySelectorAll('.cards-section').forEach(other => {
-                    if (other !== section && other._setOpen) other._setOpen(false, false);
-                });
-                categorySelect.value = section.id;
-                if (remember) rememberLibraryCategory(section.id);
-            }
-            grid.hidden = !open;
-            divider.classList.toggle('is-open', open);
-            divider.setAttribute('aria-expanded', String(open));
-        };
-        section._setOpen = setOpen;
-        const toggle = () => setOpen(grid.hidden);
-        divider.addEventListener('click', toggle);
-        divider.addEventListener('keydown', event => {
-            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(); }
+    nav.id = 'library';
+    nav.className = 'library-navigation';
+    nav.setAttribute('aria-label', 'స్తోత్రాల విభాగాలు / Prayer categories');
+    const intro = document.createElement('div');
+    intro.className = 'library-intro';
+    intro.innerHTML = '<div><span class="eyebrow">THE SACRED COLLECTION</span><h2>స్తోత్రాల గ్రంథాలయం</h2></div><p>మీ మనసుకు దగ్గరైన స్తోత్రాన్ని ఎంచుకోండి.</p>';
+    const filters = document.createElement('div');
+    filters.className = 'category-filters';
+    let sections = [...home.querySelectorAll('.cards-section')];
+    const choose = (id, remember = true) => {
+        sections.forEach(section => { section.hidden = id !== 'all' && section.id !== id; });
+        filters.querySelectorAll('button').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.category === id)));
+        if (remember) rememberLibraryCategory(id);
+    };
+    const addFilter = (id, title, count) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.category = id;
+        button.append(document.createTextNode(title + ' '));
+        const badge = document.createElement('span');
+        badge.textContent = count;
+        badge.className = 'filter-count';
+        button.append(badge);
+        button.addEventListener('click', () => choose(id));
+        filters.append(button);
+    };
+    const refreshFilters = () => {
+        const preferred = filters.querySelector('[aria-pressed="true"]')?.dataset.category || loadLibraryCategory();
+        sections = [...home.querySelectorAll('.cards-section')];
+        filters.replaceChildren();
+        addFilter('all', 'అన్నీ', home.querySelectorAll('.cards-section .card').length);
+        sections.forEach((section, i) => {
+            section.id ||= 'library-section-' + i;
+            const heading = section.querySelector('.section-title');
+            if (!heading) return;
+            addFilter(section.id, heading.textContent.trim(), section.querySelectorAll('.card').length);
+            section._setOpen = open => { if (open) choose(section.id); };
+            // Cloud-created categories belong in the library, before saved/practice.
+            const afterLibrary = document.getElementById('favoritesSection') || actions;
+            home.insertBefore(section, afterLibrary);
         });
-        setOpen(section.id === preferredCategory || (!preferredCategory && index === 0), false);
-    });
-    if (!home.querySelector('.collapsible-section-heading.is-open')) {
-        home.querySelector('.cards-section')?._setOpen?.(true, false);
-    }
-    categorySelect.addEventListener('change', () => {
-        const section = document.getElementById(categorySelect.value);
-        if (!section) return;
-        section._setOpen?.(true);
-        section.scrollIntoView({behavior:'smooth', block:'start'});
-    });
+        choose(sections.some(section => section.id === preferred) ? preferred : 'all', false);
+    };
+    nav.append(intro, filters);
+    sections[0]?.before(nav);
+    // Practice tools follow the library; reading is the primary home-page task.
+    home.append(actions, home.querySelector('.practice-details'));
+    refreshFilters();
+    document.addEventListener('stotras-updated', refreshFilters);
     renderRecentReading();
     document.querySelectorAll('.card[onclick], .meaning-toggle[onclick]').forEach(el => {
         el.tabIndex = 0;

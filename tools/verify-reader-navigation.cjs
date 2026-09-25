@@ -5,8 +5,6 @@ const assert = require('assert');
 const storage = new Map();
 let storageFails = false;
 const elements = {
-    readerProgressText: {textContent: ''},
-    readerProgressBar: {max: 0, value: 0, setAttribute(name, value) { this[name] = value; }},
     verseJump: {value: '', replaceChildren() {}, appendChild() {}},
 };
 for (let i = 0; i < 3; i++) {
@@ -61,7 +59,7 @@ const sandbox = {
 };
 sandbox.window.IntersectionObserver = sandbox.IntersectionObserver;
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync('public/assets/reader-navigation.js', 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync(fs.existsSync('public/assets/reader-navigation.js') ? 'public/assets/reader-navigation.js' : 'docs/public/assets/reader-navigation.js', 'utf8'), sandbox);
 
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null, history: []});
 assert.strictEqual(sandbox.loadLibraryCategory(), '');
@@ -96,9 +94,7 @@ sandbox.rememberReaderPosition('alpha', 1);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions().history.map(item => item.type))), ['alpha', 'gamma', 'beta']);
 
 sandbox.setCurrentVersePosition(1, false);
-assert.strictEqual(elements.readerProgressText.textContent, 'శ్లోకం 2 / 3');
-assert.strictEqual(elements.readerProgressBar.value, 2);
-assert.strictEqual(elements.readerProgressBar.max, 3);
+assert.strictEqual(elements.verseJump.value, '1');
 
 sandbox.jumpToVerse(2);
 assert.strictEqual(elements['verse-2'].scrolled, true);
@@ -115,4 +111,4 @@ assert.doesNotThrow(() => sandbox.loadReaderPositions());
 assert.doesNotThrow(() => sandbox.rememberLibraryCategory('library-section-1'));
 assert.strictEqual(sandbox.loadLibraryCategory(), '');
 
-console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling updates progress, three-item recent history and category memory work, and unavailable storage is tolerated.');
+console.log('PASS: reader positions validate bounds, section jumps filter safely, scrolling preserves the reading position, three-item recent history and category memory work, and unavailable storage is tolerated.');

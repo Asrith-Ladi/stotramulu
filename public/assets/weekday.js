@@ -125,7 +125,7 @@
       '<span class="today-note">' + DAY_NOTE[i] + '</span></div>' +
       '<p class="weekday-guidance">ఈ రోజు సూచనలు మాత్రమే. మీ సంప్రదాయం ప్రకారం ఏ రోజైనా చదవవచ్చు.</p>' +
       '<div class="today-strip">' +
-      keys.map((k) => {
+      keys.slice(0, 3).map((k) => {
         const cfg = stotramConfig[k];
         const icon = cfg.__icon || '🕉️';
         return '<button class="today-tile" onclick="openReader(\'' + k + '\')">' +

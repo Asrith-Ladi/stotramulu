@@ -12,11 +12,8 @@ assert.doesNotMatch(html, /grandhamToggle|toggleGrandham/, 'reader has no redund
 assert.doesNotMatch(reader + app + html, /localStorage\.getItem\(['"]grandham['"]\)|initGrandham|toggleGrandham/, 'old Grandham preference path is removed');
 assert.doesNotMatch(html, /గ్రంథ రూపం, శ్లోకం/, 'reader options summary no longer advertises a removed control');
 
-assert.doesNotMatch(readingCss, /\.library-selector option\s*\{[^}]*background:\s*#fff7e7/s, 'Home options do not use the unreadable white popup');
-assert.match(designCss, /\.library-selector select\s*\{[^}]*color-scheme:\s*dark/s, 'native Home selector uses dark controls');
-assert.match(designCss, /\.library-selector option,[\s\S]*?\.library-selector optgroup\s*\{[^}]*color:\s*#fff8e8;[^}]*background-color:\s*#24182e;/, 'Home option text and surface are explicit');
-assert.match(designCss, /\.library-selector option:checked\s*\{[^}]*color:\s*#24170d;[^}]*background-color:\s*#f7dc91;/, 'selected Home option remains legible');
-assert.match(designCss, /\.home-page input\[type="date"\]\s*\{[^}]*color-scheme:\s*dark;/, 'native Home date control follows the dark theme');
+assert.match(designCss, /\.category-filters button\[aria-pressed="true"\]/, 'category selection has an explicit visual state');
+assert.match(designCss, /\.home-page input\[type="date"\]\s*\{[^}]*color-scheme:\s*dark;/, 'date input remains legible on the dark counter');
 
 function luminance(hex) {
     const rgb = hex.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
@@ -27,7 +24,7 @@ function contrast(foreground, background) {
     const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
     return (values[0] + 0.05) / (values[1] + 0.05);
 }
-assert.ok(contrast('#fff8e8', '#24182e') >= 7, 'option popup exceeds WCAG AAA normal-text contrast');
-assert.ok(contrast('#24170d', '#f7dc91') >= 7, 'selected option exceeds WCAG AAA normal-text contrast');
+assert.ok(contrast('#526256', '#f7f5ef') >= 4.5, 'category text meets AA normal-text contrast');
+assert.ok(contrast('#fff9e9', '#173e35') >= 7, 'selected category exceeds AAA normal-text contrast');
 
-console.log('PASS: fixed Grandham reader and high-contrast native Home controls.');
+console.log('PASS: fixed Grandham reader and high-contrast Home category controls.');

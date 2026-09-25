@@ -69,7 +69,7 @@ function renderFavorites() {
         section.setAttribute('aria-labelledby', 'favoritesTitle');
         const home = document.getElementById('homePage');
         const today = document.getElementById('todaySection');
-        if (today) today.after(section);
+        if (home.querySelector('.home-primary-actions')) home.querySelector('.home-primary-actions').before(section);
         else home.insertBefore(section, home.querySelector('.cards-section'));
     }
     section.replaceChildren();
