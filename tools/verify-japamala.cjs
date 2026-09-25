@@ -1,4 +1,4 @@
-﻿const fs = require('node:fs');
+const fs = require('node:fs');
 const assert = require('node:assert/strict');
 const { execFileSync } = require('node:child_process');
 
@@ -39,7 +39,12 @@ assert.match(js, /rudraksha3d: 'jmRudrakshaCanvas'/, 'completion animation targe
 assert.match(threeJs, /getContext\('webgl'/, 'renderer uses real WebGL');
 assert.match(threeJs, /function createRudrakshaGeometry\(\)/, 'Rudraksha mesh is procedural');
 assert.match(threeJs, /longitude \* 5\.0/, 'shader renders five mukhi grooves');
-assert.match(threeJs, /longitude \* 5\)/, 'mesh contains five physical groove channels');
+assert.match(threeJs, /longitude \* 5 \+/, 'mesh contains five physical groove channels');
+assert.match(threeJs, /const tubercles =/, 'rough tuberculated surface changes the physical mesh');
+assert.match(threeJs, /topInnerStart/, 'top and bottom recessed thread channels are modeled');
+assert.match(threeJs, /float bore =/, 'thread channel receives dark recessed shading');
+assert.match(threeJs, /longitudeSegments = 52/, 'mesh has enough detail for the irregular silhouette');
+assert.equal(threeJs.includes("].join('\\\\n');"), false, 'shader arrays join with real newline separators');
 assert.match(threeJs, /powerPreference: 'low-power'/, 'mobile-friendly GPU preference');
 assert.match(threeJs, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.5\)/, 'pixel density is capped');
 assert.match(threeJs, /prefers-reduced-motion: reduce/, '3D pull respects reduced motion');

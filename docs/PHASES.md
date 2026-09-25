@@ -93,3 +93,9 @@ The four choices wrap into a clear two-column selector on small phones, all sele
 Added **రుద్రాక్ష · 3D** as a fifth choice without removing Flow, Pull, Full, or the articulated 2D Hand. It uses a small dependency-free WebGL renderer rather than the separate 3.3 MB experiment. The renderer procedurally builds a brown five-mukhi Rudraksha mesh with physical grooves, uneven seed texture, central openings, directional light, depth, and rotation. Each count pulls the strand through the focus while reusing the same saved total, sound, vibration, reset, and completion behavior.
 
 The renderer initializes only when selected, stops when hidden, caps phone pixel density, and requests the low-power GPU profile. Horizontal dragging rotates the beads while vertical swipes continue scrolling the page. Keyboard Enter counts, reduced-motion preferences skip the pull animation, and a clear fallback appears when WebGL is unavailable.
+
+## Phase 22 — realistic Rudraksha form
+
+Refined the 3D bead from a regular grooved sphere into an irregular five-segment seed. The physical mesh now has deeper continuous mukhi clefts, raised face lobes, an oval/obovoid silhouette, asymmetric tubercles, fine surface roughness, and recessed top and bottom channels around the thread. The material uses darker clefts and pores, low gloss, varied brown tones, and per-bead shape variation.
+
+The form is based on botanical and pharmacopoeial descriptions rather than a copyrighted scan or downloaded 3D model. docs/RUDRAKSHA-3D.md records the references, the visual features derived from them, and the remaining limits of this procedural representation.

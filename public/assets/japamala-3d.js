@@ -28,6 +28,7 @@
         'uniform float uScale;',
         'uniform float uYaw;',
         'uniform float uTilt;',
+        'uniform float uSeed;',
         'varying vec3 vNormal;',
         'varying vec3 vLocal;',
         'vec3 rotateX(vec3 p, float a) {',
@@ -39,11 +40,14 @@
         '  return vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);',
         '}',
         'void main() {',
-        '  vec3 turned = rotateY(rotateX(aPosition, uTilt), uYaw);',
+        '  float longitude = atan(aPosition.z, aPosition.x);',
+        '  float individual = sin(aPosition.y * 6.7 + longitude * 3.0 + uSeed) * 0.018;',
+        '  vec3 shaped = vec3(aPosition.x * (1.0 + individual), aPosition.y * (1.0 + individual * 0.35), aPosition.z * (1.0 + individual));',
+        '  vec3 turned = rotateY(rotateX(shaped, uTilt), uYaw);',
         '  vec3 world = turned * uScale + uOffset;',
         '  world.z -= 9.5;',
         '  vNormal = normalize(rotateY(rotateX(aNormal, uTilt), uYaw));',
-        '  vLocal = aPosition;',
+        '  vLocal = shaped;',
         '  gl_Position = uProjection * vec4(world, 1.0);',
         '}'
     ].join('\n');
@@ -61,19 +65,28 @@
         '  vec3 n = normalize(vNormal);',
         '  vec3 lightDir = normalize(vec3(-0.55, 0.78, 0.72));',
         '  float diffuse = max(dot(n, lightDir), 0.0);',
-        '  float rim = pow(1.0 - max(n.z, 0.0), 2.2);',
+        '  float backLight = max(dot(n, normalize(vec3(0.7, -0.3, 0.45))), 0.0);',
+        '  float rim = pow(1.0 - max(n.z, 0.0), 2.4);',
         '  float longitude = atan(vLocal.z, vLocal.x);',
-        '  float groove = pow(0.5 + 0.5 * cos(longitude * 5.0), 10.0);',
-        '  float pore = hash(floor(vLocal * 18.0));',
-        '  vec3 darkSeed = vec3(0.105, 0.032, 0.012);',
-        '  vec3 warmSeed = vec3(0.47, 0.17, 0.055);',
-        '  vec3 color = mix(darkSeed, warmSeed, 0.52 + diffuse * 0.48);',
-        '  color *= 1.0 - groove * 0.48;',
-        '  color *= 0.88 + pore * 0.16;',
-        '  color += vec3(0.36, 0.20, 0.07) * rim * 0.23;',
-        '  color += vec3(0.42, 0.25, 0.08) * uActive * (0.22 + diffuse * 0.2);',
-        '  float specular = pow(max(dot(reflect(-lightDir, n), vec3(0.0, 0.0, 1.0)), 0.0), 22.0);',
-        '  color += vec3(1.0, 0.72, 0.35) * specular * (0.14 + uActive * 0.22);',
+        '  float latitude = atan(vLocal.y, length(vLocal.xz));',
+        '  float furrowPath = longitude * 5.0 + sin(latitude * 3.0) * 0.13;',
+        '  float groove = pow(0.5 + 0.5 * cos(furrowPath), 15.0);',
+        '  float wrinkle = pow(abs(sin(latitude * 17.0 + longitude * 7.0 + uSeed * 0.04)), 7.0);',
+        '  float pore = hash(floor(vLocal * 23.0));',
+        '  float seedTone = 0.5 + 0.5 * sin(uSeed * 0.17);',
+        '  float bore = (1.0 - smoothstep(0.08, 0.30, length(vLocal.xz))) * smoothstep(0.64, 0.82, abs(vLocal.y));',
+        '  vec3 deepBrown = vec3(0.075, 0.018, 0.006);',
+        '  vec3 barkBrown = mix(vec3(0.31, 0.082, 0.020), vec3(0.47, 0.17, 0.052), seedTone * 0.46);',
+        '  vec3 color = mix(deepBrown, barkBrown, 0.48 + diffuse * 0.52);',
+        '  color *= 1.0 - groove * 0.70;',
+        '  color *= 1.0 - bore * 0.68;',
+        '  color *= 1.0 - wrinkle * (0.08 + pore * 0.08);',
+        '  color *= 0.88 + pore * 0.18;',
+        '  color += vec3(0.30, 0.14, 0.035) * backLight * 0.11;',
+        '  color += vec3(0.34, 0.16, 0.035) * rim * 0.15;',
+        '  color += vec3(0.36, 0.19, 0.055) * uActive * (0.18 + diffuse * 0.16);',
+        '  float specular = pow(max(dot(reflect(-lightDir, n), vec3(0.0, 0.0, 1.0)), 0.0), 34.0);',
+        '  color += vec3(0.92, 0.58, 0.24) * specular * (0.07 + uActive * 0.10);',
         '  gl_FragColor = vec4(color, 1.0);',
         '}'
     ].join('\n');
@@ -108,25 +121,40 @@
     }
 
     function createRudrakshaGeometry() {
-        const longitudeSegments = 40;
-        const latitudeSegments = 22;
+        const longitudeSegments = 52;
+        const latitudeSegments = 28;
         const positions = [];
         const indices = [];
 
         for (let latIndex = 0; latIndex <= latitudeSegments; latIndex++) {
-            const latitude = -1.42 + (latIndex / latitudeSegments) * 2.84;
-            const vertical = Math.sin(latitude) * 1.04;
-            const bodyRing = 0.13 + Math.cos(latitude) * 0.87;
+            const latitude = -1.5 + (latIndex / latitudeSegments) * 3.0;
+            const latitudeCos = Math.max(0, Math.cos(latitude));
+            const vertical = Math.sin(latitude) * 0.99 + Math.sin(latitude * 2) * 0.035;
+            const bodyRing = 0.125 + Math.pow(latitudeCos, 0.82) * 0.875;
+            const middleWeight = Math.pow(latitudeCos, 0.55);
             for (let lonIndex = 0; lonIndex <= longitudeSegments; lonIndex++) {
                 const longitude = (lonIndex / longitudeSegments) * Math.PI * 2;
-                const groove = Math.pow((1 + Math.cos(longitude * 5)) * 0.5, 9);
-                const natural = 1
-                    + Math.sin(longitude * 11 + latitude * 7) * 0.014
-                    + Math.sin(longitude * 17 - latitude * 5) * 0.009;
-                const ring = bodyRing * (1 - groove * 0.16) * natural;
+                const furrowPath = longitude * 5 + Math.sin(latitude * 3) * 0.13;
+                const cleft = Math.pow((1 + Math.cos(furrowPath)) * 0.5, 15);
+                const faceBulge = (1 - Math.cos(furrowPath)) * 0.5;
+                const tubercleA = Math.sin(longitude * 13 + latitude * 19);
+                const tubercleB = Math.sin(longitude * 21 - latitude * 11);
+                const tubercles = Math.max(0, tubercleA * tubercleB) * 0.045 * middleWeight;
+                const fineRoughness = (
+                    Math.sin(longitude * 29 + latitude * 23)
+                    + Math.sin(longitude * 17 - latitude * 31)
+                ) * 0.0075 * middleWeight;
+                const asymmetry = 1
+                    + Math.sin(longitude * 2 + 0.7) * 0.028
+                    + Math.cos(longitude * 3 - latitude * 1.4) * 0.018;
+                const ring = bodyRing
+                    * (1 - cleft * 0.27 + faceBulge * 0.052)
+                    * asymmetry
+                    + tubercles
+                    + fineRoughness;
                 positions.push(
                     ring * Math.cos(longitude),
-                    vertical + Math.sin(longitude * 5) * Math.cos(latitude) * 0.025,
+                    vertical + Math.sin(furrowPath) * latitudeCos * 0.018,
                     ring * Math.sin(longitude)
                 );
             }
@@ -139,6 +167,32 @@
                 const b = a + row;
                 indices.push(a, b, a + 1, b, b + 1, a + 1);
             }
+        }
+
+        // Recessed pole-to-pole channel: taper each irregular outer rim into a
+        // darker inner ring so the silk thread visibly passes through the seed.
+        const topOuterStart = latitudeSegments * row;
+        const bottomOuterStart = 0;
+        const topInnerStart = positions.length / 3;
+        for (let lonIndex = 0; lonIndex <= longitudeSegments; lonIndex++) {
+            const longitude = (lonIndex / longitudeSegments) * Math.PI * 2;
+            const innerRadius = 0.082 + Math.sin(longitude * 7) * 0.006;
+            positions.push(innerRadius * Math.cos(longitude), 0.76, innerRadius * Math.sin(longitude));
+        }
+        const bottomInnerStart = positions.length / 3;
+        for (let lonIndex = 0; lonIndex <= longitudeSegments; lonIndex++) {
+            const longitude = (lonIndex / longitudeSegments) * Math.PI * 2;
+            const innerRadius = 0.082 + Math.cos(longitude * 9) * 0.006;
+            positions.push(innerRadius * Math.cos(longitude), -0.76, innerRadius * Math.sin(longitude));
+        }
+        for (let lonIndex = 0; lonIndex < longitudeSegments; lonIndex++) {
+            const topOuter = topOuterStart + lonIndex;
+            const topInner = topInnerStart + lonIndex;
+            indices.push(topOuter, topInner, topOuter + 1, topOuter + 1, topInner, topInner + 1);
+
+            const bottomOuter = bottomOuterStart + lonIndex;
+            const bottomInner = bottomInnerStart + lonIndex;
+            indices.push(bottomOuter, bottomOuter + 1, bottomInner, bottomOuter + 1, bottomInner + 1, bottomInner);
         }
 
         const normals = new Float32Array(positions.length);
