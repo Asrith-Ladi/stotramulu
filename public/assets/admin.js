@@ -149,7 +149,7 @@
 
   // Update the title/subtitle/description shown on a built-in's hand-written card.
   function patchCardText(key, title, subtitle, desc) {
-    const card = document.querySelector('.card[onclick*="openReader(\'' + key + '\')"]');
+    const card = document.querySelector('.card[data-stotram="' + key + '"]');
     if (!card) return;
     const h3 = card.querySelector('h3');
     const sub = card.querySelector('.card-sub');
@@ -180,9 +180,10 @@
     const themeKey = (cfg.theme || '').replace('-theme', '');
     const grid = gridForCategory(cfg.__cat, cfg.__catLabel);
     const desc = cfg.__desc || (cfg.origin ? (cfg.origin.slice(0, 90) + '…') : '');
-    const div = document.createElement('div');
+    const div = document.createElement('a');
     div.className = 'card cloud-card ' + themeKey;
-    div.setAttribute('onclick', "openReader('" + key + "')");
+    div.href = '?stotram=' + encodeURIComponent(key);
+    div.dataset.stotram = key;
     div.innerHTML =
       '<div class="card-bg"></div>' +
       '<svg class="card-deity-svg" style="color:' + cfg.svgColor + '"><use href="' + cfg.svgId + '"/></svg>' +

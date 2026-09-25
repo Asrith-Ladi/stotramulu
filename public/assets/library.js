@@ -1,4 +1,4 @@
-﻿/* Phase 2: device-local favorites and bookmarkable reader URLs. */
+/* Phase 2: device-local favorites and bookmarkable reader URLs. */
 const FAVORITES_KEY = 'stotramFavorites';
 let favoriteKeys = loadFavorites();
 let applyingReaderRoute = false;
@@ -18,6 +18,24 @@ function readerUrl(type) {
     url.hash = '';
     return url;
 }
+function handlePrayerCardClick(event, type) {
+    if (!isVisibleStotram(type)) return;
+    if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    openReader(type);
+}
+function enhancePrayerCards(root = document) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    root.querySelectorAll('a.card[data-stotram]').forEach(card => {
+        const type = card.dataset.stotram;
+        if (!isVisibleStotram(type)) return;
+        card.href = readerUrl(type).href;
+        if (card.dataset.readerLinkReady === 'true') return;
+        card.dataset.readerLinkReady = 'true';
+        card.addEventListener('click', event => handlePrayerCardClick(event, type));
+    });
+}
+
 function syncReaderRoute(type) {
     updateFavoriteButton(type);
     if (applyingReaderRoute) return;
@@ -119,11 +137,13 @@ window.addEventListener('storage', event => {
     }
 });
 document.addEventListener('DOMContentLoaded', () => {
+    enhancePrayerCards();
     renderFavorites();
     if (new URL(window.location.href).searchParams.has('stotram')) applyReaderRoute();
 });
 
 document.addEventListener('stotras-updated', () => {
+    enhancePrayerCards();
     renderFavorites();
     const type = new URL(window.location.href).searchParams.get('stotram');
     if (type && isVisibleStotram(type) && currentType !== type) applyReaderRoute();

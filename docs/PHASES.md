@@ -71,3 +71,7 @@ Added two independently source-counted Ashtottarams with 108 names each. The Aru
 ## Phase 17 — recent reading history
 
 Expanded the single recent-reading shortcut into a compact list of up to three prayers. Each item keeps its own last valid verse, reopening a prayer moves it to the front without duplicates, existing single-item storage migrates automatically, and invalid or removed content is omitted. The list uses three columns on wider screens and one clear column on phones.
+
+## Phase 18 — semantic, shareable prayer cards
+
+Converted every bundled prayer card from a clickable container into a real link with its reader URL. Normal taps still open the reader without a page reload, while browser link behavior now supports opening in a new tab, copying the destination, and standard keyboard activation. Dynamically managed cards use the same structure, and keyboard focus has a clear visible outline.

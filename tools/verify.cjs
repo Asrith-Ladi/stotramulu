@@ -67,6 +67,8 @@ const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/
 assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
 assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');
 assert.ok(!/card-btn/.test(html+fs.readFileSync('public/assets/admin.js','utf8')),'nested card buttons stay removed');
+assert.equal([...html.matchAll(/<a[^>]+data-stotram="[^"]+"/g)].length,30,'all visible bundled prayer cards are semantic links');
+assert.ok(!/<div[^>]+class="card(?: |")/.test(html),'no bundled prayer card remains a clickable div');
 for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) if(match[1].trim()) new vm.Script(match[1]);
 for(const match of html.matchAll(/(?:src|href)="((?:assets|data)\/[^"?#]+)"/g)) assert.ok(fs.existsSync('public/'+match[1]),match[1]);
 const app=fs.readFileSync('public/assets/app.js','utf8');
