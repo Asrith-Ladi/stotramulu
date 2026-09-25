@@ -28,13 +28,16 @@ let jmTarget = -1;
 let jmVel = 0;
 let jmRaf = null;
 
-let jmMode = 'flow';      // 'flow' (complete mala, beads flow R→L) | 'strand' (pull) | 'full' (static loop)
+let jmMode = 'flow';      // flow | strand | full | hand (articulated 2D pinch and pull)
 try { jmMode = localStorage.getItem('jm_mode_v2') || 'flow'; } catch (e) {}
 let jmFullBeads = [];
 let jmFullBuilt = false;
 let jmFlow = 0, jmFlowTarget = 0, jmFlowVel = 0;
 let jmFlowBeads = [];
 let jmFlowBuilt = false;
+let jmHandBeads = [];
+let jmHandBuilt = false;
+let jmHandTimer = null;
 
 // deterministic per-bead "handcrafted" variation (stable across renders)
 function jmRnd(n) { const x = Math.sin(n * 127.1 + 13.7) * 43758.545; return x - Math.floor(x); }
@@ -61,6 +64,7 @@ function openJapamala() {
     buildJapamala();
     buildFull();
     buildFlow();
+    buildHand();
     const total0 = ensureJapamalaData().total;
     jmTarget = jmScrollForCount(total0); jmScroll = jmTarget; jmVel = 0;
     jmFlowTarget = total0; jmFlow = total0; jmFlowVel = 0;
@@ -71,9 +75,9 @@ function openJapamala() {
 
 /* ---------- switch between the looks ---------- */
 function setJmMode(mode) {
-    jmMode = (mode === 'full' || mode === 'flow') ? mode : 'strand';
+    jmMode = ['flow', 'strand', 'full', 'hand'].includes(mode) ? mode : 'flow';
     try { localStorage.setItem('jm_mode_v2', jmMode); } catch (e) {}
-    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow' };
+    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow', hand: 'jmStageHand' };
     Object.keys(stages).forEach(m => {
         const el = document.getElementById(stages[m]);
         if (el) el.style.display = (m === jmMode) ? '' : 'none';
@@ -83,7 +87,8 @@ function setJmMode(mode) {
     const total = ensureJapamalaData().total;
     if (jmMode === 'strand') { jmTarget = jmScrollForCount(total); jmScroll = jmTarget; jmVel = 0; renderStrand(); }
     else if (jmMode === 'flow') { jmFlowTarget = total; jmFlow = total; jmFlowVel = 0; renderFlow(); }
-    else { renderFull(false); }
+    else if (jmMode === 'full') renderFull(false);
+    else renderHand(false);
 }
 
 // which bead index should sit at the focus for a given cumulative total
@@ -278,6 +283,62 @@ function renderFlow() {
     }
 }
 
+
+/* ---------- LOOK 4: articulated 2D hand ---------- */
+const JM_HAND = { cx: 148, cy: 193, rx: 112, ry: 148, focusX: 262, focusY: 170 };
+
+function buildHand() {
+    if (jmHandBuilt) return;
+    const NS = 'http://www.w3.org/2000/svg';
+    const group = document.getElementById('jmHandBeads');
+    if (!group) return;
+    const focusAngle = Math.atan2((JM_HAND.focusX - JM_HAND.cx) / JM_HAND.rx,
+        -(JM_HAND.focusY - JM_HAND.cy) / JM_HAND.ry);
+    const step = (Math.PI * 2) / JM_BEADS;
+    jmHandBeads = [];
+    for (let i = 0; i < JM_BEADS; i++) {
+        const angle = focusAngle + i * step;
+        const x = JM_HAND.cx + JM_HAND.rx * Math.sin(angle);
+        const y = JM_HAND.cy - JM_HAND.ry * Math.cos(angle);
+        const marker = JM_MARKERS[i];
+        const base = marker ? 'url(#gMarker)' : 'url(#gWood' + (1 + Math.floor(jmRnd(i + 9) * 3)) + ')';
+        const bead = document.createElementNS(NS, 'circle');
+        bead.setAttribute('cx', x.toFixed(1));
+        bead.setAttribute('cy', y.toFixed(1));
+        bead.setAttribute('r', (marker ? 4.7 : 3.8).toFixed(1));
+        bead.setAttribute('class', 'jm-hand-bead');
+        bead.setAttribute('fill', base);
+        bead.dataset.base = base;
+        group.appendChild(bead);
+        jmHandBeads.push(bead);
+    }
+    jmHandBuilt = true;
+}
+
+function renderHand(animate) {
+    const jm = ensureJapamalaData();
+    const inRound = jm.total % JM_BEADS;
+    const filled = (jm.total > 0 && inRound === 0) ? JM_BEADS : inRound;
+    jmHandBeads.forEach((bead, index) => {
+        bead.setAttribute('fill', index < filled ? 'url(#gGold)' : bead.dataset.base);
+        bead.classList.toggle('cur', index === filled - 1);
+    });
+    const active = document.querySelector('#jmHandActiveBead circle');
+    if (active) active.setAttribute('fill', filled > 0 ? 'url(#gGold)' : 'url(#gWood1)');
+    if (animate) animateHandPull();
+}
+
+function animateHandPull() {
+    const stage = document.getElementById('jmStageHand');
+    if (!stage) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    clearTimeout(jmHandTimer);
+    stage.classList.remove('jm-hand-moving');
+    void stage.getBoundingClientRect();
+    stage.classList.add('jm-hand-moving');
+    jmHandTimer = setTimeout(() => stage.classList.remove('jm-hand-moving'), 720);
+}
+
 /* ---------- spring animation (inertia + tiny bounce) ---------- */
 function jmAnimate() {
     const k = 0.16, damp = 0.72;
@@ -309,7 +370,9 @@ function bumpJapa() {
     if (newTarget < jmScroll - 10) { jmScroll = -1; jmVel = 0; }
     jmTarget = newTarget;
     jmFlowTarget = jm.total;
-    if (jmMode === 'full') renderFull(true); else jmStartAnim();
+    if (jmMode === 'full') renderFull(true);
+    else if (jmMode === 'hand') renderHand(true);
+    else jmStartAnim();
 
     jmPlayClick();
     jmThreadFriction();
@@ -339,12 +402,14 @@ async function resetJapamala() {
     jmFlowTarget = 0; jmFlow = 0; jmFlowVel = 0;
     if (jmMode === 'strand') renderStrand();
     else if (jmMode === 'flow') renderFlow();
-    else renderFull(false);
+    else if (jmMode === 'full') renderFull(false);
+    else renderHand(false);
     renderCount();
 }
 
 function jmCelebrate() {
-    const svg = document.getElementById(jmMode === 'full' ? 'jmSvgFull' : (jmMode === 'flow' ? 'jmSvgFlow' : 'jmSvg'));
+    const ids = { full: 'jmSvgFull', flow: 'jmSvgFlow', hand: 'jmSvgHand', strand: 'jmSvg' };
+    const svg = document.getElementById(ids[jmMode] || 'jmSvgFlow');
     if (svg) { svg.classList.remove('celebrate'); void svg.getBoundingClientRect(); svg.classList.add('celebrate'); }
     jmConfetti();
 }

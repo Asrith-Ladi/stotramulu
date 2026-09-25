@@ -1,0 +1,68 @@
+/* Fourth Japamala view: a lightweight SVG hand that pinches and pulls a bead. */
+.jm-modes { flex-wrap: wrap; }
+.jm-stage-hand {
+    border-radius: 28px;
+    background: radial-gradient(circle at 72% 38%, rgba(224,174,82,.12), transparent 28%),
+        radial-gradient(circle at 42% 42%, rgba(109,58,38,.18), transparent 62%);
+    overflow: hidden;
+}
+.jm-svg-hand { width: min(92vw, 360px); }
+.jm-hand-thread { stroke-width: 1.2; }
+.jm-hand-bead {
+    stroke: rgba(255,228,174,.28); stroke-width: .45;
+    transition: fill .22s ease, filter .22s ease;
+}
+.jm-hand-bead.cur {
+    stroke: rgba(255,239,196,.95); stroke-width: 1;
+    filter: drop-shadow(0 0 4px rgba(255,215,112,.9));
+}
+.jm-hand-index, .jm-hand-thumb, .jm-hand-active-bead {
+    transform-box: view-box; will-change: transform;
+}
+.jm-hand-index { transform-origin: 272px 169px; }
+.jm-hand-thumb { transform-origin: 269px 181px; }
+.jm-hand-active-bead {
+    transform-origin: 262px 170px;
+    filter: drop-shadow(0 0 5px rgba(255,220,132,.72));
+}
+.jm-stage-hand.jm-hand-moving .jm-hand-index {
+    animation: jmIndexPull 680ms cubic-bezier(.22,.72,.22,1) both;
+}
+.jm-stage-hand.jm-hand-moving .jm-hand-thumb {
+    animation: jmThumbPull 680ms cubic-bezier(.22,.72,.22,1) both;
+}
+.jm-stage-hand.jm-hand-moving .jm-hand-active-bead {
+    animation: jmBeadPull 680ms cubic-bezier(.22,.72,.22,1) both;
+}
+@keyframes jmIndexPull {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    24% { transform: translate(-5px,5px) rotate(4deg); }
+    58% { transform: translate(-15px,17px) rotate(7deg); }
+    78% { transform: translate(-10px,11px) rotate(3deg); }
+}
+@keyframes jmThumbPull {
+    0%,100% { transform: translate(0,0) rotate(0deg); }
+    24% { transform: translate(-4px,-5px) rotate(-5deg); }
+    58% { transform: translate(-15px,11px) rotate(-8deg); }
+    78% { transform: translate(-10px,7px) rotate(-3deg); }
+}
+@keyframes jmBeadPull {
+    0%,18%,100% { transform: translate(0,0) scale(1); opacity: 1; }
+    28% { transform: translate(-4px,4px) scale(1.04); opacity: 1; }
+    60% { transform: translate(-15px,18px) scale(1.06); opacity: 1; }
+    79% { transform: translate(-10px,11px) scale(.92); opacity: .5; }
+}
+.jm-hand-caption {
+    fill: var(--gold-light); font-family: 'Noto Sans Telugu', sans-serif;
+    font-size: 11px; letter-spacing: 1.2px; opacity: .62;
+}
+@media (max-width: 430px) {
+    .jm-modes { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .jm-mode-btn { min-height: 44px; padding-inline: 8px; }
+    .jm-stage-hand { margin-inline: -4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .jm-stage-hand.jm-hand-moving .jm-hand-index,
+    .jm-stage-hand.jm-hand-moving .jm-hand-thumb,
+    .jm-stage-hand.jm-hand-moving .jm-hand-active-bead { animation: none; }
+}

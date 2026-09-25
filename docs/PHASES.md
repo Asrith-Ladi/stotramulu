@@ -81,3 +81,9 @@ Converted every bundled prayer card from a clickable container into a real link 
 Consolidated the final presentation into a dedicated design-system stylesheet with a warmer devotional palette, quieter depth, clearer hierarchy, deity accent colors, balanced desktop density, single-column mobile cards, large touch targets, visible keyboard focus, and reduced-motion support. Grandham readers retain the light manuscript surface while controls now use the same visual language. Corrected the English site subtitle and added theme and description metadata.
 
 Split the Cloudflare Worker into routing, OCR, authentication, and HTTP response modules. OCR now accepts only JPEG, PNG, and WebP images, limits file count and encoded payload size, verifies authentication before model usage, and disables response caching. Automated Worker checks now run with the primary verification suite.
+
+## Phase 20 — articulated hand Japamala
+
+Added a fourth **చేతి · Hand** mode while retaining Flow, Pull, and Full. The new lightweight 2D SVG view draws all 108 beads and an articulated hand. On each count, the index finger and thumb close around the focused bead, pull it together, release it, and return. It shares the existing saved total, sound, vibration, reset, and 108-count celebration.
+
+The four choices wrap into a clear two-column selector on small phones, all selectors keep a 44px touch target, and reduced-motion preferences disable the gesture animation without disabling counting. The hand implementation is isolated in its own stylesheet and has a dedicated verification script.

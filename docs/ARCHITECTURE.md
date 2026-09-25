@@ -9,11 +9,12 @@ The site uses plain browser modules and Cloudflare Worker modules without a fron
 - assets/styles.css: legacy component and feature styles.
 - assets/reading.css: reading accessibility and feature layouts.
 - assets/design-system.css: final visual tokens and presentation layer shared by Home and Reader.
+- assets/japamala-hand.css: isolated responsive styling and articulated finger/bead motion for the fourth Japamala view.
 - assets/reader-navigation.js: reading progress, recent-reading history, section jumps, and Home category navigation.
 - assets/reader.js: prayer rendering, read marks, font preference, meanings, Grandham theme, and in-prayer search.
 - assets/tracking.js: local pooja state, calendar, counters, vows, reminders, and file backup.
 - assets/app.js: page orchestration, global prayer search, dialogs, feedback, analytics, and startup.
-- assets/japamala.js: Japamala interaction.
+- assets/japamala.js: four Japamala views, shared counting state, sound, haptics, reset, and completion feedback.
 - assets/library.js: favorites, semantic prayer-card links, and shareable reader routes.
 - assets/cloud.js: optional cloud synchronization.
 - assets/admin.js: admin-only content management.
@@ -32,6 +33,6 @@ OCR accepts at most six JPEG, PNG, or WebP images, limits individual and combine
 
 ## Verification
 
-Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, and node tools/verify-worker.cjs.
+Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, node tools/verify-worker.cjs, and node tools/verify-japamala.cjs.
 
 The primary verifier checks all datasets, source metadata, frontend and Worker syntax, asset links, design-system load order, semantic card structure, reader behavior, and module boundaries.
