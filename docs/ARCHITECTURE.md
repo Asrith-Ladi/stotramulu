@@ -12,7 +12,7 @@ The site uses plain browser modules and Cloudflare Worker modules without a fron
 - assets/japamala-hand.css: isolated responsive styling and articulated finger/bead motion for the fourth Japamala view.
 - assets/japamala-3d.css: presentation and mobile input behavior for the fifth WebGL Rudraksha view.
 - assets/reader-navigation.js: reading progress, recent-reading history, section jumps, and Home category navigation.
-- assets/reader.js: prayer rendering, read marks, font preference, meanings, Grandham theme, and in-prayer search.
+- assets/reader.js: prayer rendering, read marks, font preference, meanings, and in-prayer search. Grandham is the fixed reader presentation defined by the page and styles.
 - assets/tracking.js: local pooja state, calendar, counters, vows, reminders, and file backup.
 - assets/app.js: page orchestration, global prayer search, dialogs, feedback, analytics, and startup.
 - assets/japamala.js: five Japamala views, shared counting state, sound, haptics, reset, and completion feedback.
@@ -35,6 +35,6 @@ OCR accepts at most six JPEG, PNG, or WebP images, limits individual and combine
 
 ## Verification
 
-Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, node tools/verify-worker.cjs, and node tools/verify-japamala.cjs.
+Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, node tools/verify-worker.cjs, node tools/verify-japamala.cjs, and node tools/verify-reader-theme.cjs.
 
 The primary verifier checks all datasets, source metadata, frontend and Worker syntax, asset links, design-system load order, semantic card structure, reader behavior, and module boundaries.

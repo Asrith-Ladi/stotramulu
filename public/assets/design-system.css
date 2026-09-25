@@ -95,7 +95,18 @@ body {
     border-radius: var(--ui-radius-small);
     color: var(--ui-text);
     background: #24182e;
+    color-scheme: dark;
 }
+.library-selector option,
+.library-selector optgroup {
+    color: #fff8e8;
+    background-color: #24182e;
+}
+.library-selector option:checked {
+    color: #24170d;
+    background-color: #f7dc91;
+}
+.home-page input[type="date"] { color-scheme: dark; }
 .collapsible-section-heading { padding: 14px 16px; }
 .collapsible-section-heading:hover,
 .collapsible-section-heading.is-open {

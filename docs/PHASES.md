@@ -99,3 +99,9 @@ The renderer initializes only when selected, stops when hidden, caps phone pixel
 Refined the 3D bead from a regular grooved sphere into an irregular five-segment seed. The physical mesh now has deeper continuous mukhi clefts, raised face lobes, an oval/obovoid silhouette, asymmetric tubercles, fine surface roughness, and recessed top and bottom channels around the thread. The material uses darker clefts and pores, low gloss, varied brown tones, and per-bead shape variation.
 
 The form is based on botanical and pharmacopoeial descriptions rather than a copyrighted scan or downloaded 3D model. docs/RUDRAKSHA-3D.md records the references, the visual features derived from them, and the remaining limits of this procedural representation.
+
+## Phase 23 — fixed Grandham reader and Home control contrast
+
+Grandham is now the single reading presentation for every prayer. The old theme toggle and saved on/off preference were removed, reducing the reader options to controls that still change reading behavior. Existing visitors who previously disabled Grandham now receive the same manuscript layout without a flash during startup.
+
+The Home category selector now gives native mobile option panels an explicit dark color scheme, light text, and a high-contrast gold selected row. The Home date field uses the same native dark-control hint. No new Home buttons or nested navigation were added.

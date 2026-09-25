@@ -21,11 +21,7 @@
     <link rel="stylesheet" href="assets/japamala-hand.css">
     <link rel="stylesheet" href="assets/japamala-3d.css">
 </head>
-<body>
-<script>
-    try { document.body.classList.toggle('grandham', localStorage.getItem('grandham') !== '0'); }
-    catch (e) { document.body.classList.add('grandham'); }
-</script>
+<body class="grandham">
 
 <div class="bg-pattern"></div>
 <div class="bg-mesh"></div>
@@ -962,15 +958,13 @@
     </section>
 
     <details class="reader-options">
-        <summary><span>⚙ పఠన ఎంపికలు</span><small>అర్థం, గ్రంథ రూపం, శ్లోకం, సేవ్, లెక్క</small></summary>
+        <summary><span>⚙ పఠన ఎంపికలు</span><small>అర్థం, శ్లోకం, సేవ్, లెక్క</small></summary>
         <div class="reader-options-content">
             <div class="reader-toggle-row">
                 <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
                     <label>అర్థం చూపించు</label><div class="toggle-switch"></div>
                 </div>
-                <div class="meaning-toggle grandham-toggle" id="grandhamToggle" onclick="toggleGrandham()">
-                    <label>📜 గ్రంథ రూపం</label><div class="toggle-switch"></div>
-                </div>
+
             </div>
             <nav class="reader-navigation" aria-label="పఠన మార్గదర్శి">
                 <label for="verseJump">శ్లోకానికి వెళ్లండి</label>

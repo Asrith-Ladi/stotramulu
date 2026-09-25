@@ -337,8 +337,11 @@ body.grandham .reader-section-label { color: #573416; }
     border-radius: 12px;
     background: #24192d;
     cursor: pointer;
+    color-scheme: dark;
 }
-.library-selector option { color: #24170d; background: #fff7e7; }
+.library-selector option,
+.library-selector optgroup { color: #fff8e8; background-color: #24182e; }
+.library-selector option:checked { color: #24170d; background-color: #f7dc91; }
 
 .cards-section { scroll-margin-top: 100px; }
 .collapsible-section-heading { margin-block: 12px; }

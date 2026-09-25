@@ -515,7 +515,6 @@ function gaEvent(name, params) {
 ============================================================ */
 createParticles();
 initMeaningsToggle();
-initGrandham();
 initVoice();
 showDueReminders();
 initHomePradakshina();
