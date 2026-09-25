@@ -13,8 +13,8 @@
   // 🔑 PASTE YOUR FIREBASE UID HERE (Firebase console → Authentication → Users → your row → copy "User UID")
   const ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
 
-  // 🌐 Image→text OCR endpoint. This is a Cloudflare **Pages Function** that
-  //    ships with the site (see functions/api/ocr.js), so it's same-origin —
+  // 🌐 Image→text OCR endpoint. This is a Cloudflare Worker endpoint that
+  //    ships with the site (see src/ocr.js), so it's same-origin —
   //    no separate Worker, no CORS. Just set the GEMINI_API_KEY secret on the
   //    Pages project. (Locally via python http.server there is no function, so
   //    OCR only works on the deployed site.)

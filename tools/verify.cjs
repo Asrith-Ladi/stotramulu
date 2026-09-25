@@ -63,9 +63,14 @@ for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js')))
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);
 }
 execFileSync(process.execPath,['tools/verify-reader-smoke.cjs']);
+execFileSync(process.execPath,['tools/verify-worker.cjs']);
 const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
 assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
 assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');
+assert.ok(html.indexOf('assets/reading.css') < html.indexOf('assets/design-system.css'),'final design system load order');
+const design=fs.readFileSync('public/assets/design-system.css','utf8');
+assert.match(design,/--ui-gold-bright:/);
+assert.match(design,/@media \(prefers-reduced-motion: reduce\)/);
 assert.ok(!/card-btn/.test(html+fs.readFileSync('public/assets/admin.js','utf8')),'nested card buttons stay removed');
 assert.equal([...html.matchAll(/<a[^>]+data-stotram="[^"]+"/g)].length,30,'all visible bundled prayer cards are semantic links');
 assert.ok(!/<div[^>]+class="card(?: |")/.test(html),'no bundled prayer card remains a clickable div');

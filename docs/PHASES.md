@@ -75,3 +75,9 @@ Expanded the single recent-reading shortcut into a compact list of up to three p
 ## Phase 18 — semantic, shareable prayer cards
 
 Converted every bundled prayer card from a clickable container into a real link with its reader URL. Normal taps still open the reader without a page reload, while browser link behavior now supports opening in a new tab, copying the destination, and standard keyboard activation. Dynamically managed cards use the same structure, and keyboard focus has a clear visible outline.
+
+## Phase 19 — end-to-end experience and backend cleanup
+
+Consolidated the final presentation into a dedicated design-system stylesheet with a warmer devotional palette, quieter depth, clearer hierarchy, deity accent colors, balanced desktop density, single-column mobile cards, large touch targets, visible keyboard focus, and reduced-motion support. Grandham readers retain the light manuscript surface while controls now use the same visual language. Corrected the English site subtitle and added theme and description metadata.
+
+Split the Cloudflare Worker into routing, OCR, authentication, and HTTP response modules. OCR now accepts only JPEG, PNG, and WebP images, limits file count and encoded payload size, verifies authentication before model usage, and disables response caching. Automated Worker checks now run with the primary verification suite.

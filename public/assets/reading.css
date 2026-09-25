@@ -243,7 +243,6 @@ body.grandham .reading-position-bar progress::-webkit-progress-bar { background:
 }
 .recent-reading-section h2 { margin: 0 0 10px; color: #f5e0a3; font-size: 1.15rem; }
 .recent-reading-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
-.recent-reading-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
 .recent-reading-section button {
     display: grid; gap: 3px; width: 100%; min-height: 64px; padding: 12px 16px;
     border: 1px solid #b99447; border-radius: 12px; background: #2b1b3d;

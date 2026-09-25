@@ -1,34 +1,37 @@
-# Frontend architecture
+# Application architecture
 
-The site uses plain browser scripts and no build step. Features are separated by responsibility while existing HTML handlers remain stable.
+The site uses plain browser modules and Cloudflare Worker modules without a frontend build step.
 
-## Runtime modules
+## Frontend modules
 
-- data/stotras/*.js: immutable bundled prayer datasets.
+- data/stotras/*.js: bundled prayer datasets.
 - data/content-audit.js: source, review date, verification status, and edition scope.
-- assets/reader-navigation.js: URL state, reading progress, favorites, section jumps, and Home library navigation.
-- assets/reader.js: prayer rendering, read marks, font preference, meanings, Grandham theme, and search inside a prayer.
+- assets/styles.css: legacy component and feature styles.
+- assets/reading.css: reading accessibility and feature layouts.
+- assets/design-system.css: final visual tokens and presentation layer shared by Home and Reader.
+- assets/reader-navigation.js: reading progress, recent-reading history, section jumps, and Home category navigation.
+- assets/reader.js: prayer rendering, read marks, font preference, meanings, Grandham theme, and in-prayer search.
 - assets/tracking.js: local pooja state, calendar, counters, vows, reminders, and file backup.
-- assets/app.js: page orchestration, global prayer search, shared dialogs, feedback, analytics, and startup.
-- assets/japamala.js: Japamala interaction only.
+- assets/app.js: page orchestration, global prayer search, dialogs, feedback, analytics, and startup.
+- assets/japamala.js: Japamala interaction.
+- assets/library.js: favorites, semantic prayer-card links, and shareable reader routes.
 - assets/cloud.js: optional cloud synchronization.
 - assets/admin.js: admin-only content management.
-- assets/weekday.js: day suggestions.
-- assets/library.js: favorites and shareable reader routes.
+- assets/weekday.js: weekday suggestions.
 
-## Dependency direction
+Data loads first. Reader navigation, reader behavior, and tracking load before app.js. Optional cloud and admin modules load afterward. The library module attaches URL behavior after all bundled and cloud cards are available.
 
-Data loads first. Reader navigation, reader behavior, and tracking load before app.js. app.js coordinates those services during startup. Optional cloud, admin, weekday, and library features load afterward.
+## Worker modules
 
-A module owns its own state and behavior. Cross-module calls use the small existing browser-global API because the static site has no bundler and HTML currently uses inline event handlers. New features should be added to the module that owns the behavior rather than expanding app.js.
+- src/index.js: HTTP routing and static asset fallback only.
+- src/ocr.js: authenticated OCR workflow, payload limits, Gemini request, and two-pass comparison.
+- src/auth.js: Firebase token verification.
+- src/http.js: JSON response policy.
+
+OCR accepts at most six JPEG, PNG, or WebP images, limits individual and combined encoded payload sizes, verifies the caller before invoking Gemini, supports an optional ADMIN_UID runtime override, and marks responses as non-cacheable.
 
 ## Verification
 
-Run:
+Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, and node tools/verify-worker.cjs.
 
-- node tools/verify.cjs
-- node tools/verify-reader-navigation.cjs
-- node tools/verify-library.cjs
-- node tools/verify-reader-smoke.cjs
-
-The primary verifier checks script syntax and asset links, requires app.js to remain below 700 lines, and confirms that reader and tracking responsibilities remain in their dedicated modules.
+The primary verifier checks all datasets, source metadata, frontend and Worker syntax, asset links, design-system load order, semantic card structure, reader behavior, and module boundaries.

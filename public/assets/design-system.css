@@ -1,0 +1,259 @@
+/* Phase 19: unified visual system for a calm, contemporary devotional experience. */
+:root {
+    --ui-bg: #0d0814;
+    --ui-bg-soft: #171020;
+    --ui-surface: rgba(31, 21, 40, .92);
+    --ui-surface-raised: rgba(42, 28, 52, .94);
+    --ui-border: rgba(225, 184, 99, .28);
+    --ui-border-strong: rgba(244, 207, 126, .58);
+    --ui-text: #fff8e8;
+    --ui-text-soft: #d8cde0;
+    --ui-gold: #e2b85f;
+    --ui-gold-bright: #f7dc91;
+    --ui-ruby: #a94362;
+    --ui-radius: 18px;
+    --ui-radius-small: 12px;
+    --ui-shadow: 0 16px 42px rgba(0, 0, 0, .26);
+    --ui-shadow-soft: 0 7px 24px rgba(0, 0, 0, .2);
+}
+
+html { color-scheme: dark; scroll-padding-top: 18px; }
+body {
+    color: var(--ui-text);
+    background:
+        radial-gradient(circle at 12% 0%, rgba(126, 54, 92, .2), transparent 34rem),
+        radial-gradient(circle at 88% 16%, rgba(181, 129, 42, .14), transparent 30rem),
+        linear-gradient(180deg, #100916 0%, var(--ui-bg) 42%, #08050d 100%);
+}
+.bg-pattern { opacity: .25; }
+.bg-mesh {
+    opacity: .6;
+    background:
+        linear-gradient(120deg, transparent 0 48%, rgba(226,184,95,.035) 49% 51%, transparent 52%),
+        radial-gradient(circle at center, rgba(169,67,98,.08), transparent 60%);
+}
+.particles { opacity: .45; }
+
+.header {
+    border-bottom: 1px solid rgba(226,184,95,.14);
+    background: linear-gradient(180deg, rgba(18,10,25,.92), rgba(18,10,25,.68));
+    backdrop-filter: blur(16px);
+}
+.header-content { width: min(100% - 24px, 1120px); margin-inline: auto; }
+.header h1 {
+    color: var(--ui-gold-bright);
+    font-size: clamp(1.45rem, 4vw, 2.25rem);
+    text-shadow: 0 2px 18px rgba(226,184,95,.18);
+}
+.header-sub { color: var(--ui-text-soft); }
+.header-om { color: var(--ui-gold); }
+
+.home-page { width: min(100% - 24px, 1120px); margin-inline: auto; }
+.welcome-section {
+    position: relative;
+    width: 100%;
+    margin: 18px auto 16px;
+    padding: clamp(24px, 5vw, 44px) 18px;
+    overflow: hidden;
+    border: 1px solid var(--ui-border);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 50% 15%, rgba(247,220,145,.16), transparent 42%),
+        linear-gradient(135deg, rgba(68,35,62,.72), rgba(27,18,36,.82));
+    box-shadow: var(--ui-shadow);
+}
+.welcome-section::after {
+    content: '';
+    position: absolute;
+    inset: auto 12% 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ui-gold), transparent);
+}
+.welcome-section .om-symbol { color: var(--ui-gold-bright); text-shadow: 0 0 28px rgba(226,184,95,.24); }
+.welcome-section h2 { color: var(--ui-text); }
+.welcome-section p { color: var(--ui-text-soft); }
+
+.home-actions-toggle,
+.library-navigation.library-selector,
+.collapsible-section-heading,
+.recent-reading-section,
+.favorites-section,
+.practice-details {
+    border-color: var(--ui-border);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow-soft);
+}
+.home-actions-toggle {
+    color: var(--ui-text);
+    background: linear-gradient(135deg, rgba(57,36,66,.96), rgba(28,19,37,.96));
+}
+.home-actions-toggle small, .library-selector label { color: var(--ui-text-soft); }
+.home-actions-toggle::after, .collapsible-section-heading::after { color: var(--ui-gold-bright); }
+
+.library-selector select {
+    border-color: var(--ui-border-strong);
+    border-radius: var(--ui-radius-small);
+    color: var(--ui-text);
+    background: #24182e;
+}
+.collapsible-section-heading { padding: 14px 16px; }
+.collapsible-section-heading:hover,
+.collapsible-section-heading.is-open {
+    border-color: var(--ui-border-strong);
+    background: linear-gradient(135deg, rgba(56,35,65,.96), rgba(28,19,37,.96));
+}
+.section-title { color: var(--ui-gold-bright); }
+.section-sub { color: var(--ui-text-soft); }
+.section-count {
+    border-color: var(--ui-border-strong);
+    color: #2b1b12;
+    background: var(--ui-gold-bright);
+}
+
+.cards-grid { gap: 12px; }
+.card {
+    min-height: 154px;
+    border-color: var(--ui-border);
+    border-radius: var(--ui-radius);
+    color: var(--ui-text);
+    background:
+        linear-gradient(115deg, rgba(55,36,66,.88), rgba(25,17,34,.94));
+    box-shadow: var(--ui-shadow-soft);
+    transform: translateY(0);
+}
+.card::before {
+    padding: 0;
+    background: linear-gradient(180deg, transparent, rgba(226,184,95,.18));
+    mask: none;
+    -webkit-mask: none;
+    opacity: .5;
+}
+.card:hover {
+    transform: translateY(-3px);
+    border-color: var(--ui-border-strong);
+    box-shadow: 0 16px 34px rgba(0,0,0,.3);
+}
+.card-content { position: relative; z-index: 2; padding: 18px 20px; }
+.card-icon-wrap {
+    border: 1px solid rgba(247,220,145,.22);
+    background: rgba(255,255,255,.055);
+}
+.card h3 { color: var(--ui-text); }
+.card .card-sub { color: var(--ui-gold-bright); }
+.card .card-desc { color: var(--ui-text-soft); }
+.card .card-action {
+    min-height: 32px;
+    margin-top: 7px;
+    padding: 5px 11px;
+    color: var(--ui-gold-bright);
+}
+.card.vishnu { border-left: 3px solid #7098d8; }
+.card.lalitha, .card.durga, .card.lakshmi { border-left: 3px solid #d46b92; }
+.card.shiva, .card.bilva { border-left: 3px solid #88a9ca; }
+.card.ganesha, .card.hanuman, .card.harati { border-left: 3px solid #dc8b56; }
+.card.venkat, .card.govinda, .card.saibaba { border-left: 3px solid #d6ad55; }
+
+.home-primary-actions button,
+.recent-reading-section button,
+.reader-library-actions button,
+.reader-navigation button,
+.reader-navigation select,
+.clear-reading-button {
+    border-color: var(--ui-border);
+    color: var(--ui-text);
+    background: var(--ui-surface-raised);
+}
+.home-primary-actions button:first-child {
+    color: #2a1908;
+    background: linear-gradient(135deg, var(--ui-gold-bright), #d49a36);
+}
+.home-primary-actions button:hover,
+.recent-reading-section button:hover,
+.reader-library-actions button:hover,
+.reader-navigation button:hover {
+    border-color: var(--ui-border-strong);
+    background: #3a2846;
+}
+.recent-reading-section h2, .favorites-section h2 { color: var(--ui-gold-bright); }
+
+.reader-page { width: min(100% - 20px, 960px); margin-inline: auto; }
+.reader-title-section {
+    border: 1px solid var(--ui-border);
+    background:
+        radial-gradient(circle at 50% 0%, rgba(226,184,95,.15), transparent 55%),
+        var(--ui-surface);
+}
+.reader-title-section h2 { color: var(--ui-gold-bright); }
+.reader-title-section p { color: var(--ui-text-soft); }
+.reader-tool-panel,
+.reader-options,
+.origin-details,
+.source-details {
+    border-color: var(--ui-border);
+    background: var(--ui-surface);
+    box-shadow: var(--ui-shadow-soft);
+}
+.reader-search, .font-control, .meaning-toggle {
+    border-color: var(--ui-border);
+    background: rgba(255,255,255,.045);
+}
+.reading-position-bar {
+    border-color: var(--ui-border-strong);
+    background: rgba(25,17,34,.94);
+}
+.reader-options > summary,
+.origin-details > summary,
+.source-details > summary { color: var(--ui-gold-bright); }
+
+body.grandham .reader-page { color: #392411; }
+body.grandham .reader-title-section,
+body.grandham .reader-tool-panel,
+body.grandham .reader-options,
+body.grandham .origin-details,
+body.grandham .source-details {
+    color: #432b15;
+    border-color: #b58a50;
+    background: linear-gradient(135deg, rgba(248,235,203,.98), rgba(235,211,164,.98));
+}
+body.grandham .reader-title-section h2,
+body.grandham .reader-options > summary,
+body.grandham .origin-details > summary,
+body.grandham .source-details > summary { color: #573416; }
+body.grandham .reader-title-section p { color: #68492a; }
+body.grandham .reader-tool-panel { background: rgba(246,230,194,.97); }
+body.grandham .reader-search,
+body.grandham .font-control,
+body.grandham .meaning-toggle {
+    color: #40260f;
+    border-color: #b58a50;
+    background: rgba(255,249,230,.65);
+}
+body.grandham .reader-search input { color: #38210e; }
+body.grandham .reader-options small { color: #68492a; }
+body.grandham .reader-options-content { border-color: #b58a50; }
+body.grandham .reader-navigation button,
+body.grandham .reader-navigation select,
+body.grandham .reader-library-actions button,
+body.grandham .clear-reading-button {
+    color: #40260f;
+    border-color: #a97b3e;
+    background: #f5e3b8;
+}
+
+@media (max-width: 700px) {
+    .home-page { width: min(100% - 16px, 1120px); }
+    .welcome-section { margin-top: 10px; padding-block: 24px; border-radius: 18px; }
+    .card { min-height: 0; }
+    .card-content { grid-template-columns: 48px minmax(0,1fr); padding: 15px; column-gap: 12px; }
+    .card-icon-wrap { width: 46px; height: 46px; }
+    .card .card-desc { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card .card-action { justify-self: start; }
+}
+@media (max-width: 380px) {
+    .header-content { width: min(100% - 16px, 1120px); }
+    .welcome-section .om-symbol { font-size: 52px; }
+    .card h3 { font-size: 1.05rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .card:hover { transform: none; }
+}
