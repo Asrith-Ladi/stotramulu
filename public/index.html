@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="assets/reading.css">
     <link rel="stylesheet" href="assets/design-system.css">
     <link rel="stylesheet" href="assets/japamala-hand.css">
+    <link rel="stylesheet" href="assets/japamala-3d.css">
 </head>
 <body>
 <script>
@@ -1117,7 +1118,7 @@
     </defs>
 </svg>
 
-<!-- ============ JAPAMALA PAGE (four views sharing one count) ============ -->
+<!-- ============ JAPAMALA PAGE (five views sharing one count) ============ -->
 <div class="japamala-page" id="japamalaPage" onclick="bumpJapa()">
     <div class="jm-head">📿 జపమాల</div>
     <div class="jm-modes">
@@ -1125,6 +1126,7 @@
         <button class="jm-mode-btn" data-mode="strand" onclick="event.stopPropagation(); setJmMode('strand')">దండ · Pull</button>
         <button class="jm-mode-btn" data-mode="full" onclick="event.stopPropagation(); setJmMode('full')">వలయం · Full</button>
         <button class="jm-mode-btn" data-mode="hand" onclick="event.stopPropagation(); setJmMode('hand')">చేతి · Hand</button>
+        <button class="jm-mode-btn" data-mode="rudraksha3d" onclick="event.stopPropagation(); setJmMode('rudraksha3d')">రుద్రాక్ష · 3D</button>
     </div>
     <div class="jm-count-top"><span id="jmCount">0</span><span class="jm-of"> / 108</span></div>
     <div class="jm-rounds" id="jmRounds"></div>
@@ -1199,6 +1201,19 @@
             </g>
             <text x="148" y="406" class="jm-hand-caption" text-anchor="middle">Tap · pinch · pull one bead</text>
         </svg>
+    </div>
+
+    <!-- LOOK 5: lightweight WebGL Rudraksha strand; initialized only when selected -->
+    <div class="jm-stage jm-stage-rudraksha3d" id="jmStageRudraksha3d" style="display:none">
+        <div class="jm-rudraksha-aura" aria-hidden="true"></div>
+        <canvas id="jmRudrakshaCanvas" class="jm-rudraksha-canvas" width="720" height="760"
+                role="button" tabindex="0" aria-label="తిరిగే త్రిమితీయ ఐదు ముఖాల రుద్రాక్ష జపమాల. లెక్కించడానికి నొక్కండి"></canvas>
+        <div class="jm-rudraksha-fallback" id="jmRudrakshaFallback" hidden>
+            <span aria-hidden="true">📿</span>
+            <strong>3D graphics are unavailable</strong>
+            <small>The COUNT button still works, or choose one of the other four views.</small>
+        </div>
+        <div class="jm-rudraksha-hint">5-mukhi Rudraksha · Drag to rotate · Tap to count</div>
     </div>
 
     <div class="jm-controls">
@@ -1317,6 +1332,7 @@
 <script src="assets/reader.js"></script>
 <script src="assets/tracking.js"></script>
 <script src="assets/app.js"></script>
+<script src="assets/japamala-3d.js"></script>
 <script src="assets/japamala.js"></script>
 
 <!-- Firebase (compat SDK via CDN — no build step) + optional cloud backup -->

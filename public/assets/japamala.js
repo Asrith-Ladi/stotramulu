@@ -28,7 +28,7 @@ let jmTarget = -1;
 let jmVel = 0;
 let jmRaf = null;
 
-let jmMode = 'flow';      // flow | strand | full | hand (articulated 2D pinch and pull)
+let jmMode = 'flow';      // flow | strand | full | hand | rudraksha3d
 try { jmMode = localStorage.getItem('jm_mode_v2') || 'flow'; } catch (e) {}
 let jmFullBeads = [];
 let jmFullBuilt = false;
@@ -75,9 +75,10 @@ function openJapamala() {
 
 /* ---------- switch between the looks ---------- */
 function setJmMode(mode) {
-    jmMode = ['flow', 'strand', 'full', 'hand'].includes(mode) ? mode : 'flow';
+    jmMode = ['flow', 'strand', 'full', 'hand', 'rudraksha3d'].includes(mode) ? mode : 'flow';
     try { localStorage.setItem('jm_mode_v2', jmMode); } catch (e) {}
-    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow', hand: 'jmStageHand' };
+    if (jmRaf) { cancelAnimationFrame(jmRaf); jmRaf = null; }
+    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow', hand: 'jmStageHand', rudraksha3d: 'jmStageRudraksha3d' };
     Object.keys(stages).forEach(m => {
         const el = document.getElementById(stages[m]);
         if (el) el.style.display = (m === jmMode) ? '' : 'none';
@@ -85,10 +86,12 @@ function setJmMode(mode) {
     document.querySelectorAll('.jm-mode-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.mode === jmMode));
     const total = ensureJapamalaData().total;
+    if (window.Japamala3D && jmMode !== 'rudraksha3d') window.Japamala3D.hide();
     if (jmMode === 'strand') { jmTarget = jmScrollForCount(total); jmScroll = jmTarget; jmVel = 0; renderStrand(); }
     else if (jmMode === 'flow') { jmFlowTarget = total; jmFlow = total; jmFlowVel = 0; renderFlow(); }
     else if (jmMode === 'full') renderFull(false);
-    else renderHand(false);
+    else if (jmMode === 'hand') renderHand(false);
+    else if (window.Japamala3D) window.Japamala3D.show(total);
 }
 
 // which bead index should sit at the focus for a given cumulative total
@@ -372,6 +375,7 @@ function bumpJapa() {
     jmFlowTarget = jm.total;
     if (jmMode === 'full') renderFull(true);
     else if (jmMode === 'hand') renderHand(true);
+    else if (jmMode === 'rudraksha3d' && window.Japamala3D) window.Japamala3D.advance(jm.total);
     else jmStartAnim();
 
     jmPlayClick();
@@ -403,12 +407,13 @@ async function resetJapamala() {
     if (jmMode === 'strand') renderStrand();
     else if (jmMode === 'flow') renderFlow();
     else if (jmMode === 'full') renderFull(false);
-    else renderHand(false);
+    else if (jmMode === 'hand') renderHand(false);
+    else if (window.Japamala3D) window.Japamala3D.reset(0);
     renderCount();
 }
 
 function jmCelebrate() {
-    const ids = { full: 'jmSvgFull', flow: 'jmSvgFlow', hand: 'jmSvgHand', strand: 'jmSvg' };
+    const ids = { full: 'jmSvgFull', flow: 'jmSvgFlow', hand: 'jmSvgHand', rudraksha3d: 'jmRudrakshaCanvas', strand: 'jmSvg' };
     const svg = document.getElementById(ids[jmMode] || 'jmSvgFlow');
     if (svg) { svg.classList.remove('celebrate'); void svg.getBoundingClientRect(); svg.classList.add('celebrate'); }
     jmConfetti();

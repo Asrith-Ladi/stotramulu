@@ -87,3 +87,9 @@ Split the Cloudflare Worker into routing, OCR, authentication, and HTTP response
 Added a fourth **చేతి · Hand** mode while retaining Flow, Pull, and Full. The new lightweight 2D SVG view draws all 108 beads and an articulated hand. On each count, the index finger and thumb close around the focused bead, pull it together, release it, and return. It shares the existing saved total, sound, vibration, reset, and 108-count celebration.
 
 The four choices wrap into a clear two-column selector on small phones, all selectors keep a 44px touch target, and reduced-motion preferences disable the gesture animation without disabling counting. The hand implementation is isolated in its own stylesheet and has a dedicated verification script.
+
+## Phase 21 — lightweight 3D Rudraksha mode
+
+Added **రుద్రాక్ష · 3D** as a fifth choice without removing Flow, Pull, Full, or the articulated 2D Hand. It uses a small dependency-free WebGL renderer rather than the separate 3.3 MB experiment. The renderer procedurally builds a brown five-mukhi Rudraksha mesh with physical grooves, uneven seed texture, central openings, directional light, depth, and rotation. Each count pulls the strand through the focus while reusing the same saved total, sound, vibration, reset, and completion behavior.
+
+The renderer initializes only when selected, stops when hidden, caps phone pixel density, and requests the low-power GPU profile. Horizontal dragging rotates the beads while vertical swipes continue scrolling the page. Keyboard Enter counts, reduced-motion preferences skip the pull animation, and a clear fallback appears when WebGL is unavailable.
