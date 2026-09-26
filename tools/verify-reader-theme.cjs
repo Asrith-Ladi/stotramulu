@@ -13,7 +13,7 @@ assert.doesNotMatch(reader + app + html, /localStorage\.getItem\(['"]grandham['"
 assert.doesNotMatch(html, /గ్రంథ రూపం, శ్లోకం/, 'reader options summary no longer advertises a removed control');
 
 assert.match(designCss, /\.category-filters button\[aria-pressed="true"\]/, 'category selection has an explicit visual state');
-assert.match(designCss, /\.home-page input\[type="date"\]\s*\{[^}]*color-scheme:\s*dark;/, 'date input remains legible on the dark counter');
+assert.match(designCss, /\.home-page input\[type="date"\]\s*\{[^}]*color-scheme:\s*light;/, 'date input follows the paper surface');
 
 function luminance(hex) {
     const rgb = hex.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
@@ -24,7 +24,7 @@ function contrast(foreground, background) {
     const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
     return (values[0] + 0.05) / (values[1] + 0.05);
 }
-assert.ok(contrast('#526256', '#f7f5ef') >= 4.5, 'category text meets AA normal-text contrast');
-assert.ok(contrast('#fff9e9', '#173e35') >= 7, 'selected category exceeds AAA normal-text contrast');
+assert.ok(contrast('#634b2e', '#f5efdf') >= 4.5, 'category text meets AA normal-text contrast');
+assert.ok(contrast('#fff9e9', '#664524') >= 7, 'selected category exceeds AAA normal-text contrast');
 
 console.log('PASS: fixed Grandham reader and high-contrast Home category controls.');

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#173e35">
+    <meta name="theme-color" content="#664524">
     <meta name="description" content="తెలుగు స్తోత్రాలు, సహస్రనామాలు, అష్టోత్తరాలు మరియు హారతులు — సులభంగా చదవడానికి ఒకే చోట.">
     <title>శ్రీ దివ్య స్తోత్రములు</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@300;400;500;600;700&family=Noto+Serif+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
@@ -18,8 +18,6 @@
     <link rel="stylesheet" href="assets/styles.css">
     <link rel="stylesheet" href="assets/reading.css">
     <link rel="stylesheet" href="assets/design-system.css">
-    <link rel="stylesheet" href="assets/japamala-hand.css">
-    <link rel="stylesheet" href="assets/japamala-3d.css">
 </head>
 <body class="grandham">
 <a class="skip-link" href="#homePage">ప్రధాన విషయానికి వెళ్ళండి / Skip to content</a>
@@ -1132,15 +1130,13 @@
     </defs>
 </svg>
 
-<!-- ============ JAPAMALA PAGE (five views sharing one count) ============ -->
+<!-- ============ JAPAMALA PAGE (three views sharing one count) ============ -->
 <div class="japamala-page" id="japamalaPage" onclick="bumpJapa()">
     <div class="jm-head">📿 జపమాల</div>
     <div class="jm-modes">
         <button class="jm-mode-btn" data-mode="flow" onclick="event.stopPropagation(); setJmMode('flow')">మాల · Flow</button>
         <button class="jm-mode-btn" data-mode="strand" onclick="event.stopPropagation(); setJmMode('strand')">దండ · Pull</button>
         <button class="jm-mode-btn" data-mode="full" onclick="event.stopPropagation(); setJmMode('full')">వలయం · Full</button>
-        <button class="jm-mode-btn" data-mode="hand" onclick="event.stopPropagation(); setJmMode('hand')">చేతి · Hand</button>
-        <button class="jm-mode-btn" data-mode="rudraksha3d" onclick="event.stopPropagation(); setJmMode('rudraksha3d')">రుద్రాక్ష · 3D</button>
     </div>
     <div class="jm-count-top"><span id="jmCount">0</span><span class="jm-of"> / 108</span></div>
     <div class="jm-rounds" id="jmRounds"></div>
@@ -1172,62 +1168,6 @@
             <g id="jmFlowBeads"></g>
             <g id="jmFlowGuru"></g>
         </svg>
-    </div>
-
-    <!-- LOOK 4: articulated 2D hand pinches and pulls one active bead per tap -->
-    <div class="jm-stage jm-stage-hand" id="jmStageHand" style="display:none">
-        <svg id="jmSvgHand" class="jm-svg jm-svg-hand" viewBox="0 0 360 430" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="jmHandTitle jmHandDesc">
-            <title id="jmHandTitle">చేతితో జపమాల</title>
-            <desc id="jmHandDesc">బొటనవేలు మరియు చూపుడు వేలు ఒక్కో పూసను పట్టుకొని కదుపుతాయి</desc>
-            <defs>
-                <linearGradient id="jmSkin" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#f2c29d"/>
-                    <stop offset="0.55" stop-color="#c98661"/>
-                    <stop offset="1" stop-color="#8e5038"/>
-                </linearGradient>
-                <linearGradient id="jmSkinLight" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stop-color="#ffd7b5"/>
-                    <stop offset="1" stop-color="#b96f4f"/>
-                </linearGradient>
-                <filter id="jmHandShadow" x="-30%" y="-30%" width="170%" height="170%">
-                    <feDropShadow dx="-4" dy="7" stdDeviation="7" flood-color="#000" flood-opacity=".42"/>
-                </filter>
-            </defs>
-            <ellipse class="jm-thread jm-hand-thread" cx="148" cy="193" rx="112" ry="148" fill="none"/>
-            <g id="jmHandBeads"></g>
-            <ellipse class="jm-focus" cx="262" cy="170" rx="32" ry="30" fill="url(#gFocus)"/>
-            <g id="jmHandActiveBead" class="jm-hand-active-bead">
-                <circle cx="262" cy="170" r="11" fill="url(#gWood1)" stroke="#f7dc91" stroke-width="1.4"/>
-                <ellipse cx="258" cy="166" rx="3.5" ry="2.3" fill="rgba(255,245,220,.38)"/>
-            </g>
-            <g class="jm-hand" filter="url(#jmHandShadow)">
-                <path class="jm-hand-palm" d="M354 210 C332 203 316 202 302 209 C286 218 279 237 280 262 L282 337 C283 370 306 399 339 414 L360 421 Z" fill="url(#jmSkin)" stroke="#7a422f" stroke-width="1.2"/>
-                <path class="jm-hand-resting-fingers" d="M352 206 C341 184 329 177 320 181 C312 185 312 195 319 209 M358 230 C344 212 331 208 324 214 C317 220 321 231 332 244 M358 258 C343 244 332 243 326 250 C321 257 327 268 340 278" fill="none" stroke="url(#jmSkinLight)" stroke-width="17" stroke-linecap="round"/>
-                <g id="jmHandIndex" class="jm-hand-index">
-                    <path d="M350 155 C329 144 309 143 292 148 C280 151 270 156 263 162 C258 166 258 173 263 177 C268 181 274 180 279 176 C286 171 295 169 305 170 C323 172 339 181 353 193 Z" fill="url(#jmSkinLight)" stroke="#824a35" stroke-width="1.1"/>
-                    <path d="M264 162 C270 159 278 159 283 162" fill="none" stroke="rgba(255,239,220,.55)" stroke-width="2" stroke-linecap="round"/>
-                </g>
-                <g id="jmHandThumb" class="jm-hand-thumb">
-                    <path d="M340 262 C320 245 306 226 296 207 C289 194 281 182 273 176 C268 172 261 174 259 180 C257 185 260 190 265 194 C273 201 277 212 282 226 C290 249 307 270 329 284 Z" fill="url(#jmSkinLight)" stroke="#824a35" stroke-width="1.1"/>
-                    <path d="M260 180 C265 178 272 180 276 184" fill="none" stroke="rgba(255,239,220,.55)" stroke-width="2" stroke-linecap="round"/>
-                </g>
-                <path d="M300 274 C304 307 307 348 318 382" fill="none" stroke="rgba(112,58,42,.25)" stroke-width="2"/>
-            </g>
-            <text x="148" y="406" class="jm-hand-caption" text-anchor="middle">Tap · pinch · pull one bead</text>
-        </svg>
-    </div>
-
-    <!-- LOOK 5: lightweight WebGL Rudraksha strand; initialized only when selected -->
-    <div class="jm-stage jm-stage-rudraksha3d" id="jmStageRudraksha3d" style="display:none">
-        <div class="jm-rudraksha-aura" aria-hidden="true"></div>
-        <canvas id="jmRudrakshaCanvas" class="jm-rudraksha-canvas" width="720" height="760"
-                role="button" tabindex="0" aria-label="తిరిగే త్రిమితీయ ఐదు ముఖాల రుద్రాక్ష జపమాల. లెక్కించడానికి నొక్కండి"></canvas>
-        <div class="jm-rudraksha-fallback" id="jmRudrakshaFallback" hidden>
-            <span aria-hidden="true">📿</span>
-            <strong>3D graphics are unavailable</strong>
-            <small>The COUNT button still works, or choose one of the other four views.</small>
-        </div>
-        <div class="jm-rudraksha-hint">5-mukhi Rudraksha · Drag to rotate · Tap to count</div>
     </div>
 
     <div class="jm-controls">
@@ -1347,7 +1287,6 @@
 <script src="assets/reader.js"></script>
 <script src="assets/tracking.js"></script>
 <script src="assets/app.js"></script>
-<script src="assets/japamala-3d.js"></script>
 <script src="assets/japamala.js"></script>
 
 <!-- Firebase (compat SDK via CDN — no build step) + optional cloud backup -->

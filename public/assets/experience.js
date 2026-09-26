@@ -1,45 +1,67 @@
-/* Shared navigation: return from any reading/practice screen to a home destination. */
+/* Independent, bookmarkable views. Category filtering stays inside Library. */
 document.addEventListener('DOMContentLoaded', () => {
+    const home = document.getElementById('homePage');
+    const routes = {homePage:'home', library:'library', favoritesSection:'saved', practice:'practice'};
     const links = [...document.querySelectorAll('[data-home-target]')];
-    links.forEach(link => link.addEventListener('click', event => {
-        if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-        event.preventDefault();
-        const home = document.getElementById('homePage');
-        if (home.style.display === 'none') goHome();
-        const target = document.getElementById(link.dataset.homeTarget);
-        if (!target) return;
-        target.tabIndex = -1;
-        target.focus({preventScroll: true});
-        target.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start'});
-    }));
-    // Reflect the section being viewed, including after returning from the reader.
-    const update = () => {
-        if (document.getElementById('homePage').style.display === 'none') {
-            links.forEach(link => link.removeAttribute('aria-current'));
-            return;
-        }
-        let active = 'homePage';
-        const targets = links.map(link => document.getElementById(link.dataset.homeTarget)).filter(Boolean);
-        targets.sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
-        targets.forEach(target => { if (target.getBoundingClientRect().top <= 190) active = target.id; });
+    function currentView() {
+        const hash = location.hash.slice(1);
+        return Object.values(routes).includes(hash) ? hash : 'home';
+    }
+    function organize() {
+        [...home.children].forEach(section => {
+            section.dataset.panel = section.matches('.cards-section, .library-navigation') ? 'library'
+                : section.matches('.favorites-section') ? 'saved'
+                : section.matches('.home-primary-actions, .practice-details') ? 'practice' : 'home';
+        });
+    }
+    function render() {
+        organize();
+        const view = currentView();
+        home.dataset.view = view;
         links.forEach(link => {
-            if (link.dataset.homeTarget === active) link.setAttribute('aria-current', 'location');
+            if (routes[link.dataset.homeTarget] === view) link.setAttribute('aria-current', 'page');
             else link.removeAttribute('aria-current');
         });
-    };
-    let scheduled = false;
-    window.addEventListener('scroll', () => {
-        if (scheduled) return;
-        scheduled = true;
-        requestAnimationFrame(() => { update(); scheduled = false; });
-    }, {passive: true});
-    new MutationObserver(update).observe(document.getElementById('homePage'), {attributes:true, attributeFilter:['style']});
-    update();
-    const skip = document.querySelector('.skip-link');
-    skip.addEventListener('click', event => {
+    }
+    function navigate(view) {
+        const url = new URL(location.href);
+        url.searchParams.delete('stotram');
+        url.hash = view;
+        // Avoid a second history entry when closing the reader or a practice tool.
+        const wasApplying = applyingReaderRoute;
+        applyingReaderRoute = true;
+        try { goHome(); } finally { applyingReaderRoute = wasApplying; }
+        if (url.href !== location.href) history.pushState(null, '', url);
+        render();
+        window.scrollTo({top:0, behavior:'instant'});
+        home.focus({preventScroll:true});
+    }
+    links.forEach(link => {
+        link.href = '#' + routes[link.dataset.homeTarget];
+        link.addEventListener('click', event => {
+            if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            navigate(routes[link.dataset.homeTarget]);
+        });
+    });
+    document.querySelector('.primary-link').addEventListener('click', event => {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault(); navigate('library');
+    });
+    window.addEventListener('popstate', render);
+    window.addEventListener('hashchange', () => {
+        if (!new URL(location.href).searchParams.has('stotram')) {
+            const wasApplying = applyingReaderRoute;
+            applyingReaderRoute = true;
+            try { goHome(); } finally { applyingReaderRoute = wasApplying; }
+        }
+        render();
+    });
+    new MutationObserver(organize).observe(home, {childList:true});
+    render();
+    document.querySelector('.skip-link').addEventListener('click', event => {
         event.preventDefault();
-        const visible = ['readerPage', 'trackPage', 'japamalaPage'].map(id => document.getElementById(id)).find(el => el?.classList.contains('active')) || document.getElementById('homePage');
-        visible.tabIndex = -1;
-        visible.focus();
+        const visible = ['readerPage','trackPage','japamalaPage'].map(id => document.getElementById(id)).find(el => el?.classList.contains('active')) || home;
+        visible.tabIndex = -1; visible.focus();
     });
 });

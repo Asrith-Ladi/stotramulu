@@ -15,7 +15,7 @@ function readerUrl(type) {
     const url = new URL(window.location.href);
     if (type) url.searchParams.set('stotram', type);
     else url.searchParams.delete('stotram');
-    url.hash = '';
+    // Keep the originating tab so Back returns to the same collection.
     return url;
 }
 function handlePrayerCardClick(event, type) {

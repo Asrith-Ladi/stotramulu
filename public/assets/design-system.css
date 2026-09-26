@@ -1,26 +1,25 @@
-/* Devotional design system: ivory paper, temple green, brushed brass.
-   Home is a light discovery surface; prayer tools retain their reading themes. */
+/* Grandham design system: manuscript paper, brown ink and restrained brass. */
 :root {
     --ui-bg: #f7f5ef;
     --ui-surface: #fffefa;
-    --ui-text: #203c33;
+    --ui-text: #49351e;
     --ui-text-soft: #65716a;
     --ui-gold-bright: #e7c88e;
     --ui-border: #dedfd5;
-    --ui-green: #173e35;
+    --ui-green: #664524;
     --ui-brass: #8a6730;
     --ui-radius: 16px;
 }
 html { scroll-padding-top: 156px; overflow-x: clip; }
 body { overflow: visible; }
-.home-page input[type="date"] { color-scheme: dark; }
+.home-page input[type="date"] { color-scheme: light; }
 body { background: var(--ui-bg); }
 .bg-pattern, .bg-mesh, .particles { display: none; }
 [hidden] { display: none !important; }
 button, a, input, select, summary { -webkit-tap-highlight-color: transparent; }
 a, button { touch-action: manipulation; }
 :where(a, button, input, select, summary):focus-visible { outline: 3px solid #ae7730; outline-offset: 4px; }
-.skip-link { position: fixed; top: -120px; left: 16px; z-index: 1000; background: #fffefa; color: #173e35; padding: 16px; border-radius: 8px; }
+.skip-link { position: fixed; top: -120px; left: 16px; z-index: 1000; background: #fffefa; color: #664524; padding: 16px; border-radius: 8px; }
 .skip-link:focus { top: 12px; }
 .header { position: sticky; top: 0; z-index: 40; padding: 17px 0 0; background: rgba(247,245,239,.97); border-bottom: 1px solid var(--ui-border); backdrop-filter: blur(18px); box-shadow: none; }
 .header::before, .header::after { display: none; }
@@ -41,7 +40,7 @@ a, button { touch-action: manipulation; }
 .home-page { width: min(100% - 64px, 1180px); max-width: 1180px; margin: 0 auto; padding: 0 0 50px; color: var(--ui-text); gap: 0; }
 .home-page > * { flex-shrink: 0; }
 .home-page > section, .home-page > nav, .home-page > div { scroll-margin-top: 160px; }
-.welcome-section { display: grid; grid-template-columns: 1.2fr 1fr; width: 100%; margin: 30px 0 32px; padding: 48px 52px; border: 1px solid #254a3d; border-radius: 22px; background: radial-gradient(ellipse at 90% 20%, #355444 0%, transparent 65%), #173e35; color: #f7f2e4; text-align: left; overflow: hidden; box-shadow: 0 16px 32px #203c330c; }
+.welcome-section { display: grid; grid-template-columns: 1.2fr 1fr; width: 100%; margin: 30px 0 32px; padding: 48px 52px; border: 1px solid #254a3d; border-radius: 22px; background: radial-gradient(ellipse at 90% 20%, #355444 0%, transparent 65%), #664524; color: #f7f2e4; text-align: left; overflow: hidden; box-shadow: 0 16px 32px #49351e0c; }
 .eyebrow { display: block; font-size: 11px; font-weight: 600; letter-spacing: .14em; line-height: 1.8; color: var(--ui-brass); }
 .welcome-copy { align-self: center; position: relative; z-index: 1; }
 .welcome-section .eyebrow { color: #e0c99d; font-size: 11px; }
@@ -61,18 +60,18 @@ a, button { touch-action: manipulation; }
 .today-note { color: #6e745e; opacity: 1; font-size: 13px; }
 .weekday-guidance { color: #697165; font-size: 13px; margin: 5px 0 14px; }
 .today-strip { gap: 10px; }
-.today-tile { color: #294439; background: #f4f5ed; border: 1px solid #dfe2d5; border-radius: 9px; font-size: 15px; padding: 13px 16px; box-shadow: none; }
+.today-tile { color: #573e24; background: #f4f5ed; border: 1px solid #dfe2d5; border-radius: 9px; font-size: 15px; padding: 13px 16px; box-shadow: none; }
 .today-ico { display: none; }
 .today-title { line-height: 1.75; }
 .today-tile:hover { background: #eaf0e5; border-color: #9ba88d; }
 .favorites-section h2, .recent-reading-section h2 { color: var(--ui-text); font-size: 18px; margin-bottom: 12px; }
-.favorites-section p { color: #657166; font-size: 14px; }
-.recent-reading-section button { background: #f4f5ed; color: #294439; border: 1px solid #dfe2d5; border-radius: 9px; }
-.recent-reading-list button small { color: #657166; opacity: 1; }
+.favorites-section p { color: #746044; font-size: 14px; }
+.recent-reading-section button { background: #f4f5ed; color: #573e24; border: 1px solid #dfe2d5; border-radius: 9px; }
+.recent-reading-list button small { color: #746044; opacity: 1; }
 .library-navigation { display: block; width: 100%; max-width: none; padding: 20px 0 0; margin: 4px 0 22px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
 .library-intro { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
 .library-intro h2 { font-family: 'Noto Serif Telugu', serif; font-size: 28px; margin-top: 7px; font-weight: 600; line-height: 1.6; }
-.library-intro p { color: #657166; font-size: 14px; }
+.library-intro p { color: #746044; font-size: 14px; }
 .category-filters { display: flex; gap: 9px; flex-wrap: wrap; border-bottom: 1px solid var(--ui-border); padding-bottom: 22px; }
 .category-filters button { min-height: 46px; padding: 9px 16px; color: #526256; background: transparent; border: 1px solid #d3d8cb; border-radius: 8px; font-size: 14px; cursor: pointer; transition: background .2s, color .2s; }
 .category-filters button:hover { background: #e9ede2; }
@@ -83,30 +82,30 @@ a, button { touch-action: manipulation; }
 .section-title { color: var(--ui-text); font-size: 19px; background: none; -webkit-text-fill-color: currentColor; text-shadow: none; }
 .section-sub { color: #73786d; font-size: 12px; opacity: 1; margin: 0; }
 .cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.card, .card.vishnu, .card.lalitha, .card.shiva, .card.ganesha { background: #fffefa; border: 1px solid #dedfd5; border-radius: 12px; min-height: 0; box-shadow: 0 3px 8px #203c3303; color: var(--ui-text); }
+.card, .card.vishnu, .card.lalitha, .card.shiva, .card.ganesha { background: #fffefa; border: 1px solid #dedfd5; border-radius: 12px; min-height: 0; box-shadow: 0 3px 8px #49351e03; color: var(--ui-text); }
 .card::before, .card::after, .card-bg { display: none; }
-.card:hover { background: #fffef9; border-color: #adbcaa; box-shadow: 0 10px 24px #203c3310; transform: translateY(-3px); }
+.card:hover { background: #fffef9; border-color: #adbcaa; box-shadow: 0 10px 24px #49351e10; transform: translateY(-3px); }
 .card-content { display: grid; grid-template-columns: 44px minmax(0,1fr); padding: 22px; gap: 0 12px; align-items: start; }
 .card-icon-wrap { width: 42px; height: 46px; border-radius: 14px 14px 9px 9px; grid-row: 1 / span 2; border: 1px solid #e5d9c1; background: #f5efe2; }
 .card-icon-wrap .deity-icon { font-size: 22px; }
 .card h3 { color: #254437; -webkit-text-fill-color: currentColor; font-size: 17px; line-height: 1.8; font-weight: 600; }
 .card .card-sub { color: #7d704e; font: 12px/1.65 system-ui, sans-serif; margin: 3px 0 12px; }
 .card .card-desc { grid-column: 1 / -1; color: #697166; font-size: 14px; line-height: 1.9; margin: 4px 0 16px; }
-.card .card-action { grid-column: 1 / -1; justify-self: stretch; color: #31543f; min-height: 32px; padding: 12px 0 0; margin: 0; border: 0; border-top: 1px solid #e9e9de; border-radius: 0; background: transparent; font-size: 13px; }
+.card .card-action { grid-column: 1 / -1; justify-self: stretch; color: #714c23; min-height: 32px; padding: 12px 0 0; margin: 0; border: 0; border-top: 1px solid #e9e9de; border-radius: 0; background: transparent; font-size: 13px; }
 .card:hover .card-action { background: transparent; color: #7d5c23; transform: none; border-color: #e9e9de; }
 .home-primary-actions { max-width: none; width: 100%; margin: 12px 0 18px; padding: 28px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; background: #ecefe5; border: 1px solid #dce1d2; border-radius: 16px; }
 .practice-intro h2 { font-size: 24px; margin: 9px 0; }
 .practice-intro p { font-size: 13px; color: #64705e; }
-.home-primary-actions button, .home-primary-actions button:first-child { position: relative; background: #fffefa; color: #294439; border: 1px solid #d6dece; border-radius: 10px; padding: 18px; }
+.home-primary-actions button, .home-primary-actions button:first-child { position: relative; background: #fffefa; color: #573e24; border: 1px solid #d6dece; border-radius: 10px; padding: 18px; }
 .home-primary-actions .practice-symbol { color: #8a6730; font-size: 25px; margin-bottom: 10px; }
 .home-primary-actions .practice-arrow { position: absolute; right: 18px; top: 18px; }
 .home-primary-actions small { font-size: 12px; color: #64705e; opacity: 1; }
 .practice-details { width: 100%; max-width: none; background: #fffefa; border: 1px solid var(--ui-border); border-radius: 12px; }
-.practice-details > summary { color: #294439; padding: 16px 20px; }
-.practice-details .counter-card { background: #173e35; }
+.practice-details > summary { color: #573e24; padding: 16px 20px; }
+.practice-details .counter-card { background: #664524; }
 .footer { color: #62715f; border-top: 1px solid var(--ui-border); padding: 24px; font-size: 13px; opacity: 1; }
 .footer .divider { display: none; }
-.footer-feedback { padding: 10px 18px; min-height: 44px; margin-bottom: 12px; color: #36513d; background: transparent; border: 1px solid #cdd5c5; border-radius: 8px; cursor: pointer; }
+.footer-feedback { padding: 10px 18px; min-height: 44px; margin-bottom: 12px; color: #674925; background: transparent; border: 1px solid #cdd5c5; border-radius: 8px; cursor: pointer; }
 /* Consistent frames around the existing reading and practice experiences. */
 .reader-page { width: min(100% - 24px, 960px); margin: auto; }
 .reader-title-section { border: 1px solid #b4a684; box-shadow: none; }
@@ -186,7 +185,7 @@ body.grandham .reader-navigation button, body.grandham .reader-navigation select
 body.grandham .slokam-block { background: #fffcf3; border: 1px solid #ddd3b9; box-shadow: 0 3px 12px #493b2406; border-radius: 12px; padding: 28px 34px; }
 body.grandham .slokam-block::before, body.grandham .slokam-block::after, body.grandham .slokam-container::before, body.grandham .slokam-container::after { display: none; }
 body.grandham .slokam-block.read { background: #edf2e6; border-color: #a6b899; box-shadow: none; }
-body.grandham .verse-read-button { background: #f1f3e8; color: #36513d; border-color: #b9c6ac; font-size: 14px; }
+body.grandham .verse-read-button { background: #f1f3e8; color: #674925; border-color: #b9c6ac; font-size: 14px; }
 body.grandham .verse-read-button[aria-pressed="true"] { background: #254d3d; color: #fff9e9; }
 .reading-position-bar { top: 145px; }
 @media (max-width: 700px) {
@@ -200,7 +199,73 @@ body.grandham .font-btn, body.grandham .rs-nav, body.grandham .rs-clear { backgr
 body.grandham .reader-search .rs-input::placeholder { color: #756345; opacity: 1; }
 body.grandham .reader-search { box-shadow: none; }
 body.grandham .reader-navigation { background: transparent; color: #493b24; }
-body.grandham .source-details a, body.grandham #readerLinkStatus { color: #36583d; }
+body.grandham .source-details a, body.grandham #readerLinkStatus { color: #674925; }
 body.grandham .slokam-block:hover { background: #fffcf3; border-color: #bfb397; box-shadow: 0 3px 12px #493b2406; transform: none; }
 body.grandham .slokam-block.read:hover { background: #edf2e6; }
 .card-content { align-content: start; }
+
+/* Each main destination owns a separate view, not an anchor on a long page. */
+#homePage[data-view="home"] > [data-panel]:not([data-panel="home"]),
+#homePage[data-view="library"] > [data-panel]:not([data-panel="library"]),
+#homePage[data-view="saved"] > [data-panel]:not([data-panel="saved"]),
+#homePage[data-view="practice"] > [data-panel]:not([data-panel="practice"]) { display: none !important; }
+#homePage[data-view]:not([data-view="home"]) { padding-top: 28px; }
+#homePage[data-view="saved"] .favorites-section { min-height: 260px; }
+/* Grandham palette shared by discovery, reading, practice and dialogs. */
+:root { --ui-bg:#f5efdf; --ui-surface:#fff9ec; --ui-text:#49351e; --ui-text-soft:#746044; --ui-green:#664524; --ui-brass:#825c27; --ui-border:#dac9a6; }
+.header { background:rgba(245,239,223,.98); }
+.welcome-section { background:radial-gradient(ellipse at 90% 20%,#785734,transparent 65%),#49331f; border-color:#765433; }
+.welcome-section h2 { color:#fff4da; }
+.welcome-section p, .hero-note { color:#e3d3b6; }
+.card, .card.vishnu, .card.lalitha, .card.shiva, .card.ganesha,
+.today-section, .favorites-section, .recent-reading-section { background:#fff9ec; border-color:#dac9a6; }
+.card h3, .today-day, .favorites-section h2, .recent-reading-section h2, .practice-intro h2, .section-title { color:#533b22; }
+.card .card-desc, .favorites-section p, .weekday-guidance, .library-intro p, .practice-intro p { color:#746044; }
+.today-tile, .recent-reading-section button, .home-primary-actions button { background:#f8efdb; color:#573e24; border-color:#d5bf94; }
+.today-tile:hover, .card:hover { background:#fff5df; border-color:#ab8955; }
+.card .card-action { color:#714c23; border-color:#e2d3b4; }
+.category-filters button { color:#634b2e; border-color:#cbbb9b; }
+.category-filters button:hover { background:#eee1c6; }
+.category-filters button[aria-pressed="true"] { background:#664524; color:#fff9e9; border-color:#664524; }
+.home-primary-actions { background:#ece0c7; border-color:#d4c29d; }
+.practice-details { background:#fff9ec; border-color:#dac9a6; }
+.practice-details > summary, .home-primary-actions small, .home-primary-actions .practice-symbol,
+.practice-details .counter-name, .counter-head, .counter-target { color:#674b29; }
+.site-navigation a, .header-sub, .footer, .footer-feedback { color:#705c3f; }
+/* All secondary screens use the same paper surfaces and dark ink. */
+body.grandham :is(.track-page,.japamala-page) { background:#f5efdf; color:#49351e; }
+body.grandham :is(.track-card,.counter-card,.search-input-wrap,.search-result,.search-result-item,.feedback-box,.day-sheet,.sc-box,.admin-box,.mokku-item,.jm-stage) { background:#fff9ec; color:#49351e; border-color:#cdb78f; box-shadow:0 4px 18px #49331f0a; }
+body.grandham :is(.track-page,.japamala-page,.feedback-box,.day-sheet,.sc-box,.admin-box,.counter-card,.search-box) :is(h2,h3,h4,label,p,small,.track-card-title,.month-label,.track-empty,.jm-hint,.jm-sub,.jm-rounds,.jm-total,.counter-name,.counter-target,.count-target,.sc-msg,.search-hint,.fb-privacy,.fb-opt) { color:#6a5030; -webkit-text-fill-color:currentColor; opacity:1; background-image:none; }
+body.grandham :is(.track-page,.japamala-page,.feedback-box,.day-sheet,.sc-box,.admin-box,.counter-card,.search-box) :is(button,input,select,textarea) { background:#f3e7cd; color:#573c1e; border:1px solid #bfa47a; box-shadow:none; }
+body.grandham :is(.track-page,.japamala-page,.feedback-box,.day-sheet,.sc-box,.admin-box,.counter-card,.search-box) :is(input,textarea)::placeholder { color:#806a4b; opacity:1; }
+body.grandham :is(.track-page,.japamala-page,.feedback-box,.day-sheet,.sc-box,.counter-card) button:is(.primary,.active,.jm-btn-count) { background:#76502a; color:#fff6e1; border-color:#76502a; }
+body.grandham :is(.count-display,.jm-count,.jm-num,.jm-count-num,.track-section-head h2,.jm-title) { color:#68451f; -webkit-text-fill-color:currentColor; background:none; text-shadow:none; }
+body.grandham :is(.cal-day,.mokku-body,.cloud-status,.jm-mode-btn,.fb-type-btn) { color:#634825; }
+body.grandham .cal-day { background:#f4e8ce; border-color:#d5bf94; }
+body.grandham .cal-day.today { border-color:#8d612c; }
+body.grandham :is(.search-overlay,.feedback-overlay,.day-sheet-overlay,.sc-overlay,.admin-overlay) { background:rgba(49,33,16,.55); }
+body.grandham .reader-title-section h2 { color:#63421f; -webkit-text-fill-color:currentColor; }
+body.grandham .verse-read-button { background:#f1e5cb; color:#63421f; border-color:#bda277; }
+body.grandham .slokam-block.read { background:#eee2c7; border-color:#b79b6c; }
+body.grandham .verse-read-button[aria-pressed="true"] { background:#76502a; color:#fff6e1; }
+.home-page input[type="date"], body.grandham input[type="date"] { color-scheme:light; }
+
+.jm-modes { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+.jm-mode-btn { min-height:48px; padding:10px 18px; }
+body.grandham .jm-full-count { fill:#694522; }
+body.grandham .jm-full-of { fill:#735b3b; opacity:1; }
+body.grandham .cal-day:not(.empty):not(.future):hover { background:#e5d3ad; }
+
+body.grandham .search-result .sr-title { color:#563d20; }
+body.grandham .search-result .sr-sub { color:#786143; opacity:1; }
+body.grandham .search-result:hover { background:#eee0c2; }
+body.grandham #jmCount { color:#68451f; -webkit-text-fill-color:currentColor; background:none; }
+body.grandham .jm-of { color:#735b3b; opacity:1; }
+
+body.grandham .cal-weekday, body.grandham .jm-heading { color:#73522c; -webkit-text-fill-color:currentColor; background:none; opacity:1; }
+body.grandham .track-empty { opacity:1 !important; }
+body.grandham .cal-day.empty { background:transparent; border:0; }
+body.grandham .cal-day.future { opacity:.55; }
+body.grandham .cal-day.today { color:#68451f; box-shadow:none; }
+
+body.grandham .jm-head { color:#73522c; -webkit-text-fill-color:currentColor; background:none; }

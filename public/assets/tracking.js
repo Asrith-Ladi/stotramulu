@@ -43,7 +43,8 @@ function openTrack() {
     document.getElementById('readerPage').classList.remove('active');
     document.getElementById('trackPage').classList.add('active');
     document.getElementById('backBtn').style.display = 'block';
-    setHeaderActionsDisplay('none');
+    document.getElementById('japamalaPage').classList.remove('active');
+    stopReaderPositionTracking();
     gaEvent('screen_view', { screen_name: 'Track' });
     buildMonths();
     renderMonths();
@@ -124,7 +125,7 @@ function shiftMonth(dir) {
     if (next < 0 || next >= trackMonths.length) return;
     monthIdx = next;
     const strip = document.getElementById('monthStrip');
-    strip.scrollTo({ left: monthIdx * strip.clientWidth, behavior: 'smooth' });
+    strip.scrollTo({ left: monthIdx * strip.clientWidth, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' });
     updateMonthView();
 }
 
@@ -141,6 +142,7 @@ function openDay(dateStr) {
     document.body.style.overflow = 'hidden';
 }
 function closeDay() {
+    if (!document.getElementById('daySheetOverlay').classList.contains('active')) return;
     document.getElementById('daySheetOverlay').classList.remove('active');
     document.body.style.overflow = '';
     activeDay = null;

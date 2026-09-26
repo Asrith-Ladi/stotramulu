@@ -17,7 +17,8 @@ const server = http.createServer((req,res)=>{
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  await page.route(/googletagmanager|gstatic.com\/firebase|firestore.googleapis/,route=>route.abort());
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'networkidle'});
- await page.locator('.category-filters button').first().waitFor();
+ await page.locator('.category-filters button').first().waitFor({state:'attached'});
+ assert.equal(await page.locator('.cards-section:visible').count(),0,'Home is independent from Library');
  fs.mkdirSync('docs/ui-reviews/devotional',{recursive:true});
  await page.screenshot({path:'docs/ui-reviews/devotional/home-desktop.png'});
  await page.locator('[data-home-target="library"]').click();
@@ -32,6 +33,12 @@ const server = http.createServer((req,res)=>{
  await page.locator('a.card[data-stotram="vishnu"]').click();
  await page.locator('#readerPage.active').waitFor();
  assert.ok(page.url().includes('stotram=vishnu'));
+ await page.locator('.font-btn').last().click();
+ await page.locator('.reader-options summary').click();
+ await page.locator('#favoriteButton').click();
+ assert.equal(await page.locator('#favoriteButton').getAttribute('aria-pressed'),'true');
+ await page.locator('#verseJump').selectOption('2');
+ await page.locator('.reader-options summary').click();
  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
  await page.screenshot({path:'docs/ui-reviews/devotional/reader-desktop.png'});
  await page.locator('[data-home-target="library"]').click();
@@ -39,8 +46,41 @@ const server = http.createServer((req,res)=>{
  await page.locator('[data-home-target="practice"]').click();
  await page.locator('#practice button').first().click();
  await page.locator('#japamalaPage.active').waitFor();
+ assert.equal(await page.locator('.jm-mode-btn').count(),3);
+ for(const mode of ['flow','strand','full']) {
+  await page.locator('[data-mode="'+mode+'"]').click();
+  await page.locator('.jm-btn-count').click();
+ }
+ assert.equal(await page.locator('#jmCount').textContent(),'3');
+ await page.evaluate(()=>setJmMode('rudraksha3d'));
+ assert.ok(await page.locator('[data-mode="flow"]').evaluate(el=>el.classList.contains('active')));
+ await page.screenshot({path:'docs/ui-reviews/devotional/mala.png'});
  await page.locator('[data-home-target="favoritesSection"]').click();
  await page.locator('#favoritesSection').waitFor({state:'visible'});
+ await page.locator('[data-home-target="practice"]').click();
+ assert.equal(await page.locator('.cards-section:visible').count(),0);
+ await page.locator('#practice button').nth(1).click();
+ await page.locator('#trackPage.active').waitFor();
+ await page.locator('#prevMonthBtn').click();
+ await page.locator('#nextMonthBtn').click();
+ await page.screenshot({path:'docs/ui-reviews/devotional/tracker.png'});
+ await page.locator('.header-utilities button').nth(1).click();
+ await page.locator('#cloudAuthBox').waitFor({state:'attached'});
+ await page.locator('[data-home-target="library"]').click();
+ await page.reload({waitUntil:'networkidle'});
+ assert.equal(await page.locator('#homePage').getAttribute('data-view'),'library');
+ await page.locator('[data-home-target="favoritesSection"]').click();
+ await page.goBack();
+ assert.equal(await page.locator('#homePage').getAttribute('data-view'),'library');
+ await page.locator('.header-utilities button').first().click();
+ await page.locator('#searchInput').fill('vishnu');
+ await page.locator('.search-result').first().waitFor();
+ await page.screenshot({path:'docs/ui-reviews/devotional/search.png'});
+ await page.keyboard.press('Escape');
+ await page.locator('.footer-feedback').click();
+ await page.locator('#feedbackOverlay.active').waitFor();
+ await page.screenshot({path:'docs/ui-reviews/devotional/feedback.png'});
+ await page.keyboard.press('Escape');
  for(const width of [320,390,768]){
   await page.setViewportSize({width,height:844});
   await page.locator('[data-home-target="homePage"]').click();
@@ -48,14 +88,23 @@ const server = http.createServer((req,res)=>{
   await page.screenshot({path:'docs/ui-reviews/devotional/home-'+width+'.png'});
   const overflow=await page.evaluate(()=>[...document.querySelectorAll('#homePage *, .header *')].filter(el=>!el.closest('.hero-art') && el.getBoundingClientRect().width && getComputedStyle(el).position!=='absolute' && el.getBoundingClientRect().right > innerWidth+1).map(el=>el.className));
   assert.deepEqual(overflow,[],'no horizontal overflow at '+width);
+  for(const target of ['library','favoritesSection','practice']) {
+   await page.locator('[data-home-target="'+target+'"]').click();
+   const panels=await page.locator('#homePage > [data-panel]:visible').evaluateAll(nodes=>[...new Set(nodes.map(n=>n.dataset.panel))]);
+   assert.deepEqual(panels,[{library:'library',favoritesSection:'saved',practice:'practice'}[target]]);
+   const bad=await page.evaluate(()=>[...document.querySelectorAll('#homePage *')].filter(el=>el.getBoundingClientRect().width && el.getBoundingClientRect().right>innerWidth+1).map(el=>el.className));
+   assert.deepEqual(bad,[],'view fits viewport: '+target+' '+width);
+   if(width===390) await page.screenshot({path:'docs/ui-reviews/devotional/'+target+'-390.png'});
+  }
  }
  await page.evaluate(()=>{
  const section=document.createElement('div');section.className='cards-section';section.innerHTML='<div class="section-divider"><h2 class="section-title">New collection</h2></div><div class="cards-grid"></div>';
  document.getElementById('homePage').append(section);document.dispatchEvent(new Event('stotras-updated'));
  });
+ await page.locator('[data-home-target="library"]').click();
  await page.getByRole('button',{name:'New collection'}).click();
  assert.equal(await page.locator('.cards-section:visible').count(),1,'cloud-added collection joins the filter');
  assert.deepEqual(errors,[],'no uncaught page errors');
- console.log('PASS: 30 library cards, every category filter, reader routes, reader-to-library, practice-to-saved, and 320/390/768px layouts.');
+ console.log('PASS: isolated tabs, history/reload, 30 cards, category filters, reader controls/favorites, three mala modes/counting, tracker, account entry, search, feedback dismissal and every tab at 320/390/768px.');
  } finally {await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});

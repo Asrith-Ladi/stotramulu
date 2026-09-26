@@ -46,6 +46,8 @@ function openReader(type) {
 
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.add('active');
+    document.getElementById('trackPage').classList.remove('active');
+    document.getElementById('japamalaPage')?.classList.remove('active');
     document.getElementById('backBtn').style.display = 'block';
     gaEvent('screen_view', { screen_name: 'Reader: ' + type });
     gaEvent('open_stotram', { stotram: type });
@@ -352,6 +354,7 @@ function handleRestoreFile(input) {
 function openFeedback() {
     resetFeedbackBox();
     document.getElementById('feedbackOverlay').classList.add('active');
+    document.getElementById('fbName').focus();
     document.body.style.overflow = 'hidden';
 }
 function closeFeedback() {
