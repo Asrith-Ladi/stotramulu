@@ -167,8 +167,80 @@ function renderRecentReading() {
     if (categoryNav) home.querySelector('.welcome-section').after(section);
     else home.querySelector('.home-primary-actions').after(section);
 }
+function readerMeaningCoverage(type) {
+    const cfg = stotramConfig[type] || {};
+    const total = Array.isArray(cfg.data) ? cfg.data.length : 0;
+    const available = Object.entries(cfg.meanings || {}).filter(([index, meaning]) =>
+        Number.isInteger(Number(index)) && Number(index) >= 0 && Number(index) < total && String(meaning || '').trim()
+    ).length;
+    return {available, total};
+}
+function setupMeaningAvailability(type) {
+    const coverage = readerMeaningCoverage(type);
+    const toggle = document.getElementById('meaningToggle');
+    const row = document.getElementById('meaningToggleRow');
+    const summary = document.getElementById('readerOptionsSummary');
+    if (toggle) {
+        toggle.hidden = coverage.available === 0;
+        toggle.setAttribute('aria-hidden', String(coverage.available === 0));
+        const label = toggle.querySelector('label');
+        if (label) label.textContent = `అర్థం చూపించు (${coverage.available}/${coverage.total})`;
+    }
+    if (row) row.hidden = coverage.available === 0;
+    if (summary) summary.textContent = coverage.available
+        ? `అర్థం ${coverage.available}/${coverage.total}, శ్లోకం, సేవ్, లెక్క`
+        : 'శ్లోకం, సేవ్, లెక్క';
+    return coverage;
+}
+function appendMeaningReview(content, type, audit) {
+    const coverage = readerMeaningCoverage(type);
+    const meaningAudit = audit && audit.meaningAudit;
+    const section = document.createElement('section');
+    section.className = 'meaning-review-summary';
+    const heading = document.createElement('h4');
+    heading.textContent = 'అర్థాల స్థితి';
+    const count = document.createElement('p');
+    count.className = 'meaning-coverage';
+    count.textContent = coverage.available
+        ? `అర్థం ఉన్న భాగాలు: ${coverage.available} / ${coverage.total}`
+        : `ఈ పాఠంలోని ${coverage.total} భాగాలకు అర్థాలు ఇంకా జోడించలేదు.`;
+    section.append(heading, count);
+    if (coverage.available) {
+        const labels = {
+            verified: '✓ అర్థాలు మూలంతో పరిశీలించబడ్డాయి',
+            partial: '◐ కొన్ని అర్థాలు పరిశీలించబడ్డాయి',
+            reference: '◇ అర్థ పోలిక మూలం జోడించబడింది; సమీక్ష పెండింగ్',
+            pending: '△ అర్థాల సమీక్ష పెండింగ్'
+        };
+        const state = document.createElement('p');
+        state.className = 'meaning-review-status ' + ((meaningAudit && meaningAudit.status) || 'pending');
+        state.textContent = labels[(meaningAudit && meaningAudit.status) || 'pending'];
+        section.appendChild(state);
+        if (meaningAudit && meaningAudit.note) {
+            const note = document.createElement('p');
+            note.textContent = meaningAudit.note;
+            section.appendChild(note);
+        }
+        if (meaningAudit && meaningAudit.checkedOn) {
+            const checked = document.createElement('p');
+            checked.className = 'source-review-meta';
+            checked.textContent = 'అర్థ మూలాల పరిశీలన: ' + meaningAudit.checkedOn;
+            section.appendChild(checked);
+        }
+        for (const source of (meaningAudit && meaningAudit.sources) || []) {
+            const link = document.createElement('a');
+            link.href = source.url;
+            link.textContent = source.label;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            section.appendChild(link);
+        }
+    }
+    content.appendChild(section);
+}
 function setupReaderNavigation(type) {
     const cfg = stotramConfig[type];
+    setupMeaningAvailability(type);
     const select = document.getElementById('verseJump');
     select.replaceChildren();
     const sectionNav = document.getElementById('readerSectionNav');
@@ -228,9 +300,7 @@ function setupReaderNavigation(type) {
         link.rel = 'noopener noreferrer';
         content.appendChild(link);
     }
-    const meaningsNote = document.createElement('p');
-    meaningsNote.textContent = 'అర్థాలు అందుబాటులో ఉన్న చోట మాత్రమే కనిపిస్తాయి; వాటి సమీక్ష ఇంకా పూర్తికాలేదు.';
-    content.appendChild(meaningsNote);
+    appendMeaningReview(content, type, audit);
     document.getElementById('sourceDetails').open = !!(audit && audit.needsReview);
 }
 document.addEventListener('DOMContentLoaded', () => {

@@ -426,9 +426,10 @@ body.grandham .source-review-meta {
 }
 .reader-toggle-row {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 10px;
 }
+.reader-toggle-row[hidden] { display: none; }
 .reader-toggle-row .meaning-toggle {
     justify-content: center;
     min-width: 0;
@@ -463,6 +464,22 @@ body.grandham .source-review-meta {
     box-shadow: none;
 }
 .source-details.reader-after-content { margin-top: 10px; }
+.meaning-review-summary {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(212,168,67,.3);
+}
+.meaning-review-summary h4 { margin: 0 0 8px; color: #ffdf85; font-size: 1rem; }
+.meaning-coverage { font-weight: 700; }
+.meaning-review-status { display: inline-block; padding: 5px 9px; border-radius: 999px; }
+.meaning-review-status.reference,
+.meaning-review-status.pending { color: #ffe09a; background: #493817; }
+.meaning-review-status.verified { color: #a8dfaa; background: #233a29; }
+body.grandham .meaning-review-summary { border-top-color: #b58a50; }
+body.grandham .meaning-review-summary h4 { color: #573416; }
+body.grandham .meaning-review-status.reference,
+body.grandham .meaning-review-status.pending { color: #694b0e; background: #f2dfaa; }
+body.grandham .meaning-review-status.verified { color: #285b2f; background: #dcebd2; }
 
 @media (max-width: 700px) {
     .reader-tool-panel-compact .controls { grid-template-columns: 1fr; }

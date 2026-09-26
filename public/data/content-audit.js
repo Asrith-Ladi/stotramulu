@@ -15,7 +15,17 @@ window.CONTENT_AUDIT = {
         "url": "https://vignanam.org/telugu/sree-lalita-sahasra-nama-stotram.html"
       }
     ],
-    "needsReview": false
+    "needsReview": false,
+    "meaningAudit": {
+      "status": "reference",
+      "available": 5,
+      "total": 187,
+      "checkedOn": "2026-09-26",
+      "note": "ఐదు భావార్థాలకు పోలిక మూలం జోడించబడింది. పదేపదే లేదా వ్యాఖ్యాన స్థాయి సమీక్ష ఇంకా పూర్తికాలేదు; మూల అనువాదం కాపీ చేయలేదు.",
+      "sources": [
+        {"label": "అర్థ పోలిక — Lalitha Sahasranamavali meanings", "url": "https://sanskritdocuments.org/doc_devii/lalita1000.html"}
+      ]
+    }
   },
   "suprabhatam": {
     "reviewedOn": "2026-09-21",
@@ -156,7 +166,17 @@ window.CONTENT_AUDIT = {
         "url": "https://www.ohtccwa.org/pooja_library/vishnu_sahasranamam_te"
       }
     ],
-    "needsReview": true
+    "needsReview": true,
+    "meaningAudit": {
+      "status": "reference",
+      "available": 44,
+      "total": 45,
+      "checkedOn": "2026-09-26",
+      "note": "44 భాగాల్లో ఉన్నవి సంక్షిప్త భావసారాలు; వెయ్యి నామాలకు పదేపదే వ్యాఖ్యానం కావు. నామార్థాల పోలిక మూలం జోడించబడింది; పూర్తి సమీక్ష పెండింగ్‌లో ఉంది.",
+      "sources": [
+        {"label": "అర్థ పోలిక — Vishnu Sahasranamavali references", "url": "https://sanskritdocuments.org/doc_vishhnu/vishnaam.html"}
+      ]
+    }
   },
   "lingashtakam": {
     "reviewedOn": "2026-09-21",
@@ -171,7 +191,17 @@ window.CONTENT_AUDIT = {
         "url": "https://sanskritdocuments.org/doc_shiva/lingashh.html"
       }
     ],
-    "needsReview": false
+    "needsReview": false,
+    "meaningAudit": {
+      "status": "reference",
+      "available": 8,
+      "total": 9,
+      "checkedOn": "2026-09-26",
+      "note": "ఎనిమిది శ్లోకాల భావార్థాలకు పోలిక మూలం జోడించబడింది. ఫలశ్రుతికి అర్థం ఇంకా లేదు; తెలుగు భావార్థాల సంపాదకీయ సమీక్ష పెండింగ్‌లో ఉంది.",
+      "sources": [
+        {"label": "అర్థ పోలిక — Lingashtakam with meaning", "url": "https://sanskritdocuments.org/doc_shiva/lingashhMean.html"}
+      ]
+    }
   },
   "bilvashtakam": {
     "reviewedOn": "2026-09-21",
@@ -182,7 +212,17 @@ window.CONTENT_AUDIT = {
         "url": "https://sanskritdocuments.org/doc_shiva/bilvaashhtaka.html"
       }
     ],
-    "needsReview": true
+    "needsReview": true,
+    "meaningAudit": {
+      "status": "reference",
+      "available": 8,
+      "total": 9,
+      "checkedOn": "2026-09-26",
+      "note": "స్థానిక పాఠం, పది శ్లోకాల పోలిక సంచిక ఒకే క్రమంలో లేవు. అందువల్ల ఈ ఎనిమిది భావార్థాలు ధృవీకరించబడినవిగా చూపబడవు; ముందుగా స్థానిక సంచికను నిర్ధారించాలి.",
+      "sources": [
+        {"label": "అర్థ పోలిక — Bilvashtakam with meaning", "url": "https://sanskritdocuments.org/doc_shiva/bilva8mean.html"}
+      ]
+    }
   },
   "chalisa": {
     "reviewedOn": "2026-09-21",

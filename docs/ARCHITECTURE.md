@@ -5,7 +5,7 @@ The site uses plain browser modules and Cloudflare Worker modules without a fron
 ## Frontend modules
 
 - data/stotras/*.js: bundled prayer datasets.
-- data/content-audit.js: source, review date, verification status, and edition scope.
+- data/content-audit.js: separate text and meaning sources, review dates, verification statuses, coverage, and edition scope.
 - assets/styles.css: legacy component and feature styles.
 - assets/reading.css: reading accessibility and feature layouts.
 - assets/design-system.css: final visual tokens and presentation layer shared by Home and Reader.
@@ -35,6 +35,6 @@ OCR accepts at most six JPEG, PNG, or WebP images, limits individual and combine
 
 ## Verification
 
-Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, node tools/verify-worker.cjs, node tools/verify-japamala.cjs, and node tools/verify-reader-theme.cjs.
+Run node tools/verify.cjs, node tools/verify-reader-navigation.cjs, node tools/verify-library.cjs, node tools/verify-reader-smoke.cjs, node tools/verify-worker.cjs, node tools/verify-japamala.cjs, node tools/verify-reader-theme.cjs, and node tools/verify-meanings.cjs.
 
 The primary verifier checks all datasets, source metadata, frontend and Worker syntax, asset links, design-system load order, semantic card structure, reader behavior, and module boundaries.

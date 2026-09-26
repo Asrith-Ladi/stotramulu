@@ -105,3 +105,9 @@ The form is based on botanical and pharmacopoeial descriptions rather than a cop
 Grandham is now the single reading presentation for every prayer. The old theme toggle and saved on/off preference were removed, reducing the reader options to controls that still change reading behavior. Existing visitors who previously disabled Grandham now receive the same manuscript layout without a flash during startup.
 
 The Home category selector now gives native mobile option panels an explicit dark color scheme, light text, and a high-contrast gold selected row. The Home date field uses the same native dark-control hint. No new Home buttons or nested navigation were added.
+
+## Phase 24 — honest meaning coverage and sources
+
+Separated prayer-text verification from meaning verification. The four datasets that currently contain meanings now record their exact coverage, source-check date, editorial status, and dedicated comparison source. All 65 existing meaning blocks remain labelled as reference-added and review-pending; none are presented as independently verified, and no source translation was copied.
+
+The reader hides the meaning control for the 28 prayers that have no meanings. For the other four it shows the exact available/total count. The source panel repeats that coverage, explains the review limitation, and links the relevant meaning reference. Automated verification protects the 65/1,267 coverage count and prevents these reference sets from silently becoming “verified.”
