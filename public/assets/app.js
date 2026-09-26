@@ -84,6 +84,7 @@ function openReader(type) {
 
 
 function goHome() {
+    if (window.Japamala3D) window.Japamala3D.hide();
     stopReaderPositionTracking();
     // close any open overlays/sheets and release scroll lock
     document.getElementById('searchOverlay').classList.remove('active');

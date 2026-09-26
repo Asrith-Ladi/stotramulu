@@ -39,6 +39,7 @@ let monthIdx = 0;       // currently viewed month index
 
 
 function openTrack() {
+    if (window.Japamala3D) window.Japamala3D.hide();
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.remove('active');
     document.getElementById('trackPage').classList.add('active');

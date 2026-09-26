@@ -269,3 +269,6 @@ body.grandham .cal-day.future { opacity:.55; }
 body.grandham .cal-day.today { color:#68451f; box-shadow:none; }
 
 body.grandham .jm-head { color:#73522c; -webkit-text-fill-color:currentColor; background:none; }
+
+body.grandham .jm-rudraksha-hint { color:#73522c; opacity:1; }
+body.grandham .jm-rudraksha-fallback { color:#634825; background:#fff9ec; }

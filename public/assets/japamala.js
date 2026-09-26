@@ -72,10 +72,10 @@ function openJapamala() {
 
 /* ---------- switch between the looks ---------- */
 function setJmMode(mode) {
-    jmMode = ['flow', 'strand', 'full'].includes(mode) ? mode : 'flow';
+    jmMode = ['flow', 'strand', 'full', 'rudraksha3d'].includes(mode) ? mode : 'flow';
     try { localStorage.setItem('jm_mode_v2', jmMode); } catch (e) {}
     if (jmRaf) { cancelAnimationFrame(jmRaf); jmRaf = null; }
-    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow' };
+    const stages = { strand: 'jmStageStrand', full: 'jmStageFull', flow: 'jmStageFlow', rudraksha3d: 'jmStageRudraksha3d' };
     Object.keys(stages).forEach(m => {
         const el = document.getElementById(stages[m]);
         if (el) el.style.display = (m === jmMode) ? '' : 'none';
@@ -83,9 +83,11 @@ function setJmMode(mode) {
     document.querySelectorAll('.jm-mode-btn').forEach(b =>
         b.classList.toggle('active', b.dataset.mode === jmMode));
     const total = ensureJapamalaData().total;
+    if (window.Japamala3D && jmMode !== 'rudraksha3d') window.Japamala3D.hide();
     if (jmMode === 'strand') { jmTarget = jmScrollForCount(total); jmScroll = jmTarget; jmVel = 0; renderStrand(); }
     else if (jmMode === 'flow') { jmFlowTarget = total; jmFlow = total; jmFlowVel = 0; renderFlow(); }
     else if (jmMode === 'full') renderFull(false);
+    else if (window.Japamala3D) window.Japamala3D.show(total);
 }
 
 // which bead index should sit at the focus for a given cumulative total
@@ -313,6 +315,7 @@ function bumpJapa() {
     jmTarget = newTarget;
     jmFlowTarget = jm.total;
     if (jmMode === 'full') renderFull(true);
+    else if (jmMode === 'rudraksha3d') window.Japamala3D?.advance(jm.total);
     else jmStartAnim();
 
     jmPlayClick();
@@ -344,11 +347,12 @@ async function resetJapamala() {
     if (jmMode === 'strand') renderStrand();
     else if (jmMode === 'flow') renderFlow();
     else if (jmMode === 'full') renderFull(false);
+    else if (jmMode === 'rudraksha3d') window.Japamala3D?.reset(0);
     renderCount();
 }
 
 function jmCelebrate() {
-    const ids = { full: 'jmSvgFull', flow: 'jmSvgFlow', strand: 'jmSvg' };
+    const ids = { full: 'jmSvgFull', flow: 'jmSvgFlow', rudraksha3d: 'jmRudrakshaCanvas', strand: 'jmSvg' };
     const svg = document.getElementById(ids[jmMode] || 'jmSvgFlow');
     if (svg) { svg.classList.remove('celebrate'); void svg.getBoundingClientRect(); svg.classList.add('celebrate'); }
     jmConfetti();

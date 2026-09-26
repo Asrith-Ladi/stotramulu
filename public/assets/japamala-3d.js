@@ -28,9 +28,9 @@
         'uniform float uScale;',
         'uniform float uYaw;',
         'uniform float uTilt;',
-        'uniform float uSeed;',
-        'varying vec3 vNormal;',
-        'varying vec3 vLocal;',
+        'uniform mediump float uSeed;',
+        'varying mediump vec3 vNormal;',
+        'varying mediump vec3 vLocal;',
         'vec3 rotateX(vec3 p, float a) {',
         '  float c = cos(a), s = sin(a);',
         '  return vec3(p.x, p.y * c - p.z * s, p.y * s + p.z * c);',
@@ -55,9 +55,9 @@
     const fragmentSource = [
         'precision mediump float;',
         'uniform float uActive;',
-        'uniform float uSeed;',
-        'varying vec3 vNormal;',
-        'varying vec3 vLocal;',
+        'uniform mediump float uSeed;',
+        'varying mediump vec3 vNormal;',
+        'varying mediump vec3 vLocal;',
         'float hash(vec3 p) {',
         '  return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719)) + uSeed) * 43758.5453);',
         '}',
@@ -358,13 +358,13 @@
                     event.preventDefault();
                     state.ready = false;
                     cancelAnimationFrame(state.animationFrame);
+                    state.animationFrame = 0;
+                    state.animating = false;
                     showFallback();
                 });
                 state.canvas.addEventListener('webglcontextrestored', function () {
                     state.ready = false;
-                    ensureReady();
-                    hideFallback();
-                    render(0);
+                    if (ensureReady() && state.visible) render(0);
                 });
                 state.canvas.dataset.jm3dBound = '1';
             }

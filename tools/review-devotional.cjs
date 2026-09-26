@@ -15,6 +15,7 @@ const server = http.createServer((req,res)=>{
  try {
  const page=await browser.newPage({viewport:{width:1440,height:1050},reducedMotion:'reduce'});
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+ page.on('console',msg=>{if(msg.type()==='warning' && msg.text().includes('3D')) console.log(msg.text());});
  await page.route(/googletagmanager|gstatic.com\/firebase|firestore.googleapis/,route=>route.abort());
  await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'networkidle'});
  await page.locator('.category-filters button').first().waitFor({state:'attached'});
@@ -46,15 +47,43 @@ const server = http.createServer((req,res)=>{
  await page.locator('[data-home-target="practice"]').click();
  await page.locator('#practice button').first().click();
  await page.locator('#japamalaPage.active').waitFor();
- assert.equal(await page.locator('.jm-mode-btn').count(),3);
+ assert.equal(await page.locator('.jm-mode-btn').count(),4);
  for(const mode of ['flow','strand','full']) {
   await page.locator('[data-mode="'+mode+'"]').click();
   await page.locator('.jm-btn-count').click();
  }
  assert.equal(await page.locator('#jmCount').textContent(),'3');
- await page.evaluate(()=>setJmMode('rudraksha3d'));
+ await page.evaluate(()=>setJmMode('hand'));
  assert.ok(await page.locator('[data-mode="flow"]').evaluate(el=>el.classList.contains('active')));
+ await page.locator('[data-mode="rudraksha3d"]').click();
+ await page.screenshot({path:'docs/ui-reviews/devotional/mala-3d.png'});
+ assert.equal(await page.locator('#jmRudrakshaFallback').isVisible(),false,'3D shader compiles and renders');
  await page.screenshot({path:'docs/ui-reviews/devotional/mala.png'});
+ await page.locator('.jm-btn-count').click();
+ await page.locator('#jmRudrakshaCanvas').click();
+ assert.equal(await page.locator('#jmCount').textContent(),'5','canvas tap counts exactly once');
+ const canvasBox=await page.locator('#jmRudrakshaCanvas').boundingBox();
+ await page.mouse.move(canvasBox.x+100,canvasBox.y+100);
+ await page.mouse.down();await page.mouse.move(canvasBox.x+180,canvasBox.y+110,{steps:8});await page.mouse.up();
+ assert.equal(await page.locator('#jmCount').textContent(),'5','rotation does not count');
+ await page.locator('#jmRudrakshaCanvas').press('Enter');
+ assert.equal(await page.locator('#jmCount').textContent(),'6');
+ const canLose=await page.evaluate(()=>{
+  window.testGL=document.getElementById('jmRudrakshaCanvas').getContext('webgl').getExtension('WEBGL_lose_context');
+  if(window.testGL)window.testGL.loseContext();return !!window.testGL;
+ });
+ assert.ok(canLose,'graphics loss extension available for recovery check');
+ await page.locator('#jmRudrakshaFallback').waitFor({state:'visible'});
+ await page.evaluate(()=>window.testGL.restoreContext());
+ await page.locator('#jmRudrakshaFallback').waitFor({state:'hidden'});
+ assert.equal(await page.locator('#jmCount').textContent(),'6','graphics recovery keeps the count');
+ await page.locator('.jm-btn-reset').click();await page.locator('.sc-overlay [data-yes]').click();
+ await page.locator('.sc-overlay').waitFor({state:'detached'});
+ assert.equal(await page.locator('#jmCount').textContent(),'0');
+ await page.setViewportSize({width:390,height:844});
+ await page.screenshot({path:'docs/ui-reviews/devotional/mala-3d-mobile.png'});
+ await page.setViewportSize({width:1440,height:1050});
+
  await page.locator('[data-home-target="favoritesSection"]').click();
  await page.locator('#favoritesSection').waitFor({state:'visible'});
  await page.locator('[data-home-target="practice"]').click();
@@ -105,6 +134,6 @@ const server = http.createServer((req,res)=>{
  await page.getByRole('button',{name:'New collection'}).click();
  assert.equal(await page.locator('.cards-section:visible').count(),1,'cloud-added collection joins the filter');
  assert.deepEqual(errors,[],'no uncaught page errors');
- console.log('PASS: isolated tabs, history/reload, 30 cards, category filters, reader controls/favorites, three mala modes/counting, tracker, account entry, search, feedback dismissal and every tab at 320/390/768px.');
+ console.log('PASS: isolated tabs, history/reload, 30 cards, category filters, reader controls/favorites, four mala modes, 3D rendering/tap/rotation/reset/context recovery, tracker, account entry, search, feedback dismissal and every tab at 320/390/768px.');
  } finally {await browser.close();server.close();}
 })().catch(e=>{console.error(e);server.close();process.exitCode=1;});
