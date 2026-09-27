@@ -287,7 +287,7 @@ function showDueReminders() {
 
 // close search with Escape
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { closeSearch(); closeDay(); closeFeedback(); }
+    if (e.key === 'Escape') { closeSearch(); closeDay(); closeFeedback(); closeAccountOverlay(); }
 });
 
 

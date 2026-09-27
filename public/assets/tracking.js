@@ -56,11 +56,13 @@ function openTrack() {
 
 
 function openAccount() {
-    openTrack();
-    requestAnimationFrame(() => {
-        const account = document.getElementById('cloudAuthBox');
-        if (account) account.closest('.track-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    document.getElementById('accountOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    gaEvent('screen_view', { screen_name: 'Account' });
+}
+function closeAccountOverlay() {
+    document.getElementById('accountOverlay').classList.remove('active');
+    document.body.style.overflow = '';
 }
 
 

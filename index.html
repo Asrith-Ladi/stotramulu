@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="te">
 <head>
@@ -1054,6 +1055,40 @@
     </div>
 </div>
 
+<!-- ============ ACCOUNT overlay ============
+     Reached directly from the header's నా ఖాతా / Account button — sign-in
+     first and prominent (no file to manage, nothing to lose), backup/restore
+     collapsed below as a fallback for anyone who won't use Google sign-in. -->
+<div class="search-overlay" id="accountOverlay">
+    <div class="search-box account-box">
+        <div class="account-head">
+            <h2>నా ఖాతా <span lang="en">/ My Account</span></h2>
+            <button class="search-close-btn" onclick="closeAccountOverlay()" title="మూసివేయి"><svg class="icon-inline"><use href="/icons.svg#icon-close"/></svg></button>
+        </div>
+
+        <div class="track-card">
+            <div class="track-card-title">☁️ అన్ని ఫోన్‌లలో సేవ్ చేయండి</div>
+            <div id="cloudAuthBox" class="cloud-auth"></div>
+            <div id="adminLinkBox"></div>
+            <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
+                సైన్ ఇన్ చేస్తే మీ ప్రదక్షిణలు, జపమాల &amp; మొక్కులు ఆన్‌లైన్‌లో సురక్షితంగా ఉంటాయి — కొత్త ఫోన్‌లో అవే తిరిగి వస్తాయి. ఒక్క నొక్కు, ఫైల్ ఏమీ నిర్వహించాల్సిన అవసరం లేదు.
+            </div>
+        </div>
+
+        <details class="track-card account-advanced">
+            <summary class="track-card-title">💾 బ్యాకప్ &amp; రీస్టోర్ <span class="account-advanced-hint">(Google సైన్ ఇన్ చేయలేకపోతే మాత్రమే)</span></summary>
+            <div class="btn-row" style="margin-top:12px;">
+                <button class="track-btn primary" onclick="exportBackup()">📤 బ్యాకప్ తీసుకోండి</button>
+                <button class="track-btn" onclick="triggerRestore()">📥 తిరిగి పొందండి</button>
+            </div>
+            <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)">
+            <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
+                "బ్యాకప్" నొక్కితే మీ సమాచారం ఒక ఫైల్‌గా మీ పరికరంలో సేవ్ అవుతుంది (Downloads). దాన్ని Drive/iCloud లో దాచుకోవచ్చు. కొత్త ఫోన్‌లో "తిరిగి పొందండి" నొక్కి ఆ ఫైల్ ఎంచుకోండి. <b>జాగ్రత్త: ఈ ఫైల్ పోతే, డేటా తిరిగి పొందలేరు — సైన్ ఇన్ ఎక్కువ సురక్షితం.</b>
+            </div>
+        </details>
+    </div>
+</div>
+
 <!-- ============ TRACK (పూజా ట్రాక్) PAGE ============ -->
 <div class="track-page" id="trackPage">
     <div class="track-section-head">
@@ -1087,28 +1122,10 @@
         <div class="mokku-list" id="mokkuList"></div>
     </div>
 
-    <!-- Cloud backup (optional Google sign-in) -->
-    <div class="track-card">
-        <div class="track-card-title">☁️ అన్ని ఫోన్‌లలో సేవ్ చేయండి</div>
-        <div id="cloudAuthBox" class="cloud-auth"></div>
-        <div id="adminLinkBox"></div>
-        <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
-            సైన్ ఇన్ చేస్తే మీ ప్రదక్షిణలు, జపమాల &amp; మొక్కులు ఆన్‌లైన్‌లో సురక్షితంగా ఉంటాయి — కొత్త ఫోన్‌లో అవే తిరిగి వస్తాయి. సైన్ ఇన్ ఐచ్ఛికం; లేకపోతే ఈ పరికరంలోనే ఉంటాయి.
-        </div>
-    </div>
-
-    <!-- Backup / Restore (Option A — file on the user's device) -->
-    <div class="track-card">
-        <div class="track-card-title">💾 బ్యాకప్ &amp; రీస్టోర్</div>
-        <div class="btn-row">
-            <button class="track-btn primary" onclick="exportBackup()">📤 బ్యాకప్ తీసుకోండి</button>
-            <button class="track-btn" onclick="triggerRestore()">📥 తిరిగి పొందండి</button>
-        </div>
-        <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)">
-        <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
-            "బ్యాకప్" నొక్కితే మీ సమాచారం ఒక ఫైల్‌గా మీ పరికరంలో సేవ్ అవుతుంది (Downloads). దాన్ని Drive/iCloud లో దాచుకోవచ్చు. కొత్త ఫోన్‌లో "తిరిగి పొందండి" నొక్కి ఆ ఫైల్ ఎంచుకోండి.
-        </div>
-    </div>
+    <!-- Backup/restore + cloud sign-in moved to the dedicated Account overlay
+         (#accountOverlay, below) — reached via the header's నా ఖాతా / Account
+         button, so it no longer requires scrolling past the calendar/mokkulu
+         content on this page to reach it. -->
 
     <div class="track-empty" style="font-size:13px;opacity:0.5;line-height:1.7;">
         📱 మీ ట్రాక్ సమాచారం ఈ పరికరంలోనే (ఈ ఫోన్/టాబ్‌లో) భద్రంగా దాచబడుతుంది.<br>

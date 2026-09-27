@@ -788,6 +788,14 @@ html, body { overflow-x: hidden; max-width: 100%; }
 }
 .search-hint { text-align: center; color: var(--gold-light); opacity: 0.6; font-size: 14px; margin: 16px 0 4px; letter-spacing: 1px; }
 .search-results { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ---- Account overlay (reuses .search-overlay/.track-card; see index.html) ---- */
+.account-box { display: flex; flex-direction: column; gap: 16px; }
+.account-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.account-head h2 { font-size: 21px; color: var(--gold-light); font-weight: 600; margin: 0; }
+.account-advanced summary { cursor: pointer; list-style: none; }
+.account-advanced summary::-webkit-details-marker { display: none; }
+.account-advanced-hint { font-size: 12px; opacity: 0.55; font-weight: 400; }
 .search-result {
     display: flex; align-items: center; gap: 16px; padding: 16px 20px;
     border-radius: 16px; cursor: pointer; transition: all 0.25s ease;
