@@ -1,6 +1,13 @@
 import {verifyFirebaseToken} from "./auth.js";
 import {json} from "./http.js";
 
+// This is the real authorization boundary for OCR: a server-verified Firebase
+// UID checked against ADMIN_UID below. The ADMIN_UID constants that also exist
+// client-side (public/assets/site-config.js, used by admin.js/admin-dashboard.js)
+// only control which UI renders — they are not a security control on their own.
+// Firestore writes (stotras/feedback/config collections, used by admin.html)
+// are separately gated by Firestore security rules, which live in the Firebase
+// console and are NOT version-controlled in this repo.
 const DEFAULT_ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
 const DEFAULT_MODEL = "gemini-3.6-flash";
 const MAX_IMAGES = 6;

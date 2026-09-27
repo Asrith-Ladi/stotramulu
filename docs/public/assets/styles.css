@@ -1,0 +1,1971 @@
+:root {
+    --gold: #d4a843;
+    --gold-light: #f5e0a3;
+    --gold-bright: #ffdf85;
+    --gold-dark: #8a6510;
+    --gold-rich: #c9a04e;
+    --maroon-dark: #4a0012;
+    --cream: #fdf5e6;
+    --glass-bg: rgba(30, 20, 50, 0.35);
+    --glass-border: rgba(212, 168, 67, 0.25);
+    --gold-gradient: linear-gradient(135deg, #8a6510 0%, #d4a843 25%, #f5e0a3 50%, #ffdf85 65%, #d4a843 80%, #8a6510 100%);
+    --gold-shimmer: linear-gradient(110deg, transparent 30%, rgba(245, 224, 163, 0.6) 50%, transparent 70%);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Noto Sans Telugu', sans-serif;
+    background: #050310;
+    min-height: 100vh;
+    color: var(--cream);
+    overflow-x: hidden;
+}
+
+/* Multi-layer animated background */
+.bg-pattern {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+        radial-gradient(ellipse 800px 600px at 15% 20%, rgba(212, 168, 67, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 700px 700px at 85% 80%, rgba(180, 50, 100, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 900px 500px at 50% 50%, rgba(80, 40, 140, 0.08) 0%, transparent 70%),
+        linear-gradient(180deg, #050310 0%, #14082a 25%, #1a0a2e 50%, #0d0418 75%, #050310 100%);
+}
+
+/* Subtle gold mesh overlay */
+.bg-mesh {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.4;
+    background-image:
+        linear-gradient(rgba(212, 168, 67, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212, 168, 67, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 70%);
+}
+
+/* Floating particles */
+.particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+
+/* ============================================================
+   ఓం watermark — a large Telugu ఓం breathing quietly behind the
+   content, plus a faint tiled ఓం field. Very low opacity so text
+   stays perfectly readable; purely decorative (aria-hidden).
+============================================================ */
+.particles::before {
+    content: 'ఓం';
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Noto Sans Telugu', serif;
+    font-size: min(78vw, 60vh);
+    line-height: 1;
+    color: transparent;
+    background: linear-gradient(160deg, rgba(255,223,133,0.10), rgba(212,168,67,0.05) 45%, rgba(180,50,100,0.04));
+    -webkit-background-clip: text; background-clip: text;
+    text-shadow: none;
+    pointer-events: none; z-index: 0;
+    animation: omBreathe 11s ease-in-out infinite;
+}
+@keyframes omBreathe {
+    0%, 100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1); }
+    50%      { opacity: 0.9;  transform: translate(-50%, -50%) scale(1.035); }
+}
+/* tiled ఓం field, fading out towards the edges */
+.particles::after {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Ctext x='75' y='95' font-family='Noto Sans Telugu,serif' font-size='54' fill='%23d4a843' fill-opacity='0.045' text-anchor='middle'%3E%E0%B0%93%E0%B0%82%3C/text%3E%3C/svg%3E");
+    background-size: 150px 150px;
+    mask-image: radial-gradient(ellipse at center, transparent 0%, black 55%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse at center, transparent 0%, black 55%, transparent 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+    .particles::before { animation: none; opacity: 0.7; }
+}
+
+.particle { position: absolute; border-radius: 50%; opacity: 0; animation: floatUp 10s infinite; }
+.particle.gold { background: var(--gold-bright); width: 3px; height: 3px; box-shadow: 0 0 8px rgba(255, 223, 133, 0.8); }
+.particle.big { background: rgba(245, 224, 163, 0.5); width: 5px; height: 5px; box-shadow: 0 0 12px rgba(245, 224, 163, 0.6); }
+@keyframes floatUp {
+    0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.3; }
+    100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+}
+
+/* Premium Glass Header */
+.header {
+    background: linear-gradient(180deg, rgba(25, 15, 45, 0.7) 0%, rgba(15, 8, 25, 0.5) 100%);
+    border-bottom: 1px solid transparent;
+    padding: 18px 0;
+    position: sticky; top: 0; z-index: 100;
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(245, 224, 163, 0.1);
+}
+.header::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%, transparent 95%, rgba(212, 168, 67, 0.1) 100%);
+}
+.header::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, transparent 15%, var(--gold-dark) 30%, var(--gold-bright) 50%, var(--gold-dark) 70%, transparent 85%, transparent 100%);
+    box-shadow: 0 0 20px rgba(212, 168, 67, 0.4);
+}
+.header-content { max-width: 1400px; margin: 0 auto; text-align: center; padding: 0 20px; position: relative; }
+.header-om {
+    font-size: 18px; letter-spacing: 10px; opacity: 0.85;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.header h1 {
+    font-size: 32px; font-weight: 700; letter-spacing: 4px;
+    background: var(--gold-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 8px rgba(212, 168, 67, 0.3));
+    animation: shimmerText 6s linear infinite;
+}
+@keyframes shimmerText {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+}
+.header-sub { font-size: 12px; color: var(--gold-light); opacity: 0.6; margin-top: 4px; letter-spacing: 5px; text-transform: uppercase; }
+
+.back-btn {
+    position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.15), rgba(212, 168, 67, 0.05));
+    color: var(--gold-light);
+    border: 1px solid rgba(212, 168, 67, 0.4);
+    padding: 10px 24px; border-radius: 30px; font-size: 16px;
+    font-family: 'Noto Sans Telugu', sans-serif; font-weight: 500; cursor: pointer;
+    display: none; transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.15);
+}
+.back-btn:hover {
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.3), rgba(212, 168, 67, 0.15));
+    border-color: var(--gold-bright);
+    
+    box-shadow: 0 4px 20px rgba(212, 168, 67, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.25);
+}
+
+/* Home Page */
+.home-page {
+    display: flex; flex-direction: column; align-items: center;
+    min-height: calc(100vh - 100px); padding: 50px 20px; position: relative; z-index: 1;
+}
+
+.welcome-section { text-align: center; margin-bottom: 55px; position: relative; }
+.welcome-section .om-symbol {
+    font-size: 80px; display: block; margin-bottom: 18px;
+    background: var(--gold-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 60px rgba(255, 223, 133, 0.4));
+    animation: omPulse 4s ease-in-out infinite, shimmerText 5s linear infinite;
+}
+@keyframes omPulse {
+    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 40px rgba(255, 223, 133, 0.3)); }
+    50% { transform: scale(1.06); filter: drop-shadow(0 0 80px rgba(255, 223, 133, 0.6)); }
+}
+.welcome-section h2 {
+    font-size: 28px; font-weight: 500; margin-bottom: 10px; letter-spacing: 2px;
+    background: linear-gradient(135deg, #f5e0a3, #ffdf85, #d4a843);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.welcome-section p { font-size: 14px; color: var(--cream); opacity: 0.45; letter-spacing: 3px; text-transform: uppercase; }
+
+/* Cards Grid */
+.cards-section {
+    width: 100%; max-width: 1240px;
+    margin-bottom: 20px;
+}
+.section-divider {
+    text-align: center;
+    margin: 30px 0 28px;
+    position: relative;
+}
+.section-title {
+    display: inline-block;
+    font-size: 26px;
+    font-weight: 700;
+    background: var(--gold-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 4px;
+    padding: 0 30px;
+    position: relative;
+    animation: shimmerText 6s linear infinite;
+}
+.section-title::before, .section-title::after {
+    content: '';
+    position: absolute; top: 50%;
+    width: 100px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.section-title::before { right: 100%; }
+.section-title::after { left: 100%; }
+.section-sub {
+    font-size: 11px; color: var(--gold-light); opacity: 0.55;
+    letter-spacing: 5px; text-transform: uppercase;
+    margin-top: 8px;
+}
+
+.cards-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px;
+    width: 100%;
+}
+
+/* PREMIUM GLASS CARD */
+.card {
+    width: 100%; max-width: 380px; min-height: 420px;
+    border-radius: 24px; overflow: hidden; cursor: pointer; text-decoration: none; color: inherit;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.5) 0%, rgba(20, 12, 35, 0.7) 100%);
+    backdrop-filter: blur(20px) saturate(150%);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    border: 1px solid rgba(212, 168, 67, 0.2);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 rgba(245, 224, 163, 0.15),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+/* Gold border glow on card */
+.card::before {
+    content: ''; position: absolute; inset: 0; border-radius: 24px; padding: 1px;
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.5) 0%, rgba(212, 168, 67, 0.05) 30%, rgba(212, 168, 67, 0.05) 70%, rgba(245, 224, 163, 0.4) 100%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events: none;
+    transition: all 0.5s ease;
+}
+/* Shimmer overlay */
+.card::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+    background: var(--gold-shimmer);
+    transition: left 0.8s ease;
+    pointer-events: none; z-index: 3;
+}
+.card:focus-visible {
+    outline: 3px solid var(--gold-light);
+    outline-offset: 4px;
+}
+.card:hover {
+    transform: translateY(-12px) scale(1.025);
+    box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(212, 168, 67, 0.2),
+        inset 0 1px 0 rgba(245, 224, 163, 0.3),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+.card:hover::before {
+    background: linear-gradient(135deg, rgba(255, 223, 133, 0.8) 0%, rgba(212, 168, 67, 0.3) 30%, rgba(212, 168, 67, 0.3) 70%, rgba(255, 223, 133, 0.8) 100%);
+}
+.card:hover::after { left: 100%; }
+
+.card-bg { position: absolute; inset: 0; z-index: 0; opacity: 0.5; }
+.card.vishnu .card-bg { background: radial-gradient(ellipse at top, rgba(40, 100, 200, 0.25) 0%, transparent 70%); }
+.card.lalitha .card-bg { background: radial-gradient(ellipse at top, rgba(200, 50, 100, 0.25) 0%, transparent 70%); }
+.card.shiva .card-bg { background: radial-gradient(ellipse at top, rgba(100, 150, 200, 0.22) 0%, transparent 70%); }
+.card.bilva .card-bg { background: radial-gradient(ellipse at top, rgba(60, 160, 80, 0.22) 0%, transparent 70%); }
+.card.venkat .card-bg { background: radial-gradient(ellipse at top, rgba(220, 150, 50, 0.25) 0%, transparent 70%); }
+.card.ganesha .card-bg { background: radial-gradient(ellipse at top, rgba(220, 110, 60, 0.28) 0%, transparent 70%); }
+.card.hanuman .card-bg { background: radial-gradient(ellipse at top, rgba(200, 80, 40, 0.28) 0%, transparent 70%); }
+.card.lakshmi .card-bg { background: radial-gradient(ellipse at top, rgba(230, 180, 60, 0.28) 0%, transparent 70%); }
+.card.saibaba .card-bg { background: radial-gradient(ellipse at top, rgba(220, 130, 60, 0.28) 0%, transparent 70%); }
+.card.ayyappa .card-bg { background: radial-gradient(ellipse at top, rgba(60, 120, 200, 0.28) 0%, transparent 70%); }
+.card.durga .card-bg { background: radial-gradient(ellipse at top, rgba(220, 60, 80, 0.28) 0%, transparent 70%); }
+.card.govinda .card-bg { background: radial-gradient(ellipse at top, rgba(70, 140, 220, 0.28) 0%, transparent 70%); }
+.card.chalisa .card-bg { background: radial-gradient(ellipse at top, rgba(230, 120, 50, 0.28) 0%, transparent 70%); }
+.card.harati .card-bg { background: radial-gradient(ellipse at top, rgba(255, 170, 50, 0.28) 0%, transparent 70%); }
+.card.manidweepa .card-bg { background: radial-gradient(ellipse at top, rgba(160, 70, 200, 0.28) 0%, transparent 70%); }
+
+/* Card deity SVG backgrounds */
+.card-deity-svg {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 280px; height: 280px; z-index: 1; opacity: 0.07;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.card:hover .card-deity-svg { opacity: 0.13; transform: translate(-50%, -50%) scale(1.05); }
+
+.card-content {
+    position: relative; z-index: 2; padding: 36px 26px 28px;
+    display: flex; flex-direction: column; align-items: center;
+    height: 100%; text-align: center;
+}
+
+/* Premium gold ring around icon */
+.card-icon-wrap {
+    width: 100px; height: 100px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 22px; position: relative;
+    background: radial-gradient(circle, rgba(212, 168, 67, 0.15) 0%, transparent 70%);
+    border: 1px solid rgba(212, 168, 67, 0.4);
+    box-shadow:
+        0 0 30px rgba(212, 168, 67, 0.15),
+        inset 0 0 20px rgba(212, 168, 67, 0.08);
+}
+.card-icon-wrap::before {
+    content: ''; position: absolute; inset: -4px; border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(245, 224, 163, 0.5) 25%, transparent 50%, rgba(212, 168, 67, 0.4) 75%, transparent 100%);
+    opacity: 0; transition: opacity 0.4s ease;
+    animation: rotateRing 4s linear infinite;
+    -webkit-mask: radial-gradient(circle, transparent 50%, black 51%);
+    mask: radial-gradient(circle, transparent 50%, black 51%);
+}
+.card:hover .card-icon-wrap::before { opacity: 1; }
+@keyframes rotateRing { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.card-icon-wrap .deity-icon { font-size: 44px; filter: drop-shadow(0 0 15px rgba(255, 223, 133, 0.4)); }
+
+.card h3 {
+    font-size: 23px; font-weight: 700; margin-bottom: 5px; letter-spacing: 1px;
+    background: linear-gradient(135deg, #f5e0a3, #ffdf85, #d4a843);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.card .card-sub { font-size: 12px; color: var(--gold); opacity: 0.55; margin-bottom: 16px; letter-spacing: 2px; text-transform: uppercase; }
+.card .card-desc { font-size: 14.5px; color: var(--cream); opacity: 0.55; line-height: 1.85; margin-bottom: 26px; flex: 1; }
+
+/* PREMIUM GOLD BUTTON */
+
+
+
+/* Reader Page */
+.reader-page {
+    display: none; max-width: 920px; margin: 0 auto;
+    padding: 35px 20px 80px; position: relative; z-index: 1;
+}
+.reader-page.active { display: block; animation: fadeInUp 0.6s ease; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(25px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Reader Deity Background */
+.reader-deity-bg {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 650px; height: 650px; z-index: 0; opacity: 0.04;
+    pointer-events: none;
+    filter: drop-shadow(0 0 40px rgba(212, 168, 67, 0.3));
+}
+
+/* GLASS TITLE SECTION */
+.reader-title-section {
+    text-align: center; margin-bottom: 35px; padding: 32px 28px;
+    border-radius: 20px;
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.5) 0%, rgba(20, 12, 35, 0.7) 100%);
+    border: 1px solid rgba(212, 168, 67, 0.25);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(245, 224, 163, 0.15);
+    position: relative; overflow: hidden;
+}
+.reader-title-section::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent 0%, var(--gold-dark) 25%, var(--gold-bright) 50%, var(--gold-dark) 75%, transparent 100%);
+    box-shadow: 0 0 15px rgba(212, 168, 67, 0.4);
+}
+.reader-title-section::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.3), transparent);
+}
+.reader-title-section.vishnu-theme { background: linear-gradient(135deg, rgba(40, 80, 160, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.lalitha-theme { background: linear-gradient(135deg, rgba(180, 40, 80, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.shiva-theme { background: linear-gradient(135deg, rgba(80, 130, 180, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.bilva-theme { background: linear-gradient(135deg, rgba(50, 140, 60, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.venkat-theme { background: linear-gradient(135deg, rgba(200, 140, 50, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.ganesha-theme { background: linear-gradient(135deg, rgba(220, 110, 60, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.hanuman-theme { background: linear-gradient(135deg, rgba(200, 80, 40, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.lakshmi-theme { background: linear-gradient(135deg, rgba(230, 180, 60, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.saibaba-theme { background: linear-gradient(135deg, rgba(220, 130, 60, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.ayyappa-theme { background: linear-gradient(135deg, rgba(60, 120, 200, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.durga-theme { background: linear-gradient(135deg, rgba(220, 60, 80, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.govinda-theme { background: linear-gradient(135deg, rgba(70, 140, 220, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.chalisa-theme { background: linear-gradient(135deg, rgba(230, 120, 50, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.harati-theme { background: linear-gradient(135deg, rgba(255, 170, 50, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+.reader-title-section.manidweepa-theme { background: linear-gradient(135deg, rgba(160, 70, 200, 0.18) 0%, rgba(20, 12, 35, 0.7) 100%); }
+
+.reader-title-section h2 {
+    font-size: 32px; margin-bottom: 8px; letter-spacing: 2px;
+    background: var(--gold-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmerText 6s linear infinite;
+}
+.reader-title-section p { font-size: 13px; color: var(--gold-light); opacity: 0.55; letter-spacing: 3px; text-transform: uppercase; }
+
+/* GLASS CONTROLS */
+.controls { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 30px; flex-wrap: wrap; }
+.font-control {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.5), rgba(20, 12, 35, 0.6));
+    padding: 8px 18px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 168, 67, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.1);
+}
+.font-control label { font-size: 14px; color: var(--gold-light); opacity: 0.8; }
+.font-btn {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: 1px solid rgba(212, 168, 67, 0.4);
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.15), rgba(212, 168, 67, 0.03));
+    color: var(--gold-light); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 0 rgba(245, 224, 163, 0.15);
+}
+.font-btn:hover {
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    color: #2a1808;
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 15px rgba(212, 168, 67, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.font-size-display { font-size: 14px; color: var(--gold-light); min-width: 28px; text-align: center; opacity: 0.9; font-weight: 600; }
+
+/* MEANING TOGGLE SWITCH */
+.meaning-toggle {
+    display: flex; align-items: center; gap: 12px;
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.5), rgba(20, 12, 35, 0.6));
+    padding: 8px 18px; border-radius: 30px;
+    border: 1px solid rgba(212, 168, 67, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.1);
+    cursor: pointer; user-select: none;
+    transition: all 0.3s ease;
+}
+.meaning-toggle:hover { border-color: rgba(212, 168, 67, 0.4); }
+.meaning-toggle label { font-size: 14px; color: var(--gold-light); opacity: 0.85; cursor: pointer; }
+.toggle-switch {
+    width: 48px; height: 26px; border-radius: 13px;
+    background: rgba(212, 168, 67, 0.15);
+    border: 1px solid rgba(212, 168, 67, 0.35);
+    position: relative; transition: all 0.35s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.toggle-switch::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #f0e0c0, #d4a843);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.meaning-toggle.on .toggle-switch {
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-bright) 100%);
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 15px rgba(212, 168, 67, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.meaning-toggle.on .toggle-switch::after {
+    left: 24px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+/* IN-STOTRAM SEARCH (highlight + scroll) */
+.reader-search {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 10px 6px 14px; border-radius: 30px;
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.5), rgba(20, 12, 35, 0.6));
+    border: 1px solid rgba(212, 168, 67, 0.2);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.1);
+    min-width: 240px; max-width: 360px; flex: 1;
+    transition: all 0.25s ease;
+}
+.reader-search:focus-within {
+    border-color: var(--gold);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(245, 224, 163, 0.15), 0 0 0 2px rgba(212, 168, 67, 0.18);
+}
+.reader-search .rs-icon { font-size: 14px; opacity: 0.7; flex-shrink: 0; }
+.reader-search .rs-input {
+    flex: 1; min-width: 0;
+    background: transparent; border: none; outline: none;
+    color: var(--cream); font-size: 14px; font-weight: 500;
+    font-family: 'Noto Sans Telugu', sans-serif;
+}
+.reader-search .rs-input::placeholder { color: rgba(245, 224, 163, 0.4); }
+.reader-search .rs-count {
+    font-size: 11px; color: var(--gold-light); opacity: 0.75;
+    min-width: 36px; text-align: center; flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+.reader-search .rs-nav, .reader-search .rs-clear {
+    width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(212, 168, 67, 0.12);
+    border: 1px solid rgba(212, 168, 67, 0.25);
+    color: var(--gold-light); cursor: pointer; font-size: 13px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+}
+.reader-search .rs-nav:hover:not(:disabled),
+.reader-search .rs-clear:hover {
+    background: rgba(212, 168, 67, 0.25);
+    border-color: var(--gold); color: var(--gold-bright);
+}
+.reader-search .rs-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.reader-search .rs-mic {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    border: 1px solid rgba(245, 224, 163, 0.45);
+    color: #2a1808; cursor: pointer; font-size: 14px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.25s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.reader-search .rs-mic:hover { transform: scale(1.08); box-shadow: 0 0 12px rgba(212, 168, 67, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.reader-search .rs-mic.listening {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    color: #fff; animation: micPulse 1.2s infinite;
+}
+
+/* Match highlights inside slokam blocks */
+.slokam-text mark, .slokam-meaning mark {
+    background: linear-gradient(135deg, rgba(255, 223, 133, 0.55), rgba(212, 168, 67, 0.35));
+    color: inherit;
+    padding: 1px 4px; border-radius: 4px;
+    box-shadow: 0 0 8px rgba(212, 168, 67, 0.35);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+.slokam-text mark.current, .slokam-meaning mark.current {
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+    color: var(--maroon-dark); font-weight: 700;
+    box-shadow: 0 0 16px rgba(255, 223, 133, 0.7);
+}
+
+/* MEANING BLOCK */
+.slokam-meaning {
+    margin-top: 18px;
+    padding: 16px 22px 16px 24px;
+    border-left: 3px solid var(--gold);
+    background: linear-gradient(90deg, rgba(212, 168, 67, 0.08) 0%, rgba(212, 168, 67, 0.02) 100%);
+    border-radius: 0 12px 12px 0;
+    font-size: 17px;
+    line-height: 1.95;
+    color: #f0e0b8;
+    opacity: 0.95;
+    position: relative;
+    display: none;
+    font-style: italic;
+    box-shadow: -2px 0 12px rgba(212, 168, 67, 0.1);
+}
+.slokam-meaning::before {
+    content: ''; position: absolute; left: -3px; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, transparent, var(--gold-bright), transparent);
+    opacity: 0.6;
+}
+.meaning-label {
+    display: inline-block;
+    font-size: 11px;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+    color: var(--maroon-dark);
+    font-weight: 700; font-style: normal;
+    padding: 2px 12px; border-radius: 12px;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(212, 168, 67, 0.3);
+}
+body.show-meanings .slokam-meaning {
+    display: block;
+    animation: meaningSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes meaningSlide {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 0.95; transform: translateY(0); }
+}
+
+/* ORIGIN / SIGNIFICANCE BLOCK */
+.origin-block {
+    margin-bottom: 28px;
+    padding: 22px 26px;
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.1) 0%, rgba(20, 12, 35, 0.5) 100%);
+    border: 1px solid rgba(212, 168, 67, 0.25);
+    border-left: 4px solid var(--gold);
+    border-radius: 14px;
+    backdrop-filter: blur(15px) saturate(150%);
+    -webkit-backdrop-filter: blur(15px) saturate(150%);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(245, 224, 163, 0.1);
+    position: relative;
+    overflow: hidden;
+    display: none;
+}
+.origin-block.visible { display: block; animation: meaningSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+.origin-block::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.5), transparent);
+}
+.origin-label {
+    display: inline-block;
+    font-size: 12px;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-bright) 100%);
+    color: var(--maroon-dark);
+    font-weight: 700;
+    padding: 4px 16px;
+    border-radius: 14px;
+    letter-spacing: 1.8px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 6px rgba(212, 168, 67, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.origin-text {
+    font-size: 16px;
+    line-height: 1.95;
+    color: #f0e0b8;
+    opacity: 0.92;
+}
+
+/* PREMIUM GLASS SLOKAM BLOCKS */
+.slokam-container { display: flex; flex-direction: column; gap: 18px; }
+.slokam-block {
+    background: linear-gradient(135deg, rgba(40, 25, 65, 0.4) 0%, rgba(20, 12, 35, 0.6) 100%);
+    border: 1px solid rgba(212, 168, 67, 0.15);
+    border-radius: 16px; padding: 26px 30px;
+    transition: all 0.4s ease; position: relative; overflow: hidden;
+    backdrop-filter: blur(15px) saturate(150%);
+    -webkit-backdrop-filter: blur(15px) saturate(150%);
+    box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(245, 224, 163, 0.08);
+}
+.slokam-block::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212, 168, 67, 0.4), transparent);
+}
+.slokam-block::after {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, transparent, var(--gold), transparent);
+    opacity: 0; transition: opacity 0.4s ease;
+}
+.slokam-block:hover {
+    border-color: rgba(212, 168, 67, 0.35);
+    background: linear-gradient(135deg, rgba(50, 30, 75, 0.5) 0%, rgba(25, 15, 45, 0.7) 100%);
+    transform: translateX(2px);
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(212, 168, 67, 0.08),
+        inset 0 1px 0 rgba(245, 224, 163, 0.12);
+}
+.slokam-block:hover::after { opacity: 1; }
+
+.slokam-number {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-bright) 100%);
+    color: var(--maroon-dark); padding: 4px 16px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; margin-bottom: 14px;
+    box-shadow:
+        0 2px 8px rgba(212, 168, 67, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    letter-spacing: 0.5px;
+}
+.slokam-text { font-size: 22px; line-height: 2; color: var(--cream); white-space: pre-line; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); }
+
+/* PREMIUM SCROLL TOP BUTTON */
+.scroll-top-btn {
+    position: fixed; bottom: 30px; right: 30px; width: 52px; height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dark) 0%, var(--gold) 50%, var(--gold-bright) 100%);
+    color: #2a1808; border: 1px solid rgba(245, 224, 163, 0.5);
+    font-size: 22px; font-weight: 700; cursor: pointer;
+    display: none; align-items: center; justify-content: center; z-index: 200;
+    box-shadow:
+        0 6px 20px rgba(212, 168, 67, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+.scroll-top-btn:hover {
+    transform: scale(1.12) translateY(-3px);
+    box-shadow:
+        0 10px 30px rgba(212, 168, 67, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.scroll-top-btn.visible { display: flex; }
+
+/* Footer */
+.footer {
+    text-align: center; padding: 30px;
+    font-size: 13px; position: relative; z-index: 1; letter-spacing: 1px;
+    background: var(--gold-gradient);
+    background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.5;
+    animation: shimmerText 8s linear infinite;
+}
+.footer .divider { width: 220px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 0 auto 15px; box-shadow: 0 0 10px rgba(212, 168, 67, 0.3); }
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .cards-grid { grid-template-columns: repeat(2, 1fr); max-width: 780px; }
+    .cards-grid .card:nth-child(5) { grid-column: 1 / -1; justify-self: center; }
+}
+@media (max-width: 700px) {
+    .cards-grid { grid-template-columns: 1fr; max-width: 400px; }
+    .cards-grid .card:nth-child(4),
+    .cards-grid .card:nth-child(5) { justify-self: stretch; }
+    .card { max-width: 100%; min-height: 340px; }
+    .back-btn { position: static; transform: none; margin-bottom: 8px; }
+    .back-btn:hover { transform: scale(1.03); }
+    .header h1 { font-size: 22px; }
+    .reader-deity-bg { width: 350px; height: 350px; }
+    .slokam-text { font-size: 19px; }
+    .slokam-block { padding: 18px; }
+}
+/* ============================================================
+   ADDED FEATURES: smooth scroll · search+voice · pooja track
+   (kept in the same dark-gold glass theme, big tap targets
+    for easy use by 45+ devotees)
+============================================================ */
+html { scroll-behavior: smooth; }
+html, body { overflow-x: hidden; max-width: 100%; }
+*, *::before, *::after { box-sizing: border-box; }
+.month-strip, .search-overlay, .day-sheet { -webkit-overflow-scrolling: touch; }
+
+/* ---- Header: 3-slot grid so title stays centered and the
+       action buttons never overlap the back button ---- */
+.header-content {
+    display: grid; grid-template-columns: 1fr auto 1fr;
+    align-items: center; gap: 8px;
+}
+.header-slot-left { justify-self: start; }
+.header-titles { text-align: center; min-width: 0; }
+
+/* override the original absolute back-btn positioning */
+.back-btn { position: static !important; transform: none !important; left: auto !important; top: auto !important; }
+
+
+
+
+/* ---- Search overlay ---- */
+.search-overlay {
+    position: fixed; inset: 0; z-index: 500; display: none;
+    background: rgba(5,3,16,0.78); backdrop-filter: blur(10px);
+    padding: 90px 18px 40px; overflow-y: auto;
+}
+.search-overlay.active { display: block; animation: fadeInUp 0.3s ease; }
+.search-box { max-width: 640px; margin: 0 auto; }
+.search-input-wrap {
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(40,25,65,0.92), rgba(20,12,35,0.96));
+    border: 1px solid rgba(212,168,67,0.45); border-radius: 40px;
+    padding: 8px 8px 8px 24px;
+    box-shadow: 0 12px 45px rgba(0,0,0,0.55), inset 0 1px 0 rgba(245,224,163,0.15);
+}
+.search-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--cream); font-size: 20px; padding: 13px 0;
+    font-family: 'Noto Sans Telugu', sans-serif;
+}
+.search-input::placeholder { color: rgba(245,224,163,0.4); }
+.mic-btn, .search-close-btn {
+    width: 54px; height: 54px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 23px; cursor: pointer; transition: all 0.3s ease;
+    border: 1px solid rgba(245,224,163,0.4);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    color: #2a1808; box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+.mic-btn:hover, .search-close-btn:hover { transform: scale(1.07); box-shadow: 0 0 16px rgba(212,168,67,0.5); }
+.mic-btn.listening {
+    background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff;
+    animation: micPulse 1.2s infinite;
+}
+@keyframes micPulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.55); }
+    50% { box-shadow: 0 0 0 16px rgba(231,76,60,0); }
+}
+.search-hint { text-align: center; color: var(--gold-light); opacity: 0.6; font-size: 14px; margin: 16px 0 4px; letter-spacing: 1px; }
+.search-results { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.search-result {
+    display: flex; align-items: center; gap: 16px; padding: 16px 20px;
+    border-radius: 16px; cursor: pointer; transition: all 0.25s ease;
+    background: linear-gradient(135deg, rgba(40,25,65,0.6), rgba(20,12,35,0.8));
+    border: 1px solid rgba(212,168,67,0.2);
+}
+.search-result:hover {
+    border-color: var(--gold); transform: translateX(4px);
+    background: linear-gradient(135deg, rgba(50,30,75,0.7), rgba(25,15,45,0.9));
+}
+.search-result .sr-icon { font-size: 30px; }
+.search-result .sr-title { font-size: 19px; color: var(--gold-light); font-weight: 600; }
+.search-result .sr-sub { font-size: 13px; color: var(--cream); opacity: 0.5; letter-spacing: 1px; }
+.search-empty { text-align: center; color: var(--cream); opacity: 0.5; font-size: 16px; padding: 36px; }
+
+/* ---- Reminder banner ---- */
+.reminder-banner {
+    max-width: 720px; margin: 0 auto 18px; padding: 14px 20px; border-radius: 14px;
+    display: none; align-items: center; gap: 12px; font-size: 16px; color: #fff7e0;
+    background: linear-gradient(135deg, rgba(180,90,30,0.5), rgba(120,40,20,0.4));
+    border: 1px solid rgba(255,180,90,0.5);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+.reminder-banner.show { display: flex; animation: meaningSlide 0.5s ease; }
+.reminder-banner .rb-close { margin-left: auto; cursor: pointer; opacity: 0.7; font-size: 20px; }
+
+/* ---- Track page ---- */
+.track-page { display: none; max-width: 760px; margin: 0 auto; padding: 30px 16px 90px; position: relative; z-index: 1; }
+.track-page.active { display: block; animation: fadeInUp 0.6s ease; }
+.track-section-head { text-align: center; margin: 8px 0 18px; }
+.track-section-head h2 {
+    font-size: 28px; letter-spacing: 2px;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmerText 6s linear infinite;
+}
+.track-section-head p { font-size: 12px; color: var(--gold-light); opacity: 0.55; letter-spacing: 4px; text-transform: uppercase; margin-top: 4px; }
+
+.track-card {
+    background: linear-gradient(135deg, rgba(40,25,65,0.5), rgba(20,12,35,0.7));
+    border: 1px solid rgba(212,168,67,0.22); border-radius: 20px;
+    padding: 20px; margin-bottom: 22px;
+    backdrop-filter: blur(15px) saturate(150%);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(245,224,163,0.12);
+}
+.track-card-title { font-size: 19px; color: var(--gold-light); font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+
+/* ============================================================
+   JAPAMALA — page + two bead styles (ring / strand).
+   Beads are re-styled per tap, never re-created, so animation
+   stays cheap on older phones (only .active bead animates).
+============================================================ */
+.japamala-page { display: none; max-width: 560px; margin: 0 auto; padding: 20px 16px 90px; text-align: center; position: relative; z-index: 1; }
+.japamala-page.active { display: block; animation: fadeInUp 0.6s ease; }
+
+/* ---- Vertical scrolling japamala (2D SVG, no WebGL) ---- */
+.jm-head {
+    font-size: 24px; letter-spacing: 2px; margin-bottom: 2px;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmerText 6s linear infinite;
+}
+/* two-look toggle */
+.jm-modes { display: flex; gap: 8px; justify-content: center; margin: 8px 0 8px; }
+.jm-mode-btn {
+    padding: 7px 16px; border-radius: 30px; cursor: pointer; font-size: 13px; font-weight: 600;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    color: var(--gold-light); background: rgba(212,168,67,0.10);
+    border: 1px solid rgba(212,168,67,0.28); transition: all 0.2s ease;
+}
+.jm-mode-btn.active {
+    color: #2a1808; border-color: var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+}
+
+.jm-count-top { line-height: 1; margin: 10px 0 2px; }
+.jm-count-top #jmCount {
+    font-size: 56px; font-weight: 800; letter-spacing: -1px;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold) 60%, #9a6f28);
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    font-variant-numeric: tabular-nums;
+}
+.jm-count-top .jm-of { font-size: 18px; color: var(--gold-light); opacity: 0.5; letter-spacing: 1px; }
+.jm-rounds { font-size: 12.5px; color: var(--gold-light); opacity: 0.8; min-height: 16px; letter-spacing: 1px; }
+
+/* temple-ambience stage holding the tall strand */
+.jm-stage {
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    margin: 6px auto 0; border-radius: 20px;
+    background: radial-gradient(60% 42% at 50% 45%, rgba(120,70,20,0.28), rgba(30,16,8,0.0) 70%);
+}
+.jm-svg { width: min(78vw, 300px); height: auto; display: block; margin: 0 auto;
+    overflow: visible; filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5)); }
+
+/* silk thread + fixed focus glow */
+.jm-thread { stroke: rgba(150,110,55,0.5); stroke-width: 1.4; }
+.jm-focus { animation: jmFocusPulse 3.2s ease-in-out infinite; }
+@keyframes jmFocusPulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
+
+/* beads (positioned/scaled per frame by JS) */
+.jm-bead { transition: none; }
+.jm-bead.cur circle { stroke: rgba(255,235,180,0.9); stroke-width: 1.1;
+    filter: drop-shadow(0 0 5px rgba(255,223,133,0.9)); }
+
+/* LOOK 2: full-loop beads */
+.jm-svg-full { width: min(84vw, 320px); }
+.jm-fbead { transition: fill 0.25s ease; transform-box: fill-box; transform-origin: center; }
+.jm-fbead.cur { stroke: rgba(255,235,180,0.95); stroke-width: 1; filter: drop-shadow(0 0 5px rgba(255,223,133,0.95)); }
+.jm-fbead.pop { animation: jmPop 0.3s ease; }
+@keyframes jmPop { 40% { transform: scale(1.9); } }
+.jm-full-count { fill: url(#gGold); font-size: 44px; font-weight: 800;
+    font-family: -apple-system, system-ui, sans-serif; }
+.jm-full-of { fill: var(--gold-light); font-size: 13px; letter-spacing: 3px; opacity: 0.55; }
+
+/* LOOK 3: flowing complete mala */
+.jm-svg-flow { width: min(88vw, 340px); }
+.jm-flowbead circle { transition: fill 0.25s ease; }
+.jm-flowbead.cur circle { stroke: rgba(255,235,180,0.95); stroke-width: 1;
+    filter: drop-shadow(0 0 5px rgba(255,223,133,0.95)); }
+
+/* guru tassel */
+.jm-tassel-thread { fill: none; stroke: #caa24a; stroke-width: 1.8; stroke-linecap: round; opacity: 0.9; }
+
+.jm-svg.celebrate { animation: jmGlow 0.9s ease; }
+@keyframes jmGlow { 40% { filter: drop-shadow(0 0 24px rgba(255,223,133,0.85)); } }
+
+.jm-controls { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 14px; }
+.jm-btn-count {
+    width: 96px; height: 96px; border-radius: 50%; cursor: pointer;
+    font-size: 15px; font-weight: 700; letter-spacing: 2px; color: #2a1808;
+    border: 1px solid var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold) 55%, var(--gold-bright));
+    box-shadow: 0 8px 24px rgba(212,168,67,0.35), inset 0 2px 5px rgba(255,255,255,0.3);
+    transition: transform 0.12s ease;
+}
+.jm-btn-count:active { transform: scale(0.93); }
+.jm-btn-reset {
+    width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+    font-size: 20px; color: var(--gold-light);
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(212,168,67,0.3);
+    transition: transform 0.12s ease;
+}
+.jm-btn-reset:active { transform: scale(0.9); }
+.jm-hint { font-size: 12.5px; letter-spacing: 1px; opacity: 0.45; margin-top: 16px; }
+
+/* completion confetti (no library) */
+.jm-confetti {
+    position: fixed; top: -20px; width: 9px; height: 14px; border-radius: 2px;
+    z-index: 700; pointer-events: none; animation: jmFall linear forwards;
+}
+@keyframes jmFall { to { transform: translateY(110vh) rotate(720deg); opacity: 0.15; } }
+
+.mala-style-switch { display: flex; gap: 10px; justify-content: center; margin-bottom: 18px; }
+.mala-style-btn {
+    padding: 9px 18px; border-radius: 30px; cursor: pointer; font-size: 14px; font-weight: 600;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    color: var(--gold-light); background: rgba(212,168,67,0.10);
+    border: 1px solid rgba(212,168,67,0.30); transition: all 0.2s ease;
+}
+.mala-style-btn.active {
+    color: #2a1808; border-color: var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: 0 4px 12px rgba(212,168,67,0.3);
+}
+
+.mala-card { text-align: center; }
+
+/* ============ RING = real japamala drawn in SVG ============ */
+.mala-stage.mala-ring { position: relative; width: 320px; max-width: 100%; margin: 0 auto 6px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.mala-stage.mala-ring .mala-strand-wrap { display: none; }       /* hide strand markup in ring mode */
+.mala-svg { width: 100%; height: auto; display: block; overflow: visible; }
+
+.mala-thread { stroke: rgba(212,168,67,0.35); stroke-width: 2; }
+
+/* each strung bead */
+.mala-bead-svg {
+    fill: #4a3410; stroke: rgba(212,168,67,0.35); stroke-width: 0.6;
+    transition: fill 0.25s ease, r 0.2s ease;
+}
+.mala-bead-svg.filled { fill: #e8c25c; stroke: var(--gold-bright);
+    filter: drop-shadow(0 0 2px rgba(255,223,133,0.6)); }
+.mala-bead-svg.active { r: 8; fill: #ffe9a8; stroke: #fff2c8;
+    filter: drop-shadow(0 0 6px rgba(255,223,133,1)); animation: beadGlowSvg 1.4s ease-in-out infinite; }
+@keyframes beadGlowSvg {
+    0%,100% { filter: drop-shadow(0 0 5px rgba(255,223,133,0.7)); }
+    50%     { filter: drop-shadow(0 0 10px rgba(255,223,133,1)); }
+}
+
+/* guru bead (మేరు) + tassel */
+.mala-guru { fill: #b5341f; stroke: var(--gold-bright); stroke-width: 1.5;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); }
+.mala-tassel path { stroke: var(--gold); stroke-width: 2; fill: none; opacity: 0.85; }
+.mala-tassel-knot { fill: var(--gold); }
+
+/* the moving hand */
+.mala-hand { font-size: 30px; transition: transform 0.28s cubic-bezier(.34,1.56,.64,1); }
+.mala-hand.push { animation: handPush 0.28s ease; }
+@keyframes handPush {
+    0% { font-size: 30px; }
+    45% { font-size: 38px; }
+    100% { font-size: 30px; }
+}
+
+/* count sits in the loop's centre */
+.mala-ring-center {
+    position: absolute; top: 42%; left: 0; right: 0; transform: translateY(-50%);
+    display: flex; flex-direction: column; align-items: center; pointer-events: none;
+}
+.mala-ring-center .mala-count { font-size: 52px; font-weight: 700; line-height: 1;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mala-ring-center .mala-of { font-size: 14px; color: var(--gold-light); opacity: 0.6; margin-top: 4px; }
+.mala-stage.mala-ring .mala-tap-hint,
+.mala-ring-center + .mala-tap-hint { display: none; }
+
+/* ============ STRAND = lightweight horizontal fallback ============ */
+.mala-stage.mala-strand { position: relative; margin: 10px auto 4px; max-width: 100%; }
+.mala-stage.mala-strand .mala-svg,
+.mala-stage.mala-strand .mala-ring-center { display: none; }      /* hide SVG in strand mode */
+
+.mala-bead {
+    width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto; position: relative; z-index: 1;
+    background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.35), rgba(90,60,20,0.6) 70%);
+    border: 1px solid rgba(212,168,67,0.28);
+    transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+.mala-bead.filled {
+    background: radial-gradient(circle at 35% 30%, var(--gold-bright), var(--gold) 55%, var(--gold-dark) 100%);
+    border-color: var(--gold-bright); box-shadow: 0 0 6px rgba(255,223,133,0.5);
+}
+.mala-bead.active { transform: scale(1.5); box-shadow: 0 0 14px 3px rgba(255,223,133,0.9); animation: beadGlow 1.4s ease-in-out infinite; }
+@keyframes beadGlow {
+    0%,100% { box-shadow: 0 0 10px 2px rgba(255,223,133,0.7); }
+    50%     { box-shadow: 0 0 18px 5px rgba(255,223,133,1); }
+}
+.mala-strand .mala-beads {
+    display: flex; align-items: center; gap: 10px; overflow-x: auto; padding: 26px 45% 20px;
+    scrollbar-width: none; position: relative;
+}
+.mala-strand .mala-beads::-webkit-scrollbar { display: none; }
+.mala-strand .mala-beads::before {   /* the thread */
+    content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(212,168,67,0.4), transparent);
+}
+.mala-strand .mala-center { margin-top: 4px; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
+.mala-strand .mala-count { font-size: 44px; font-weight: 700;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+.mala-strand .mala-of { font-size: 15px; color: var(--gold-light); opacity: 0.6; }
+
+/* completing a mala: gentle celebratory pulse of the whole stage */
+.mala-stage.celebrate { animation: malaCelebrate 0.7s ease; }
+@keyframes malaCelebrate {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.06); filter: drop-shadow(0 0 20px rgba(255,223,133,0.8)); }
+    100% { transform: scale(1); }
+}
+
+.mala-rounds { font-size: 15px; color: var(--gold-light); opacity: 0.8; margin: 10px 0 18px; }
+.mala-controls { margin-top: 8px; }
+
+/* month navigation */
+.month-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.month-arrow {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer;
+    color: #2a1808; border: 1px solid rgba(245,224,163,0.4);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3); transition: all 0.25s ease;
+}
+.month-arrow:hover:not(:disabled) { transform: scale(1.08); }
+.month-arrow:disabled { opacity: 0.25; cursor: not-allowed; }
+.month-label {
+    font-size: 22px; font-weight: 700; letter-spacing: 1px; text-align: center;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.month-strip { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.month-strip::-webkit-scrollbar { display: none; }
+.month-card { flex: 0 0 100%; scroll-snap-align: center; padding: 4px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-weekday { text-align: center; font-size: 13px; color: var(--gold); opacity: 0.75; font-weight: 600; padding: 4px 0; }
+.cal-day {
+    aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 12px; cursor: pointer; font-size: 17px; color: var(--cream); position: relative;
+    background: rgba(40,25,65,0.35); border: 1px solid rgba(212,168,67,0.12); transition: all 0.2s ease;
+}
+.cal-day.empty { background: transparent; border: none; cursor: default; }
+.cal-day:not(.empty):not(.future):hover { border-color: var(--gold); background: rgba(50,30,75,0.6); }
+.cal-day.today { border-color: var(--gold-bright); color: var(--gold-bright); font-weight: 700; box-shadow: 0 0 12px rgba(212,168,67,0.4); }
+.cal-day.future { opacity: 0.28; pointer-events: none; }
+.cal-day.has-data { background: linear-gradient(135deg, rgba(212,168,67,0.28), rgba(212,168,67,0.08)); border-color: rgba(212,168,67,0.4); }
+.cal-day .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 3px; background: var(--gold-bright); box-shadow: 0 0 6px var(--gold-bright); }
+
+/* day bottom sheet */
+.day-sheet-overlay { position: fixed; inset: 0; z-index: 600; display: none; background: rgba(5,3,16,0.72); backdrop-filter: blur(6px); }
+.day-sheet-overlay.active { display: block; }
+.day-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; max-width: 680px; margin: 0 auto;
+    max-height: 88vh; overflow-y: auto; padding: 20px 20px 44px;
+    background: linear-gradient(180deg, rgba(30,18,50,0.99), rgba(15,8,28,1));
+    border-radius: 24px 24px 0 0; border-top: 2px solid var(--gold);
+    transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 -12px 45px rgba(0,0,0,0.6);
+}
+.day-sheet-overlay.active .day-sheet { transform: translateY(0); }
+.sheet-handle { width: 46px; height: 5px; border-radius: 3px; background: rgba(212,168,67,0.45); margin: 0 auto 16px; }
+.sheet-date {
+    text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 20px; letter-spacing: 1px;
+    background: var(--gold-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* counters */
+.counter-card {
+    background: linear-gradient(135deg, rgba(40,25,65,0.6), rgba(20,12,35,0.8));
+    border: 1px solid rgba(212,168,67,0.2); border-radius: 18px; padding: 18px; margin-bottom: 16px;
+}
+.counter-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.counter-name { font-size: 18px; color: var(--gold-light); font-weight: 600; }
+.counter-del { cursor: pointer; opacity: 0.5; font-size: 18px; color: var(--cream); }
+.counter-del:hover { opacity: 1; color: #e88; }
+.counter-row { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.count-btn {
+    width: 64px; height: 64px; border-radius: 50%; font-size: 32px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; color: #2a1808;
+    border: 1px solid rgba(245,224,163,0.45); transition: all 0.2s ease;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 12px rgba(212,168,67,0.25);
+}
+.count-btn:active { transform: scale(0.9); }
+.count-center { text-align: center; min-width: 96px; }
+.count-display {
+    font-size: 46px; font-weight: 700; line-height: 1;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.count-target { font-size: 14px; color: var(--cream); opacity: 0.65; margin-top: 6px; cursor: pointer; text-decoration: underline dotted; }
+.count-target.done { color: #7fe0a0; opacity: 0.95; font-weight: 600; }
+
+/* counter date picker (used on home + reader counters) */
+.counter-date-picker {
+    font-family: 'Noto Sans Telugu', sans-serif;
+    font-size: 14px; font-weight: 500;
+    padding: 8px 12px; border-radius: 12px;
+    color: var(--gold-light);
+    background: linear-gradient(135deg, rgba(40,25,65,0.7), rgba(20,12,35,0.85));
+    border: 1px solid rgba(212,168,67,0.4); outline: none; cursor: pointer;
+    transition: all 0.25s ease;
+    -webkit-appearance: none; appearance: none;
+    box-shadow: inset 0 1px 0 rgba(245,224,163,0.1), 0 2px 8px rgba(0,0,0,0.25);
+    min-width: 150px;
+}
+.counter-date-picker:hover {
+    border-color: var(--gold);
+    background: linear-gradient(135deg, rgba(212,168,67,0.18), rgba(20,12,35,0.7));
+}
+.counter-date-picker:focus {
+    border-color: var(--gold-bright);
+    box-shadow: 0 0 0 2px rgba(212,168,67,0.25), inset 0 1px 0 rgba(245,224,163,0.15);
+}
+.counter-date-picker::-webkit-calendar-picker-indicator {
+    filter: invert(0.85) sepia(1) saturate(3.5) hue-rotate(355deg) brightness(1.1);
+    cursor: pointer; opacity: 0.9; margin-left: 6px;
+    transition: opacity 0.2s ease;
+}
+.counter-date-picker:hover::-webkit-calendar-picker-indicator { opacity: 1; }
+.counter-date-picker::-webkit-datetime-edit { color: var(--gold-light); padding: 0; }
+.counter-date-picker::-webkit-datetime-edit-fields-wrapper { color: var(--gold-light); }
+.counter-date-picker::-webkit-datetime-edit-month-field,
+.counter-date-picker::-webkit-datetime-edit-day-field,
+.counter-date-picker::-webkit-datetime-edit-year-field { color: var(--gold-light); padding: 0 1px; }
+.counter-date-picker::-webkit-datetime-edit-text { color: rgba(245,224,163,0.45); padding: 0 2px; }
+
+/* Counter actions (date picker + reset button grouped on the right) */
+.counter-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.counter-reset {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(40,25,65,0.7), rgba(20,12,35,0.85));
+    border: 1px solid rgba(212,168,67,0.4);
+    color: var(--gold-light); font-size: 18px; line-height: 1;
+    cursor: pointer; transition: all 0.3s ease;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 0 rgba(245,224,163,0.1), 0 2px 8px rgba(0,0,0,0.25);
+}
+.counter-reset:hover {
+    background: linear-gradient(135deg, rgba(212,168,67,0.2), rgba(20,12,35,0.7));
+    border-color: var(--gold);
+    color: var(--gold-bright);
+    transform: rotate(-180deg);
+}
+.counter-reset:active { transform: rotate(-360deg) scale(0.92); }
+
+/* Home page pradakshina section */
+.home-counter-section {
+    width: 100%; max-width: 580px; margin: 0 auto 30px;
+}
+.home-counter-section .counter-card { margin-bottom: 0; }
+.home-counter-section .counter-name {
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* Reader page stotram counter */
+.stotram-counter-card { margin-bottom: 24px; }
+.stotram-counter-card .counter-name { font-size: 16px; }
+
+/* add-japa chips */
+.chip-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+.add-chip {
+    padding: 10px 16px; border-radius: 22px; cursor: pointer; font-size: 14px;
+    color: var(--gold-light); background: rgba(212,168,67,0.1);
+    border: 1px dashed rgba(212,168,67,0.45); transition: all 0.2s ease;
+    font-family: 'Noto Sans Telugu', sans-serif;
+}
+.add-chip:hover { background: rgba(212,168,67,0.25); border-style: solid; }
+
+/* mokkulu */
+.mokku-form { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.mokku-input, .mokku-date, .mokku-target {
+    width: 100%; padding: 13px 16px; border-radius: 12px; font-size: 16px;
+    color: var(--cream); font-family: 'Noto Sans Telugu', sans-serif;
+    background: rgba(20,12,35,0.7); border: 1px solid rgba(212,168,67,0.3); outline: none;
+}
+.mokku-input:focus, .mokku-date:focus, .mokku-target:focus { border-color: var(--gold); }
+.mokku-input::placeholder, .mokku-target::placeholder { color: rgba(245,224,163,0.4); }
+.mokku-row2 { display: flex; gap: 12px; flex-wrap: wrap; }
+.mokku-row2 > * { flex: 1; min-width: 140px; }
+.mokku-add-btn {
+    padding: 13px 24px; border-radius: 30px; font-size: 16px; font-weight: 600; cursor: pointer;
+    color: #2a1808; border: 1px solid rgba(245,224,163,0.4); align-self: flex-start;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3); transition: all 0.25s ease;
+}
+.mokku-add-btn:hover { transform: scale(1.04); }
+.mokku-list { display: flex; flex-direction: column; gap: 12px; }
+.mokku-item {
+    display: flex; align-items: flex-start; gap: 14px; padding: 14px 16px; border-radius: 14px;
+    background: linear-gradient(135deg, rgba(40,25,65,0.55), rgba(20,12,35,0.75));
+    border: 1px solid rgba(212,168,67,0.18);
+}
+.mokku-item.done { opacity: 0.55; }
+.mokku-check {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; cursor: pointer; margin-top: 2px;
+    border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #2a1808; transition: all 0.2s ease;
+}
+.mokku-item.done .mokku-check { background: linear-gradient(135deg, var(--gold), var(--gold-bright)); }
+.mokku-body { flex: 1; }
+.mokku-text { font-size: 17px; color: var(--cream); line-height: 1.5; }
+.mokku-item.done .mokku-text { text-decoration: line-through; }
+.mokku-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 7px; }
+.mokku-badge { font-size: 12px; padding: 3px 11px; border-radius: 12px; background: rgba(212,168,67,0.15); border: 1px solid rgba(212,168,67,0.35); color: var(--gold-light); }
+.mokku-badge.due { background: rgba(200,80,40,0.3); border-color: rgba(255,150,80,0.5); color: #ffd9b0; }
+.mokku-del { cursor: pointer; opacity: 0.5; font-size: 18px; color: var(--cream); }
+.mokku-del:hover { opacity: 1; color: #e88; }
+.track-empty { text-align: center; color: var(--cream); opacity: 0.5; font-size: 15px; padding: 18px; }
+
+/* ---- Backup / Restore buttons ---- */
+.btn-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.track-btn {
+    flex: 1; min-width: 150px; padding: 14px 16px; border-radius: 14px;
+    font-size: 16px; font-weight: 600; cursor: pointer; text-align: center;
+    font-family: 'Noto Sans Telugu', sans-serif; transition: all 0.25s ease;
+    color: var(--gold-light); background: rgba(212,168,67,0.12);
+    border: 1px solid rgba(212,168,67,0.4);
+}
+.track-btn:hover { background: rgba(212,168,67,0.25); transform: translateY(-2px); }
+.track-btn.primary {
+    color: #2a1808; border-color: rgba(245,224,163,0.45);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3);
+}
+
+/* cloud backup (sign-in) */
+.cloud-auth { display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+.cloud-auth .track-btn { flex: none; }
+.cloud-signed { color: var(--cream); font-size: 15px; line-height: 1.5; }
+.cloud-signed b { color: var(--gold-light); }
+.cloud-sub { font-size: 12.5px; opacity: 0.6; margin-top: 3px; }
+.cloud-toast {
+    position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px);
+    background: rgba(30,18,10,0.95); color: var(--cream); border: 1px solid rgba(212,168,67,0.4);
+    padding: 12px 20px; border-radius: 30px; font-size: 14px; z-index: 900;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+.cloud-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---- admin: add/edit stotram ---- */
+.admin-fab {
+    /* sits ABOVE the scroll-to-top button (bottom 30px + 52px tall) so the two
+       gold circles never overlap */
+    position: fixed; right: 30px; bottom: calc(94px + env(safe-area-inset-bottom));
+    width: 56px; height: 56px; border-radius: 50%; z-index: 850; cursor: pointer;
+    font-size: 30px; line-height: 1; color: #2a1808; border: 1px solid var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    box-shadow: 0 8px 24px rgba(212,168,67,0.4);
+}
+.admin-fab:active { transform: scale(0.92); }
+.admin-overlay {
+    position: fixed; inset: 0; z-index: 860; display: none;
+    background: rgba(5,3,16,0.75); backdrop-filter: blur(6px);
+    align-items: flex-start; justify-content: center; overflow-y: auto; padding: 24px 14px;
+}
+.admin-overlay.active { display: flex; }
+.admin-box {
+    width: 100%; max-width: 560px; margin: auto;
+    background: linear-gradient(135deg, rgba(40,25,65,0.96), rgba(20,12,35,0.98));
+    border: 1px solid rgba(212,168,67,0.3); border-radius: 20px; padding: 22px;
+}
+.admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.admin-head h2 { font-size: 22px; color: var(--gold-light); }
+.ad-label { display: block; font-size: 13.5px; color: var(--gold-light); opacity: 0.85; margin: 12px 0 5px; }
+.ad-hint { opacity: 0.55; font-size: 11.5px; }
+.ad-in {
+    width: 100%; box-sizing: border-box; padding: 11px 13px; border-radius: 12px;
+    font-family: 'Noto Sans Telugu', sans-serif; font-size: 15px; color: var(--cream);
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(212,168,67,0.3);
+}
+.ad-area { resize: vertical; line-height: 1.7; }
+.ad-row { display: flex; gap: 12px; }
+.ad-row > div { flex: 1; }
+.ad-check { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--cream); margin-top: 14px; cursor: pointer; }
+.ad-err { color: #ffb4a0; font-size: 13.5px; min-height: 18px; margin-top: 10px; }
+.ad-actions { display: flex; gap: 12px; margin-top: 8px; }
+/* in-app confirmation dialog (replaces the browser's plain confirm box).
+   z-index sits above the admin overlay (860) and the cloud toast (900). */
+.sc-overlay {
+    position: fixed; inset: 0; z-index: 950;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(5,3,16,0.72); backdrop-filter: blur(6px);
+    opacity: 0; transition: opacity 0.18s ease;
+}
+.sc-overlay.show { opacity: 1; }
+.sc-box {
+    width: 100%; max-width: 420px; padding: 26px 22px 20px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(44,28,68,0.98), rgba(22,13,38,0.98));
+    border: 1px solid rgba(212,168,67,0.35);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(245,224,163,0.14);
+    transform: translateY(12px) scale(0.97); transition: transform 0.18s ease;
+}
+.sc-overlay.show .sc-box { transform: translateY(0) scale(1); }
+.sc-msg {
+    font-size: 17px; line-height: 1.65; color: var(--cream);
+    white-space: pre-line; text-align: center; margin-bottom: 22px;
+}
+.sc-actions { display: flex; gap: 12px; }
+.sc-btn {
+    flex: 1; padding: 15px 14px; border-radius: 14px; cursor: pointer;
+    font-family: 'Noto Sans Telugu', sans-serif; font-size: 16px; font-weight: 600;
+    color: var(--gold-light); background: rgba(212,168,67,0.12);
+    border: 1px solid rgba(212,168,67,0.4); transition: transform 0.12s ease, background 0.2s ease;
+}
+.sc-btn:active { transform: scale(0.96); }
+.sc-btn.primary {
+    color: #2a1808; border-color: rgba(245,224,163,0.5);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+}
+.sc-btn.danger {
+    color: #fff; border-color: rgba(255,150,130,0.5);
+    background: linear-gradient(135deg, #7a1b12, #b5341f 60%, #d4553c);
+}
+
+.ad-existing:not(:empty) { margin: 4px 0 18px; border-bottom: 1px solid rgba(212,168,67,0.2); padding-bottom: 12px; }
+.ad-ex-name { flex: 1; min-width: 0; }
+.ad-ex-btns { display: flex; gap: 2px; flex: none; }
+.ad-ex-tag { font-size: 11.5px; color: var(--gold); opacity: 0.85; font-style: normal;
+    border: 1px solid rgba(212,168,67,0.35); border-radius: 20px; padding: 1px 7px; margin-left: 6px; white-space: nowrap; }
+/* the 20 built-ins can be long — keep the list from pushing the form off-screen */
+.ad-ex-scroll { max-height: 220px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.ad-builtin-note {
+    font-size: 13px; line-height: 1.6; color: var(--cream); opacity: 0.8;
+    background: rgba(212,168,67,0.08); border: 1px solid rgba(212,168,67,0.25);
+    border-radius: 12px; padding: 11px 13px; margin: 0 0 14px;
+}
+.ad-existing-title { font-size: 13px; color: var(--gold-light); opacity: 0.7; margin-bottom: 8px; }
+.ad-ex-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; font-size: 14.5px; color: var(--cream); border-bottom: 1px solid rgba(255,255,255,0.06); }
+.ad-mini { background: none; border: none; cursor: pointer; font-size: 17px; padding: 4px 6px; }
+.ad-ocr { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 0 8px; }
+.ad-ocr input[type=file] { font-size: 12.5px; color: var(--cream); max-width: 62%; }
+.ad-ocr-btn { flex: none; min-width: auto; padding: 9px 14px; font-size: 14px; }
+.ad-ocr-status { font-size: 12.5px; opacity: 0.85; flex-basis: 100%; }
+
+/* ---- Feedback modal ---- */
+.feedback-overlay {
+    position: fixed; inset: 0; z-index: 550; display: none;
+    background: rgba(5,3,16,0.82); backdrop-filter: blur(10px);
+    padding: 70px 16px 40px; overflow-y: auto;
+}
+.feedback-overlay.active { display: block; animation: fadeInUp 0.3s ease; }
+.feedback-box {
+    max-width: 560px; margin: 0 auto; padding: 24px 22px 30px; border-radius: 22px;
+    background: linear-gradient(135deg, rgba(40,25,65,0.96), rgba(20,12,35,0.98));
+    border: 1px solid rgba(212,168,67,0.4);
+    box-shadow: 0 14px 50px rgba(0,0,0,0.6), inset 0 1px 0 rgba(245,224,163,0.12);
+}
+.fb-head { display: flex; align-items: center; justify-content: space-between; }
+.fb-head h2 {
+    font-size: 24px; letter-spacing: 1px;
+    background: var(--gold-gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.fb-sub { color: var(--gold-light); opacity: 0.6; font-size: 14px; margin: 6px 0 18px; }
+.fb-label { display: block; font-size: 15px; color: var(--gold-light); font-weight: 600; margin: 16px 0 7px; }
+.fb-label .req { color: #ff8a6a; }
+.fb-field { display: flex; gap: 10px; align-items: stretch; }
+.fb-field.area { align-items: flex-start; }
+.fb-input, .fb-textarea {
+    flex: 1; width: 100%; padding: 13px 16px; border-radius: 12px; font-size: 16px; color: var(--cream);
+    font-family: 'Noto Sans Telugu', sans-serif; background: rgba(20,12,35,0.7);
+    border: 1px solid rgba(212,168,67,0.3); outline: none;
+}
+.fb-input:focus, .fb-textarea:focus { border-color: var(--gold); }
+.fb-input.invalid, .fb-textarea.invalid { border-color: #e8675a; box-shadow: 0 0 0 2px rgba(232,103,90,0.25); }
+.fb-textarea { min-height: 110px; resize: vertical; }
+.fb-input::placeholder, .fb-textarea::placeholder { color: rgba(245,224,163,0.4); }
+.mic-mini {
+    width: 52px; flex-shrink: 0; border-radius: 12px; font-size: 21px; cursor: pointer;
+    color: #2a1808; border: 1px solid rgba(245,224,163,0.4);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+    transition: all 0.2s ease;
+}
+.fb-field.area .mic-mini { height: 52px; }
+.mic-mini:hover { transform: scale(1.05); }
+.mic-mini.listening { background: linear-gradient(135deg, #c0392b, #e74c3c); color: #fff; animation: micPulse 1.2s infinite; }
+.fb-error { color: #ff9a85; font-size: 14px; min-height: 20px; margin: 16px 0 4px; }
+.fb-submit { width: 100%; margin-top: 6px; }
+.fb-thanks { text-align: center; padding: 30px 10px; }
+.fb-thanks .big { font-size: 54px; }
+.fb-thanks h3 { font-size: 22px; color: var(--gold-light); margin: 14px 0 8px; }
+.fb-thanks p { color: var(--cream); opacity: 0.6; font-size: 15px; }
+
+/* show pill labels only on wide screens (3 pills fit) */
+@media (max-width: 1024px) { .header-pill .label { display: none; } }
+
+/* Tablet & below — most devotees use phones/tablets */
+@media (max-width: 900px) {
+    .header { padding: 14px 0; }
+    .header h1 { font-size: 24px; letter-spacing: 2px; }
+    .header-om { font-size: 15px; letter-spacing: 6px; }
+    .header-sub { font-size: 10px; letter-spacing: 3px; }
+      /* icon-only buttons */
+
+
+    .back-btn { padding: 9px 16px; font-size: 15px; }
+    .track-section-head h2 { font-size: 23px; }
+    .reader-page, .track-page { padding-left: 14px; padding-right: 14px; }
+    /* .japamala-page stays full-bleed (holds the 3D mala iframe) */
+    /* SVG mala scales via viewBox; just cap its width on phones */
+    .mala-stage.mala-ring { width: 290px; }
+    .mala-ring-center .mala-count { font-size: 46px; }
+}
+@media (max-width: 600px) {
+    .header-content { gap: 4px; }
+    .header h1 { font-size: 19px; letter-spacing: 1px; }
+    .header-om { font-size: 13px; letter-spacing: 4px; }
+    .back-btn { padding: 8px 12px; font-size: 14px; }
+
+
+    .count-display { font-size: 40px; }
+    .count-btn { width: 58px; height: 58px; font-size: 28px; }
+    .cal-day { font-size: 15px; }
+    .cal-weekday { font-size: 11px; }
+    .month-label { font-size: 19px; }
+    .track-card { padding: 16px; }
+    .search-input { font-size: 18px; }
+    .day-sheet { padding: 18px 16px 40px; }
+}
+@media (max-width: 380px) {
+    .header h1 { font-size: 17px; }
+    .cal-grid { gap: 4px; }
+    .cal-day { font-size: 14px; border-radius: 9px; }
+}
+
+/* ============================================================
+   PREMIUM POLISH  (appended last so it refines the rules above)
+   Goals: calm hierarchy, generous touch targets, and type that an
+   older reader can read at arm's length — on phones especially.
+============================================================ */
+
+/* 1. Smoother rendering + no accidental text zoom on iOS rotate */
+html { -webkit-text-size-adjust: 100%; }
+body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+/* 2. Respect notches / home bars on phones */
+.home-page, .reader-page, .track-page, .japamala-page {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+}
+.footer { padding-bottom: max(30px, calc(24px + env(safe-area-inset-bottom))); }
+
+/* 3. A clear, visible focus ring for keyboard users (accessibility) */
+:where(button, a, input, select, textarea):focus-visible {
+    outline: 2px solid var(--gold-bright);
+    outline-offset: 2px;
+    border-radius: 8px;
+}
+
+/* 4. Section headings: a little more air, so groups read as groups */
+.cards-section { margin-bottom: 8px; }
+.section-divider { margin-bottom: 20px; }
+
+/* 5. Cards feel like objects you can pick up — a soft lift on hover,
+      and a real "press" on touch (phones have no hover). */
+.card { transition: transform 0.28s cubic-bezier(.2,.7,.3,1), box-shadow 0.28s ease; }
+@media (hover: hover) {
+    .card:focus-visible {
+    outline: 3px solid var(--gold-light);
+    outline-offset: 4px;
+}
+.card:hover { transform: translateY(-4px); }
+}
+.card:active { transform: scale(0.988); }
+
+/* 6. Comfortable minimum tap targets (Apple/Google both advise ~44px) */
+
+
+/* ---------------- phones ---------------- */
+@media (max-width: 600px) {
+    /* readable body text without zooming */
+    .card .card-desc { font-size: 15px; line-height: 1.8; }
+    .card h3 { line-height: 1.45; }
+
+    /* one card per row reads far better than two cramped ones */
+    .cards-grid { grid-template-columns: 1fr; gap: 16px; }
+
+    /* the ఓం watermark shouldn't dominate a small screen */
+    .particles::before { font-size: min(92vw, 46vh); }
+    .particles::after { background-size: 110px 110px; }
+
+    /* slokam text: the main reading surface — give it room */
+    .slokam-block { padding: 18px 16px; }
+    .slokam-text { line-height: 2.05; }
+
+    /* stack the reader controls instead of squeezing them side by side */
+    .controls { gap: 12px; }
+
+    /* dialogs sit comfortably above the home bar */
+    .sc-box { max-width: 100%; }
+}
+
+/* ---------------- very small phones ---------------- */
+@media (max-width: 380px) {
+    .jm-btn-count { width: 86px; height: 86px; font-size: 14px; }
+    .counter-name { font-size: 16px; }
+}
+
+/* ---------------- print: clean paper, no decoration ---------------- */
+@media print {
+
+    body { background: #fff; color: #000; }
+    .slokam-text, .slokam-meaning { color: #000 !important; }
+}
+
+/* OCR review panel — the lines where two readings of the image disagreed */
+.ad-ocr-review {
+    margin: 4px 0 12px; padding: 12px 14px; border-radius: 12px;
+    background: rgba(200,90,40,0.10); border: 1px solid rgba(255,170,90,0.35);
+    font-size: 13px; line-height: 1.6; max-height: 260px; overflow-y: auto;
+}
+.ad-rev-head { color: #ffd9b0; font-weight: 600; margin-bottom: 8px; }
+.ad-rev-item { padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.07); color: var(--cream); }
+.ad-rev-item:last-of-type { border-bottom: none; }
+.ad-rev-line { display: inline-block; font-size: 11.5px; color: #ffd9b0;
+    border: 1px solid rgba(255,170,90,0.4); border-radius: 20px; padding: 1px 8px; margin-bottom: 4px; }
+.ad-rev-a, .ad-rev-b { opacity: 0.9; word-break: break-word; }
+.ad-rev-b { opacity: 0.7; }
+.ad-rev-foot { margin-top: 8px; font-size: 12px; opacity: 0.7; color: var(--cream); }
+
+/* admin tools row + feedback viewer */
+.ad-tools { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.ad-tools .track-btn { font-size: 14px; padding: 12px 14px; }
+.fb-opt { font-weight: 400; font-size: 12px; opacity: 0.6; }
+.fb-privacy { font-size: 12px; line-height: 1.6; color: var(--cream); opacity: 0.55; margin-top: 14px; }
+
+.ad-fb { margin-top: 16px; border-top: 1px solid rgba(212,168,67,0.22); padding-top: 12px;
+    max-height: 340px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.ad-fb-head { font-size: 14px; color: var(--gold-light); font-weight: 600; margin-bottom: 10px; }
+.ad-fb-item { padding: 11px 12px; margin-bottom: 10px; border-radius: 12px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(212,168,67,0.18); }
+.ad-fb-item.done { opacity: 0.5; }
+.ad-fb-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+.ad-fb-type { font-size: 12px; color: var(--gold-light); border: 1px solid rgba(212,168,67,0.35);
+    border-radius: 20px; padding: 1px 9px; white-space: nowrap; }
+.ad-fb-when { font-size: 11.5px; opacity: 0.55; color: var(--cream); }
+.ad-fb-msg { font-size: 14.5px; line-height: 1.65; color: var(--cream); white-space: pre-line; }
+.ad-fb-meta { font-size: 12px; opacity: 0.6; color: var(--cream); margin-top: 6px; }
+.ad-fb-btns { display: flex; gap: 4px; justify-content: flex-end; margin-top: 4px; }
+
+/* ============================================================
+   వార పూజ — "ఈ రోజు" section at the top of the home page
+============================================================ */
+.today-section {
+    width: 100%; max-width: 1240px; margin: 0 auto 30px;
+    padding: 18px 20px 20px; border-radius: 20px;
+    background: linear-gradient(135deg, rgba(212,168,67,0.10), rgba(20,12,35,0.55));
+    border: 1px solid rgba(212,168,67,0.28);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(245,224,163,0.12);
+    backdrop-filter: blur(14px) saturate(150%);
+}
+.today-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.today-day {
+    font-size: 21px; font-weight: 700; letter-spacing: 1px;
+    background: var(--gold-gradient); background-size: 200% auto;
+    -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    animation: shimmerText 7s linear infinite;
+}
+.today-note { font-size: 13px; color: var(--gold-light); opacity: 0.7; letter-spacing: 1px; }
+
+/* horizontal strip of compact tiles — scrolls on phones */
+.today-strip {
+    display: flex; gap: 12px; overflow-x: auto; padding-bottom: 6px;
+    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.today-strip::-webkit-scrollbar { display: none; }
+.today-tile {
+    flex: 0 0 auto; max-width: 190px; min-height: 44px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 16px; border-radius: 14px; cursor: pointer; text-align: left;
+    font-family: 'Noto Sans Telugu', sans-serif; font-size: 14.5px; font-weight: 600;
+    color: var(--gold-light);
+    background: linear-gradient(135deg, rgba(40,25,65,0.75), rgba(20,12,35,0.85));
+    border: 1px solid rgba(212,168,67,0.3);
+    transition: transform 0.15s ease, border-color 0.25s ease;
+}
+.today-tile:active { transform: scale(0.97); }
+@media (hover: hover) { .today-tile:hover { border-color: var(--gold-bright); transform: translateY(-2px); } }
+.today-ico { font-size: 22px; flex: none; }
+.today-title { line-height: 1.35; }
+
+/* weekday editor (admin) */
+.wd-day { margin-bottom: 10px; border: 1px solid rgba(212,168,67,0.2); border-radius: 12px; padding: 10px 12px; }
+.wd-day summary { cursor: pointer; color: var(--cream); font-size: 15px; }
+.wd-count { font-size: 12px; opacity: 0.6; margin-left: 8px; }
+.wd-label { font-size: 12.5px; color: var(--gold-light); opacity: 0.75; margin: 10px 0 6px; }
+.wd-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.wd-scroll { max-height: 150px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.wd-chip {
+    padding: 7px 12px; border-radius: 20px; cursor: pointer;
+    font-family: 'Noto Sans Telugu', sans-serif; font-size: 13px;
+    color: var(--gold-light); background: rgba(212,168,67,0.08);
+    border: 1px solid rgba(212,168,67,0.25); transition: all 0.18s ease;
+}
+.wd-chip.on {
+    color: #2a1808; border-color: var(--gold-bright);
+    background: linear-gradient(135deg, var(--gold-dark), var(--gold), var(--gold-bright));
+}
+
+@media (max-width: 600px) {
+    .today-section { padding: 14px 14px 16px; margin-bottom: 22px; }
+    .today-day { font-size: 18px; }
+    .today-tile { max-width: 168px; font-size: 14px; }
+}
+
+/* ============================================================
+   READ MARK — tap a slokam to highlight it as already read.
+   Keeps the text fully legible; the marker is the tinted panel,
+   the gold edge and a ✓ in the corner.
+============================================================ */
+.slokam-block { cursor: pointer; }
+.slokam-block.read {
+    background: linear-gradient(135deg, rgba(212,168,67,0.16) 0%, rgba(30,20,12,0.6) 100%);
+    border-color: rgba(212,168,67,0.5);
+}
+.slokam-block.read::after { opacity: 1; }          /* the existing gold left edge */
+.slokam-block.read .slokam-number {
+    box-shadow: 0 0 0 2px rgba(255,223,133,0.35), 0 2px 8px rgba(212,168,67,0.3);
+}
+.slokam-block.read::before {                        /* ✓ in the top-right corner */
+    content: '✓';
+    left: auto; right: 14px; top: 14px; height: auto; width: auto;
+    background: none; font-size: 17px; font-weight: 700;
+    color: var(--gold-bright); text-shadow: 0 0 10px rgba(255,223,133,0.6);
+    line-height: 1;
+}
+.read-clear-btn { flex: none; }
+
+/* ============================================================
+   గ్రంథ రూపం — palm-leaf (తాళపత్రం) READING THEME.
+
+   OPT-IN ONLY. Every rule below is scoped to `body.grandham`, which
+   is added solely when the reader flips the 📜 toggle. With the
+   toggle off nothing here applies and the app looks exactly as
+   before — the default dark-gold theme is untouched.
+
+   Each slokam becomes a dried-leaf panel, and the leaves are strung
+   on a binding cord running down the page, as in a real grandham.
+============================================================ */
+
+/* cords/knots/tassels are defined in the refinement block below */
+body.grandham .slokam-container { position: relative; gap: 22px; }
+
+/* the leaf itself */
+body.grandham .slokam-block {
+    position: relative; z-index: 1;
+    padding: 34px 58px; border-radius: 10px / 34px;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border: 1px solid rgba(110,70,30,0.55);
+    background:
+        radial-gradient(ellipse 90px 40px at 18% 28%, rgba(120,80,35,0.16), transparent 70%),
+        radial-gradient(ellipse 70px 30px at 76% 68%, rgba(110,70,30,0.14), transparent 70%),
+        radial-gradient(ellipse 50px 26px at 55% 15%, rgba(140,95,45,0.12), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.13) 0px, rgba(120,80,38,0.13) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #b98f52 0%, #dcb87d 12%, #e3c48c 50%, #dcb87d 88%, #b58a4d 100%);
+    box-shadow:
+        inset 0 0 40px rgba(90,55,20,0.35),
+        inset 0 2px 0 rgba(255,240,205,0.35),
+        0 12px 28px rgba(0,0,0,0.55);
+    transform: none;
+}
+body.grandham .slokam-block:hover {
+    transform: none;
+    border-color: rgba(110,70,30,0.8);
+    background:
+        radial-gradient(ellipse 90px 40px at 18% 28%, rgba(120,80,35,0.16), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.13) 0px, rgba(120,80,38,0.13) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #bd9356 0%, #e0bc81 12%, #e7c891 50%, #e0bc81 88%, #b98e51 100%);
+}
+
+/* the pseudo-elements become the cord holes (they carry the dark-theme
+   hairline + gold edge otherwise, which a leaf must not have) */
+body.grandham .slokam-block::before,
+body.grandham .slokam-block::after {
+    content: ''; top: 50%; bottom: auto; left: auto; right: auto;
+    width: 14px; height: 14px; margin-top: -7px;
+    border-radius: 50%; opacity: 1;
+    background: #1c1108;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.9), 0 0 0 3px rgba(150,105,55,0.6);
+}
+body.grandham .slokam-block::before { left: 20px; }
+body.grandham .slokam-block::after  { right: 20px; }
+
+/* ink on leaf: serif face, dark brown, softly absorbed */
+body.grandham .slokam-text {
+    font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
+    color: #40260f; text-align: center;
+    text-shadow: 0 0 1px rgba(64,38,15,0.45);
+}
+body.grandham .slokam-number {
+    background: none; color: #6b431d;
+    box-shadow: none; padding: 0; font-size: 12.5px;
+    letter-spacing: 2px; display: block; text-align: center;
+    opacity: 0.85; margin-bottom: 12px;
+}
+body.grandham .slokam-meaning {
+    background: linear-gradient(90deg, rgba(110,70,30,0.14), rgba(110,70,30,0.04));
+    border-left-color: #8a6532; color: #4a2e13; opacity: 1;
+    box-shadow: none;
+}
+body.grandham .meaning-label {
+    background: linear-gradient(135deg, #8a6532, #6b431d); color: #f6e6c8;
+    box-shadow: none;
+}
+body.grandham .slokam-meaning::before { display: none; }
+
+/* read mark on a leaf: a deeper, well-handled leaf + inked number */
+body.grandham .slokam-block.read {
+    background:
+        repeating-linear-gradient(0deg,
+            rgba(110,70,30,0.16) 0px, rgba(110,70,30,0.16) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #a87c42 0%, #cda469 12%, #d4b076 50%, #cda469 88%, #a2773e 100%);
+    border-color: rgba(80,48,18,0.85);
+    box-shadow:
+        inset 0 0 44px rgba(70,40,12,0.45),
+        inset 0 2px 0 rgba(255,235,195,0.28),
+        0 12px 28px rgba(0,0,0,0.55);
+}
+body.grandham .slokam-block.read .slokam-number {
+    color: #2e1a08; font-weight: 700; opacity: 1;
+}
+
+/* search highlights need to work on a light leaf, not a dark panel */
+body.grandham .slokam-text mark,
+body.grandham .slokam-meaning mark {
+    background: rgba(190,130,45,0.5); color: #2e1a08;
+    box-shadow: none;
+}
+body.grandham .slokam-text mark.current,
+body.grandham .slokam-meaning mark.current {
+    background: #8a3a12; color: #ffeccd; font-weight: 700;
+    box-shadow: 0 0 10px rgba(138,58,18,0.6);
+}
+
+@media (max-width: 600px) {
+    body.grandham .slokam-block { padding: 26px 42px; }
+    body.grandham .slokam-block::before { left: 13px; }
+    body.grandham .slokam-block::after  { right: 13px; }
+    body.grandham .slokam-container::before { left: 18px; }
+    body.grandham .slokam-container::after  { right: 18px; }
+}
+
+/* ============================================================
+   గ్రంథ రూపం — refinements
+   (a) lighter leaf + darker ink, so a long stotram stays easy on
+       older eyes in ordinary room light
+   (b) a real vintage binding thread: twisted cord down the page,
+       knots at the top, frayed tassels at the bottom
+   Still fully scoped to body.grandham.
+============================================================ */
+
+/* (a) CONTRAST — brighter leaf */
+body.grandham .slokam-block {
+    background:
+        radial-gradient(ellipse 90px 40px at 18% 28%, rgba(120,80,35,0.10), transparent 70%),
+        radial-gradient(ellipse 70px 30px at 76% 68%, rgba(110,70,30,0.09), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.085) 0px, rgba(120,80,38,0.085) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #cfa267 0%, #ecd0a3 12%, #f4dcb4 50%, #ecd0a3 88%, #caa063 100%);
+    box-shadow:
+        inset 0 0 40px rgba(120,80,35,0.22),
+        inset 0 2px 0 rgba(255,248,225,0.5),
+        0 12px 28px rgba(0,0,0,0.5);
+}
+body.grandham .slokam-block:hover {
+    background:
+        repeating-linear-gradient(0deg,
+            rgba(120,80,38,0.085) 0px, rgba(120,80,38,0.085) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #d3a76c 0%, #f0d5a9 12%, #f8e2bc 50%, #f0d5a9 88%, #cfa568 100%);
+}
+/* darker, slightly heavier ink = the real contrast win */
+body.grandham .slokam-text {
+    color: #2b1608; font-weight: 500;
+    text-shadow: 0 0 1px rgba(43,22,8,0.3);
+}
+body.grandham .slokam-number { color: #5a3413; opacity: 1; font-weight: 600; }
+body.grandham .slokam-meaning { color: #3a2209; }
+body.grandham .slokam-block.read {
+    background:
+        repeating-linear-gradient(0deg,
+            rgba(110,70,30,0.12) 0px, rgba(110,70,30,0.12) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #bf9057 0%, #ddbe8c 12%, #e5caa0 50%, #ddbe8c 88%, #b98b52 100%);
+}
+
+/* (b) THE BINDING THREAD — continuous, end to end.
+   The cord is drawn ABOVE the leaves at exactly the hole positions, so it
+   reads as one unbroken thread passing through every leaf from the knot at
+   the top to the tassel at the bottom (a cord behind opaque leaves would
+   only peek out in the gaps and look like dashes). */
+body.grandham .slokam-container { padding-bottom: 8px; }
+
+/* the two cords: one element, two background layers, full height */
+body.grandham .slokam-container::before {
+    content: ''; position: absolute;
+    top: -30px; bottom: -62px; left: 0; right: 0;
+    pointer-events: none; z-index: 3;
+    border-radius: 0; box-shadow: none;
+    background-image:
+        repeating-linear-gradient(118deg,
+            rgba(214,175,110,0.95) 0px, rgba(214,175,110,0.95) 2px,
+            rgba(66,44,20,0.98) 2px, rgba(66,44,20,0.98) 5px),
+        repeating-linear-gradient(118deg,
+            rgba(214,175,110,0.95) 0px, rgba(214,175,110,0.95) 2px,
+            rgba(66,44,20,0.98) 2px, rgba(66,44,20,0.98) 5px);
+    background-size: 5px 100%, 5px 100%;
+    background-position: 25px top, right 25px top;
+    background-repeat: no-repeat, no-repeat;
+    filter: drop-shadow(1px 0 1px rgba(0,0,0,0.55));
+}
+
+/* knots at the top + frayed tassels at the bottom — four layers on one element */
+body.grandham .slokam-container::after {
+    content: ''; position: absolute;
+    top: -34px; bottom: -66px; left: 0; right: 0;
+    pointer-events: none; z-index: 4;
+    border-radius: 0; box-shadow: none;
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='13' cy='13' r='8' fill='%236b4a24' stroke='%233c2712' stroke-width='1'/%3E%3Ccircle cx='10.5' cy='10.5' r='2.8' fill='%23c09a5c' opacity='0.8'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26'%3E%3Ccircle cx='13' cy='13' r='8' fill='%236b4a24' stroke='%233c2712' stroke-width='1'/%3E%3Ccircle cx='10.5' cy='10.5' r='2.8' fill='%23c09a5c' opacity='0.8'/%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='60'%3E%3Ccircle cx='14' cy='8' r='7' fill='%236b4a24' stroke='%233c2712' stroke-width='1'/%3E%3Ccircle cx='11.5' cy='5.5' r='2.4' fill='%23c09a5c' opacity='0.8'/%3E%3Cg stroke='%238a6532' stroke-width='1.9' stroke-linecap='round' fill='none'%3E%3Cpath d='M11 15 L7 52'/%3E%3Cpath d='M14 15 L14 56'/%3E%3Cpath d='M17 15 L21 51'/%3E%3Cpath d='M14 15 L10 46'/%3E%3C/g%3E%3C/svg%3E"),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='60'%3E%3Ccircle cx='14' cy='8' r='7' fill='%236b4a24' stroke='%233c2712' stroke-width='1'/%3E%3Ccircle cx='11.5' cy='5.5' r='2.4' fill='%23c09a5c' opacity='0.8'/%3E%3Cg stroke='%238a6532' stroke-width='1.9' stroke-linecap='round' fill='none'%3E%3Cpath d='M11 15 L7 52'/%3E%3Cpath d='M14 15 L14 56'/%3E%3Cpath d='M17 15 L21 51'/%3E%3Cpath d='M14 15 L10 46'/%3E%3C/g%3E%3C/svg%3E");
+    background-position:
+        14px top, right 14px top,
+        13px bottom, right 13px bottom;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+}
+/* room for the tassels below the last leaf */
+body.grandham .reader-page { padding-bottom: 150px; }
+
+@media (max-width: 600px) {
+    body.grandham .slokam-container::before {
+        background-position: 18px top, right 18px top;
+    }
+    body.grandham .slokam-container::after {
+        background-position: 7px top, right 7px top, 6px bottom, right 6px bottom;
+    }
+}
+
+/* ============================================================
+   COUNT AT THE END OF EACH SLOKAM
+   Names for an అష్టోత్తరం (4, 8 … 108), slokas for a సహస్రనామం,
+   plain position for a స్తోత్రం. Quiet by design — it is a
+   progress marker, not part of the verse.
+============================================================ */
+.slokam-end-num {
+    display: block; text-align: right; margin-top: 12px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: 1.5px;
+    color: var(--gold); opacity: 0.75;
+    font-variant-numeric: tabular-nums;
+}
+/* in the leaf theme the number is written at the end of the verse
+   between dandas, the way a manuscript marks it */
+body.grandham .slokam-end-num {
+    text-align: center; margin-top: 16px;
+    font-family: 'Noto Serif Telugu', 'Noto Sans Telugu', serif;
+    font-size: 13.5px; color: #5a3413; opacity: 0.95; letter-spacing: 2px;
+}
+body.grandham .slokam-end-num::before { content: '॥ '; opacity: 0.7; }
+body.grandham .slokam-end-num::after  { content: ' ॥'; opacity: 0.7; }
+
+/* ============================================================
+   READ MARK — clearer separation between done and not-done.
+   The tint alone read as too similar, so both themes now carry an
+   unmistakable tick, and the read leaf is visibly more handled.
+============================================================ */
+
+/* dark theme: the ✓ becomes a ringed badge instead of a bare glyph */
+.slokam-block.read {
+    background: linear-gradient(135deg, rgba(212,168,67,0.22) 0%, rgba(30,20,12,0.66) 100%);
+    border-color: rgba(212,168,67,0.6);
+}
+.slokam-block.read::before {
+    right: 12px; top: 12px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; line-height: 1;
+    color: #2a1808;
+    background: linear-gradient(135deg, var(--gold), var(--gold-bright));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.45), 0 0 12px rgba(255,223,133,0.45);
+    text-shadow: none;
+}
+
+/* leaf theme: an inked tick, and a darker, well-thumbed leaf.
+   The block's own pseudo-elements are the cord holes here, so the tick
+   is drawn on .slokam-text instead (positioned against the leaf). */
+body.grandham .slokam-block.read {
+    background:
+        radial-gradient(ellipse 120px 50px at 30% 40%, rgba(90,52,19,0.10), transparent 70%),
+        repeating-linear-gradient(0deg,
+            rgba(110,70,30,0.14) 0px, rgba(110,70,30,0.14) 1px,
+            transparent 1px, transparent 5px),
+        linear-gradient(180deg, #a87f45 0%, #cfae7c 12%, #d8ba8c 50%, #cfae7c 88%, #a37a40 100%);
+    border-color: rgba(70,42,15,0.9);
+    box-shadow:
+        inset 0 0 50px rgba(70,40,12,0.38),
+        inset 0 2px 0 rgba(255,238,200,0.3),
+        0 12px 28px rgba(0,0,0,0.5);
+}
+body.grandham .slokam-block.read .slokam-text::after {
+    content: '✓';
+    position: absolute; top: 12px; right: 48px;
+    width: 26px; height: 26px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Noto Sans Telugu', sans-serif;
+    font-size: 15px; font-weight: 700; line-height: 1;
+    color: #3a2109;
+    background: rgba(255,246,225,0.45);
+    border: 1.5px solid rgba(58,33,9,0.75);
+    box-shadow: 0 1px 3px rgba(60,35,10,0.35);
+    text-shadow: none;
+}
+body.grandham .slokam-block.read .slokam-end-num { color: #3a2109; opacity: 1; }
+
+@media (max-width: 600px) {
+    body.grandham .slokam-block.read .slokam-text::after { right: 38px; top: 9px; }
+}

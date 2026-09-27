@@ -10,14 +10,7 @@
    $0 / no card: Google auth + Firestore free (Spark) tier.
 ============================================================ */
 (function () {
-  const firebaseConfig = {
-    apiKey: "AIzaSyCDwmjKvg-4XFra1NevTX4wW8BGsUzzQtU",
-    authDomain: "stotramulu-eddf4.firebaseapp.com",
-    projectId: "stotramulu-eddf4",
-    storageBucket: "stotramulu-eddf4.firebasestorage.app",
-    messagingSenderId: "692972588346",
-    appId: "1:692972588346:web:fd28b65084582ddd011403",
-  };
+  const firebaseConfig = window.FIREBASE_CONFIG;
 
   if (typeof firebase === 'undefined') {
     console.warn('[cloud] Firebase SDK not loaded — cloud sync disabled.');

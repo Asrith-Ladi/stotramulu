@@ -1,11 +1,11 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 
-const html = fs.readFileSync('public/index.html', 'utf8');
+const html = fs.readFileSync('index.html', 'utf8');
 const reader = fs.readFileSync('public/assets/reader.js', 'utf8');
 const app = fs.readFileSync('public/assets/app.js', 'utf8');
-const readingCss = fs.readFileSync('public/assets/reading.css', 'utf8');
-const designCss = fs.readFileSync('public/assets/design-system.css', 'utf8');
+const readingCss = fs.readFileSync('styles/reading.css', 'utf8');
+const designCss = fs.readFileSync('styles/design-system.css', 'utf8');
 
 assert.match(html, /<body class="grandham">/, 'Grandham presentation is always active');
 assert.doesNotMatch(html, /grandhamToggle|toggleGrandham/, 'reader has no redundant Grandham toggle');

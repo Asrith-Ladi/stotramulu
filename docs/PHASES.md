@@ -111,3 +111,14 @@ The Home category selector now gives native mobile option panels an explicit dar
 Separated prayer-text verification from meaning verification. The four datasets that currently contain meanings now record their exact coverage, source-check date, editorial status, and dedicated comparison source. All 65 existing meaning blocks remain labelled as reference-added and review-pending; none are presented as independently verified, and no source translation was copied.
 
 The reader hides the meaning control for the 28 prayers that have no meanings. For the other four it shows the exact available/total count. The source panel repeats that coverage, explains the review limitation, and links the relevant meaning reference. Automated verification protects the 65/1,267 coverage count and prevents these reference sets from silently becoming “verified.”
+
+## Phase 25 — build tooling, dedicated admin dashboard, and icon cleanup
+
+Cleared dead weight: removed a stale full duplicate of `public/` living under `docs/public/`, an unreferenced standalone 3D hand-model prototype (`mala/`), a demo-only manuscript-texture experiment (`leaf-demo.html`), and a Render static-hosting config superseded by the Cloudflare Worker deploy.
+
+Added a real build step — Vite plus `@cloudflare/vite-plugin` and Tailwind CSS — while deliberately keeping every existing behavior module as a classic, non-module script, copied through unchanged. `index.html` moved to the repo root as the Vite entry; `styles/` now holds the CSS files Vite actually processes, while `public/` is Vite's untouched passthrough for the existing datasets and behavior scripts. See `docs/ARCHITECTURE.md` for why `styles.css`, `reading.css`, and `design-system.css` still can't be safely merged — a precise diff found 126 real, order-dependent property conflicts between them.
+
+Replaced the floating "+" button and modal with a dedicated `/admin.html` dashboard (content list, feedback inbox, weekday-map editor, export) built as its own Vite entry with its own Tailwind stylesheet, so the reading site no longer ships admin-panel code to every visitor. `ADMIN_UID` and the Firebase web config were consolidated from three independent hardcoded copies into one shared `site-config.js`.
+
+Replaced the highest-frequency UI-chrome emoji (32 card-action arrows, 2 close buttons) with a small hand-authored SVG icon sprite (`public/icons.svg`) for consistent rendering across devices; deity emoji/artwork were left untouched. Investigated adding a JS animation library for premium micro-interactions, found the main site's card-hover and modal-open animations were already handled by existing CSS from an earlier phase, and removed the added dependency rather than risk an invisible conflict — added plain CSS fade-ins to the new admin dashboard instead, where there was a genuine gap.
+

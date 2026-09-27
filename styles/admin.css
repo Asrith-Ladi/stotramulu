@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* Admin dashboard is a brand-new page with no legacy markup to protect,
+   so Tailwind (including Preflight) is used directly here — unlike the
+   main site's styles/, which keep their own hand-authored cascade. */
+@theme {
+  --color-brand-bg: #faf3e3;
+  --color-brand-surface: #fffdf7;
+  --color-brand-ink: #49351e;
+  --color-brand-accent: #825c27;
+  --color-brand-accent-dark: #664524;
+  --color-brand-danger: #b3432f;
+}
+
+body {
+  background: var(--color-brand-bg);
+  color: var(--color-brand-ink);
+}
+
+.ad-mini {
+  @apply rounded-md border border-brand-accent/30 px-2.5 py-1.5 min-h-[38px] text-xs font-medium text-brand-accent-dark hover:bg-brand-accent/10 transition-colors;
+}
+.ad-mini-danger {
+  @apply border-brand-danger/40 text-brand-danger hover:bg-brand-danger/10;
+}
+.ad-btn {
+  @apply rounded-lg px-4 py-2 min-h-[44px] text-sm font-semibold border border-brand-accent/30 text-brand-accent-dark hover:bg-brand-accent/10 transition-colors;
+}
+.ad-btn-primary {
+  @apply bg-brand-accent-dark text-white border-brand-accent-dark hover:bg-brand-accent;
+}
+.ad-btn-danger {
+  @apply bg-brand-danger text-white border-brand-danger hover:opacity-90;
+}
+.ad-nav-active {
+  @apply bg-brand-accent-dark text-white;
+}
+.ad-tag-builtin { @apply bg-slate-100 text-slate-600; }
+.ad-tag-edited { @apply bg-amber-100 text-amber-700; }
+.ad-tag-cloud { @apply bg-emerald-100 text-emerald-700; }
+
+.ad-dialog-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4;
+}
+.ad-dialog {
+  @apply w-full max-w-sm rounded-xl bg-brand-surface p-5 shadow-xl;
+}
+.ad-dialog-msg { @apply text-sm text-brand-ink mb-4 whitespace-pre-wrap; }
+.ad-dialog-actions { @apply flex justify-end gap-2; }
+
+.ad-chip {
+  @apply rounded-full border border-brand-accent/30 px-3 py-1.5 text-xs text-brand-ink hover:bg-brand-accent/10 transition-colors;
+}
+.ad-chip-on {
+  @apply bg-brand-accent-dark text-white border-brand-accent-dark;
+}
+.ad-wd-label { @apply text-xs font-semibold text-brand-accent uppercase tracking-wide mt-3 mb-1.5; }
+.ad-wd-chips { @apply flex flex-wrap gap-1.5; }
+.ad-wd-scroll { @apply max-h-40 overflow-y-auto; }
+.ad-wd-day { @apply border border-brand-accent/20 rounded-lg p-3 mb-2 bg-brand-surface; }
+
+.ad-row {
+  @apply flex flex-wrap items-center justify-between gap-3 border-b border-brand-accent/15 py-3 last:border-0;
+}
+.ad-row-main { @apply flex items-center gap-2 min-w-0; }
+.ad-row-title { @apply font-medium truncate; }
+.ad-row-tag { @apply text-xs px-2 py-0.5 rounded-full shrink-0; }
+.ad-row-actions { @apply flex gap-2 shrink-0; }
+.ad-empty { @apply text-sm text-brand-ink/60 py-6 text-center; }
+.ad-error { @apply text-sm text-brand-danger py-4; }
+
+.ad-fb-item { @apply border border-brand-accent/15 rounded-lg p-3 mb-2 bg-brand-surface; }
+.ad-fb-done { @apply opacity-50; }
+.ad-fb-top { @apply flex justify-between text-xs text-brand-ink/60 mb-1; }
+.ad-fb-msg { @apply text-sm mb-2; }
+.ad-fb-meta { @apply text-xs text-brand-ink/60 mb-2; }
+
+.ad-rev-head { @apply text-sm font-semibold mt-2; }
+.ad-rev-item { @apply text-xs border-l-2 border-amber-400 pl-2 my-1.5; }
+
+.ad-in {
+  @apply w-full rounded-md border border-brand-accent/30 bg-white px-3 py-2 text-sm text-brand-ink focus:outline-2 focus:outline-brand-accent-dark;
+}
+.ad-label { @apply block text-xs font-semibold text-brand-accent uppercase tracking-wide mt-3 mb-1; }
+
+/* Subtle entrance for tab panels and the editor — plain CSS is enough here,
+   no need for a JS animation runtime for a one-shot fade/slide. */
+@keyframes ad-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+#tab-content, #tab-feedback, #tab-weekday, #tab-export, #editorPanel {
+  animation: ad-fade-in 0.22s ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  #tab-content, #tab-feedback, #tab-weekday, #tab-export, #editorPanel {
+    animation: none;
+  }
+}

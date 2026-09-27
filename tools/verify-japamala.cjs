@@ -1,6 +1,6 @@
 const fs = require('node:fs');
 const assert = require('node:assert/strict');
-const html = fs.readFileSync('public/index.html','utf8');
+const html = fs.readFileSync('index.html','utf8');
 const js = fs.readFileSync('public/assets/japamala.js','utf8');
 const modes = [...html.matchAll(/class="jm-mode-btn" data-mode="([^"]+)"/g)].map(match => match[1]);
 assert.deepEqual(modes, ['flow','strand','full','rudraksha3d']);

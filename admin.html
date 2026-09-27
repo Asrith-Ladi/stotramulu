@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="te">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>నిర్వహణ డాష్‌బోర్డ్ · Admin — స్తోత్రములు</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/admin.css">
+</head>
+<body class="min-h-screen">
+
+  <!-- Signed-out / not-admin gate -->
+  <div id="signedOutState" class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-sm w-full bg-brand-surface rounded-2xl shadow-lg p-8 text-center">
+      <h1 class="text-xl font-bold mb-2">నిర్వహణ డాష్‌బోర్డ్</h1>
+      <p class="ad-gate-msg text-sm text-brand-ink/70 mb-6">కొనసాగించడానికి సైన్ ఇన్ చేయండి. / Sign in to continue.</p>
+      <button class="ad-btn ad-btn-primary w-full" onclick="adminSignIn()">🔐 Google తో సైన్ ఇన్</button>
+      <a href="/" class="block mt-4 text-xs text-brand-ink/50 underline">← సైట్‌కు తిరిగి వెళ్ళండి / Back to site</a>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard" hidden>
+    <header class="border-b border-brand-accent/20 bg-brand-surface">
+      <div class="max-w-5xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-lg">🕉️</span>
+          <span class="font-bold truncate">నిర్వహణ డాష్‌బోర్డ్</span>
+          <span id="adminWho" class="text-xs text-brand-ink/50 truncate hidden sm:inline"></span>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <a href="/" class="text-xs text-brand-ink/60 underline">సైట్‌కు వెళ్ళండి</a>
+          <button class="ad-btn" onclick="adminSignOut()">సైన్ అవుట్</button>
+        </div>
+      </div>
+      <nav class="max-w-5xl mx-auto flex gap-1 px-4 pb-2 overflow-x-auto">
+        <button id="nav-content" class="ad-btn ad-nav-active" onclick="showTab('content')">📚 స్తోత్రాలు</button>
+        <button id="nav-feedback" class="ad-btn" onclick="showTab('feedback')">💬 అభిప్రాయాలు</button>
+        <button id="nav-weekday" class="ad-btn" onclick="showTab('weekday')">🗓️ వార పూజ</button>
+        <button id="nav-export" class="ad-btn" onclick="showTab('export')">⬇️ ఎగుమతి</button>
+      </nav>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 space-y-4">
+
+      <!-- Content tab -->
+      <section id="tab-content">
+        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold">స్తోత్రాలు</h2>
+            <button class="ad-btn ad-btn-primary" onclick="openEditor()">＋ కొత్తది</button>
+          </div>
+          <div id="contentTable"></div>
+        </div>
+      </section>
+
+      <!-- Feedback tab -->
+      <section id="tab-feedback" hidden>
+        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
+          <h2 class="font-semibold mb-3">అభిప్రాయాలు</h2>
+          <div id="feedbackList"></div>
+        </div>
+      </section>
+
+      <!-- Weekday tab -->
+      <section id="tab-weekday" hidden>
+        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="font-semibold">వార పూజ క్రమం</h2>
+            <button class="ad-btn ad-btn-primary" onclick="saveWeekday()">సేవ్ చేయండి</button>
+          </div>
+          <p class="text-xs text-brand-ink/60 mb-3">ఏ రోజు ఏ దేవత స్తోత్రాలు ముందు చూపించాలో ఎంచుకోండి.</p>
+          <div id="weekdayEditor"></div>
+        </div>
+      </section>
+
+      <!-- Export tab -->
+      <section id="tab-export" hidden>
+        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
+          <h2 class="font-semibold mb-3">బ్యాకప్ ఎగుమతి</h2>
+          <p class="text-sm text-brand-ink/70 mb-4">మీరు చేర్చిన స్తోత్రాలు మరియు అంతర్నిర్మిత సవరణలు అన్నీ ఒక JSON ఫైల్‌గా డౌన్‌లోడ్ అవుతాయి.</p>
+          <button class="ad-btn ad-btn-primary" onclick="exportStotras()">⬇️ ఎగుమతి చేయండి</button>
+        </div>
+      </section>
+
+      <!-- Add/edit panel -->
+      <section id="editorPanel" hidden class="bg-brand-surface rounded-xl shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 id="editorTitle" class="font-semibold">➕ కొత్త స్తోత్రం</h2>
+          <button class="ad-mini" onclick="closeEditor()">✕ మూసివేయి</button>
+        </div>
+        <input type="hidden" id="edEditKey">
+        <div id="edBuiltinNote" class="text-xs bg-amber-50 text-amber-700 rounded-md p-2 mb-2" style="display:none">
+          ℹ️ ఇది అంతర్నిర్మిత స్తోత్రం. శీర్షిక, ఉపశీర్షిక, ఉద్భవం, శ్లోకాలు మాత్రమే మారుతాయి.
+        </div>
+
+        <label class="ad-label">శీర్షిక / Title *</label>
+        <input class="ad-in" id="edTitle" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">
+        <label class="ad-label">Subtitle (English)</label>
+        <input class="ad-in" id="edSubtitle" placeholder="Sri Subrahmanya Ashtottaram">
+
+        <div id="edThemeCatRow" class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="ad-label">థీమ్ / Theme</label>
+            <select class="ad-in" id="edTheme"></select>
+          </div>
+          <div>
+            <label class="ad-label">విభాగం / Category</label>
+            <select class="ad-in" id="edCat" onchange="onEdCatChange()"></select>
+          </div>
+        </div>
+        <input class="ad-in mt-2" id="edCatNew" placeholder="కొత్త విభాగం పేరు" style="display:none">
+
+        <label class="ad-label">సంక్షిప్త వివరణ</label>
+        <input class="ad-in" id="edDesc" placeholder="కార్డుపై కనిపించే చిన్న వాక్యం">
+        <label class="ad-label">ఉద్భవం (ఐచ్ఛికం)</label>
+        <textarea class="ad-in" id="edOrigin" rows="2"></textarea>
+
+        <label class="ad-label">శ్లోకాలు / Slokams * — ఒక్కో శ్లోకం మధ్య ఖాళీ లైన్ వదలండి</label>
+        <div class="flex flex-wrap items-center gap-2 mb-2">
+          <input type="file" id="edImages" accept="image/*" multiple class="text-xs">
+          <button type="button" class="ad-btn" onclick="ocrExtract()">🖼️ చిత్రం నుండి తీసుకోండి</button>
+          <span id="edOcrStatus" class="text-xs text-brand-ink/60"></span>
+        </div>
+        <div id="edOcrReview"></div>
+        <textarea class="ad-in" id="edSlokams" rows="8" placeholder="మొదటి శ్లోకం…&#10;&#10;రెండవ శ్లోకం…"></textarea>
+
+        <label class="flex items-center gap-2 mt-3 text-sm">
+          <input type="checkbox" id="edPub" checked> ప్రచురించు (Publish — అందరికీ కనిపిస్తుంది)
+        </label>
+        <div id="edErr" class="ad-error"></div>
+        <div class="flex justify-end gap-2 mt-3">
+          <button class="ad-btn" onclick="closeEditor()">రద్దు</button>
+          <button class="ad-btn ad-btn-primary" onclick="saveEditor()">సేవ్ చేయండి</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Firebase + site config -->
+  <script src="/assets/site-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <!-- Same 32 stotra datasets index.html loads, so stotramConfig exists here too -->
+  <script src="/data/stotras/vishnu.js"></script>
+  <script src="/data/stotras/lalitha.js"></script>
+  <script src="/data/stotras/lingashtakam.js"></script>
+  <script src="/data/stotras/bilvashtakam.js"></script>
+  <script src="/data/stotras/suprabhatam.js"></script>
+  <script src="/data/stotras/ganesha108.js"></script>
+  <script src="/data/stotras/shiva108.js"></script>
+  <script src="/data/stotras/chalisa.js"></script>
+  <script src="/data/stotras/saiharati.js"></script>
+  <script src="/data/stotras/vishnu108.js"></script>
+  <script src="/data/stotras/lalitha108.js"></script>
+  <script src="/data/stotras/venkat108.js"></script>
+  <script src="/data/stotras/hanuman108.js"></script>
+  <script src="/data/stotras/ayyappa108.js"></script>
+  <script src="/data/stotras/lakshmi108.js"></script>
+  <script src="/data/stotras/durga108.js"></script>
+  <script src="/data/stotras/sai108.js"></script>
+  <script src="/data/stotras/govinda.js"></script>
+  <script src="/data/stotras/manidweepa.js"></script>
+  <script src="/data/stotras/manidweepa2.js"></script>
+  <script src="/data/stotras/ganeshasahasram.js"></script>
+  <script src="/data/stotras/shivasahasram.js"></script>
+  <script src="/data/stotras/saraswati108.js"></script>
+  <script src="/data/stotras/surya108.js"></script>
+  <script src="/data/stotras/jagadeeshaharati.js"></script>
+  <script src="/data/stotras/ganapatiharati.js"></script>
+  <script src="/data/stotras/rama108.js"></script>
+  <script src="/data/stotras/subrahmanya108.js"></script>
+  <script src="/data/stotras/adilakshmi108.js"></script>
+  <script src="/data/stotras/vijayalakshmi108.js"></script>
+  <script src="/data/stotras/arunachala108.js"></script>
+  <script src="/data/stotras/aishwaryalakshmi108.js"></script>
+  <script src="/data/content-audit.js"></script>
+
+  <script src="/assets/admin-dashboard.js"></script>
+</body>
+</html>

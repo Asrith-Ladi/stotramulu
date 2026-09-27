@@ -11,15 +11,13 @@
    Hanuman on Tuesday AND Saturday is perfectly fine.
 
    The map lives in Firestore `config/weekday` (anyone reads, admin
-   writes). If it is missing we fall back to DEFAULT_MAP below, so the
-   feature works before you ever open the editor.
+   writes via admin.html's dashboard). If it is missing we fall back to
+   DEFAULT_MAP below, so the feature works before the map is ever set.
 
    Classic script → shares app.js globals (stotramConfig, escapeHtml,
-   openReader, siteAlert). Loads after admin.js.
+   openReader). Loads after admin.js.
 ============================================================ */
 (function () {
-  const ADMIN_UID = "0d3PPSYaFncy1tY2oUGtBMGMFwu2";
-
   // 0 = Sunday … 6 = Saturday (matches JS Date.getDay())
   const DAY_TE = ['ఆదివారం', 'సోమవారం', 'మంగళవారం', 'బుధవారం', 'గురువారం', 'శుక్రవారం', 'శనివారం'];
   const DAY_NOTE = [
@@ -36,13 +34,7 @@
     manidweepa: 'lalitha', // Devi
     krishna: 'govinda',
   };
-  const DEITY_LABEL = {
-    vishnu: 'విష్ణు', lalitha: 'లలిత/దేవి', shiva: 'శివ', venkat: 'వేంకటేశ్వర',
-    ganesha: 'గణేశ', hanuman: 'హనుమాన్', lakshmi: 'లక్ష్మి', saibaba: 'సాయి',
-    ayyappa: 'అయ్యప్ప', durga: 'దుర్గా', govinda: 'కృష్ణ/గోవింద',
-  };
 
-  // Traditional default — editable in the admin panel.
   const DEFAULT_MAP = {
     0: { deities: ['vishnu', 'venkat'], stotras: [] },              // Sunday
     1: { deities: ['shiva'], stotras: [] },                          // Monday
@@ -54,7 +46,6 @@
   };
 
   let MAP = JSON.parse(JSON.stringify(DEFAULT_MAP));
-  let loaded = false;
 
   function fs() { return window.firebase ? firebase.firestore() : null; }
   function deityOf(key) {
@@ -86,7 +77,6 @@
     } catch (e) {
       console.warn('[weekday] load failed, using defaults', e);
     }
-    loaded = true;
     renderToday();
   }
 
@@ -136,99 +126,9 @@
       '</div>';
   }
 
-  /* ---------- admin editor ---------- */
-  function openWeekdayEditor() {
-    if (!window.firebase || !firebase.auth().currentUser ||
-        firebase.auth().currentUser.uid !== ADMIN_UID) return;
-
-    let ov = document.getElementById('wdOverlay');
-    if (!ov) {
-      ov = document.createElement('div');
-      ov.id = 'wdOverlay'; ov.className = 'admin-overlay';
-      document.body.appendChild(ov);
-      ov.addEventListener('click', (e) => { if (e.target === ov) closeWeekdayEditor(); });
-    }
-
-    const allKeys = Object.keys(stotramConfig).filter((k) => stotramConfig[k] && !stotramConfig[k].hidden);
-    const deities = Object.keys(DEITY_LABEL);
-
-    ov.innerHTML = '<div class="admin-box">' +
-      '<div class="admin-head"><h2>🗓️ వార పూజ</h2>' +
-      '<button class="search-close-btn" onclick="closeWeekdayEditor()">✕</button></div>' +
-      '<div class="ad-builtin-note">ఏ రోజు ఏ దేవత స్తోత్రాలు ముందు చూపించాలో ఎంచుకోండి. ' +
-      'ఒకే దేవతను/స్తోత్రాన్ని ఎన్ని రోజులకైనా ఎంచుకోవచ్చు.</div>' +
-      DAY_TE.map((name, i) => {
-        const row = MAP[i] || { deities: [], stotras: [] };
-        return '<details class="wd-day"' + (i === todayIdx() ? ' open' : '') + '>' +
-          '<summary><b>' + name + '</b> <span class="wd-count">' +
-          ((row.deities || []).length + (row.stotras || []).length) + ' ఎంపిక</span></summary>' +
-          '<div class="wd-label">దేవతలు</div><div class="wd-chips">' +
-          deities.map((d) => '<button class="wd-chip' + ((row.deities || []).includes(d) ? ' on' : '') +
-            '" data-day="' + i + '" data-deity="' + d + '">' + DEITY_LABEL[d] + '</button>').join('') +
-          '</div>' +
-          '<div class="wd-label">ఈ స్తోత్రాలను కూడా (ఐచ్ఛికం)</div><div class="wd-chips wd-scroll">' +
-          allKeys.map((k) => '<button class="wd-chip' + ((row.stotras || []).includes(k) ? ' on' : '') +
-            '" data-day="' + i + '" data-key="' + k + '">' +
-            escapeHtml(stotramConfig[k].title || k) + '</button>').join('') +
-          '</div></details>';
-      }).join('') +
-      '<div class="ad-err" id="wdErr"></div>' +
-      '<div class="ad-actions"><button class="track-btn" onclick="closeWeekdayEditor()">రద్దు</button>' +
-      '<button class="track-btn primary" onclick="saveWeekdayMap()">సేవ్ చేయండి</button></div>' +
-      '</div>';
-
-    // toggling never removes an item from other days — each day is independent
-    ov.querySelectorAll('.wd-chip').forEach((b) => {
-      b.onclick = () => {
-        const day = +b.getAttribute('data-day');
-        const deity = b.getAttribute('data-deity');
-        const key = b.getAttribute('data-key');
-        const list = deity ? (MAP[day].deities ||= []) : (MAP[day].stotras ||= []);
-        const val = deity || key;
-        const at = list.indexOf(val);
-        if (at >= 0) list.splice(at, 1); else list.push(val);
-        b.classList.toggle('on', at < 0);
-        const cnt = b.closest('details').querySelector('.wd-count');
-        if (cnt) cnt.textContent = ((MAP[day].deities || []).length + (MAP[day].stotras || []).length) + ' ఎంపిక';
-      };
-    });
-
-    ov.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeWeekdayEditor() {
-    const ov = document.getElementById('wdOverlay');
-    if (ov) ov.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  async function saveWeekdayMap() {
-    const err = document.getElementById('wdErr');
-    if (err) err.textContent = '⏳ సేవ్ అవుతోంది…';
-    const out = {};
-    for (let i = 0; i < 7; i++) {
-      out[String(i)] = {
-        deities: (MAP[i] && MAP[i].deities) || [],
-        stotras: (MAP[i] && MAP[i].stotras) || [],
-      };
-    }
-    try {
-      await fs().collection('config').doc('weekday').set(out);
-      closeWeekdayEditor();
-      renderToday();
-      siteAlert('✅ వార పూజ క్రమం సేవ్ అయ్యింది');
-    } catch (e) {
-      if (err) err.textContent = '❌ సేవ్ కాలేదు: ' + (e && e.message ? e.message : e);
-    }
-  }
-
   // admin.js calls this after cloud stotras load, so newly added ones can
   // appear in today's list too.
   window.__renderToday = renderToday;
-  window.openWeekdayEditor = openWeekdayEditor;
-  window.closeWeekdayEditor = closeWeekdayEditor;
-  window.saveWeekdayMap = saveWeekdayMap;
 
   // first paint from defaults, then refine once Firestore answers
   let lastDay = new Date().toDateString();

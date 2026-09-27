@@ -1,11 +1,17 @@
 /**
  * Cloudflare Workers config for the stotramulu site.
  *
- * Deploy:  npx wrangler deploy
+ * Dev:     npm run dev      (Vite dev server + Worker, via @cloudflare/vite-plugin)
+ * Build:   npm run build    (outputs dist/client + dist/stotramulu)
+ * Deploy:  npm run deploy   (builds, then deploys the generated dist/stotramulu/wrangler.json —
+ *                            NOT this file directly; @cloudflare/vite-plugin regenerates a
+ *                            build-output-relative config on every build)
  *
  * Layout this expects:
- *   public/   → the website (index.html, assets/, data/) served as static files
- *   src/      → the Worker, which only handles POST /api/ocr
+ *   index.html, admin.html → Vite entries at the repo root
+ *   styles/  → CSS Vite/Tailwind actually processes
+ *   public/  → static passthrough (assets/*.js, data/*.js) copied through untouched
+ *   src/     → the Worker, which only handles POST /api/ocr
  *
  * NOTE: never put the Gemini key here — this file is committed. Add it as a
  * Secret instead (dashboard → Settings → Variables and Secrets → Secret, or
@@ -14,7 +20,11 @@
 {
   "name": "stotramulu",
   "main": "src/index.js",
-  "compatibility_date": "2026-09-01",
+  // Pinned to what the installed wrangler/workerd binary supports (see
+  // package.json's wrangler pin — the npm registry used at the time this was
+  // set lagged the newest wrangler releases). Bump this back up once
+  // `npm view wrangler version` shows a newer release available to you.
+  "compatibility_date": "2026-08-06",
 
   "assets": {
     "directory": "./public",

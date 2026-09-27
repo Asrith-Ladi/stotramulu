@@ -59,7 +59,7 @@ const sandbox = {
 };
 sandbox.window.IntersectionObserver = sandbox.IntersectionObserver;
 vm.createContext(sandbox);
-vm.runInContext(fs.readFileSync(fs.existsSync('public/assets/reader-navigation.js') ? 'public/assets/reader-navigation.js' : 'docs/public/assets/reader-navigation.js', 'utf8'), sandbox);
+vm.runInContext(fs.readFileSync('public/assets/reader-navigation.js', 'utf8'), sandbox);
 
 assert.deepStrictEqual(JSON.parse(JSON.stringify(sandbox.loadReaderPositions())), {positions: {}, recent: null, history: []});
 assert.strictEqual(sandbox.loadLibraryCategory(), '');

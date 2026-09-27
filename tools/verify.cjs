@@ -57,8 +57,8 @@ assert.equal(JSON.stringify(data.shivasahasram.sections.map(section=>section.ind
 assert.equal(JSON.stringify(data.ganeshasahasram.sections.map(section=>section.index)),'[0,170]');
 assert.equal(JSON.stringify(data.vishnu.sections.map(section=>section.index)),'[0,6,43]');
 assert.equal(JSON.stringify(data.lalitha.sections.map(section=>section.index)),'[0,4]');
-assert.ok(/readerSectionNav/.test(fs.readFileSync('public/index.html','utf8')));
-assert.ok(/sourceStatusBadge/.test(fs.readFileSync('public/index.html','utf8')));
+assert.ok(/readerSectionNav/.test(fs.readFileSync('index.html','utf8')));
+assert.ok(/sourceStatusBadge/.test(fs.readFileSync('index.html','utf8')));
 for (const file of fs.readdirSync('public/assets').filter(f=>f.endsWith('.js'))) {
     execFileSync(process.execPath,['--check',path.join('public/assets',file)]);
 }
@@ -67,18 +67,21 @@ execFileSync(process.execPath,['tools/verify-worker.cjs']);
 execFileSync(process.execPath,['tools/verify-japamala.cjs']);
 execFileSync(process.execPath,['tools/verify-reader-theme.cjs']);
 execFileSync(process.execPath,['tools/verify-meanings.cjs']);
-const html=fs.readFileSync('public/index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
+const html=fs.readFileSync('index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
 assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
 assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');
-assert.ok(html.indexOf('assets/reading.css') < html.indexOf('assets/design-system.css'),'final design system load order');
-const design=fs.readFileSync('public/assets/design-system.css','utf8');
+assert.ok(html.indexOf('styles/reading.css') < html.indexOf('styles/design-system.css'),'final design system load order');
+const design=fs.readFileSync('styles/design-system.css','utf8');
 assert.match(design,/--ui-gold-bright:/);
 assert.match(design,/@media \(prefers-reduced-motion: reduce\)/);
 assert.ok(!/card-btn/.test(html+fs.readFileSync('public/assets/admin.js','utf8')),'nested card buttons stay removed');
 assert.equal([...html.matchAll(/<a[^>]+data-stotram="[^"]+"/g)].length,30,'all visible bundled prayer cards are semantic links');
 assert.ok(!/<div[^>]+class="card(?: |")/.test(html),'no bundled prayer card remains a clickable div');
 for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)) if(match[1].trim()) new vm.Script(match[1]);
-for(const match of html.matchAll(/(?:src|href)="((?:assets|data)\/[^"?#]+)"/g)) assert.ok(fs.existsSync('public/'+match[1]),match[1]);
+for(const match of html.matchAll(/(?:src|href)="\/((?:assets|data|styles)\/[^"?#]+)"/g)) {
+    const rel = match[1].startsWith('styles/') ? match[1] : 'public/'+match[1];
+    assert.ok(fs.existsSync(rel),match[1]);
+}
 const app=fs.readFileSync('public/assets/app.js','utf8');
 const reader=fs.readFileSync('public/assets/reader.js','utf8');
 const tracking=fs.readFileSync('public/assets/tracking.js','utf8');
