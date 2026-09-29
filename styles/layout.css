@@ -1,0 +1,619 @@
+/* ============================================================
+   Layout (CSS-1): the app shell.
+   Header, the phone tab bar and the desktop tabs, page containers,
+   footer, scroll-to-top button and skip link.
+   Markup: contract §3 "Header" and "Floating and footer"; look: §7 "Shell".
+
+   Rules of this file:
+   - behavior.css loads last and owns the position / top / z-index of
+     .header, the display of .back-btn (JS writes it inline), the display,
+     position and z-index of every page, .footer overflow, and the
+     placement of .scroll-top-btn and .skip-link. Nothing here re-declares
+     those properties on those selectors; this file only adds visuals.
+   - .header, #homePage, .reader-page and .japamala-page never get
+     transform, filter, backdrop-filter, perspective, contain, will-change
+     or container-type. The tab bar is position:fixed INSIDE the header
+     and has to stay fixed to the viewport.
+   - html and body never get overflow (scroll lock and sticky depend on it).
+   - Breakpoints: tab bar below 1024px, tabs in the header from 1024px,
+     labelled header buttons from 1280px. The max-width queries use .98 so
+     fractional (zoomed) widths never fall between two layouts.
+============================================================ */
+
+/* Room for the fixed phone tab bar. --tabbar-h is 0 from 1024px (tokens). */
+body {
+    padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom));
+}
+
+/* ============================================================
+   Header (phones and tablets: one compact 60px bar)
+============================================================ */
+.header {
+    height: var(--header-h);
+    background: var(--ivory);   /* solid: page content must not ghost through */
+    border-bottom: 1px solid var(--line);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    height: 100%;
+    max-width: var(--content-max);
+    margin: 0 auto;
+    /* The right edge is 10px tighter: the 44px icon buttons carry 10px of
+       empty space around their 24px icons, so the icons still line up
+       with the page gutter. */
+    padding-block: 0;
+    padding-inline: max(var(--gutter), var(--safe-left)) max(calc(var(--gutter) - 10px), var(--safe-right));
+}
+
+/* Back: a peacock pill with a chevron and a label. JS shows it with an
+   inline display:block, so it is laid out as a block with a 44px line box. */
+.back-btn {
+    flex: none;
+    height: 44px;
+    padding: 0 var(--sp-4) 0 10px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--peacock-50);
+    box-shadow: inset 0 0 0 1px var(--peacock-100);
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 44px;
+    white-space: nowrap;
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.back-btn .icon-inline {
+    width: 22px;
+    height: 22px;
+    margin-right: 2px;
+    vertical-align: middle;
+}
+.back-label {
+    position: relative;
+    top: 1px;                   /* optical: Telugu glyph bodies sit high in the em box */
+    display: inline-block;
+    line-height: 1.4;
+    vertical-align: middle;
+}
+.back-btn:active { transform: scale(.96); }
+
+/* Brand: the ఓం medallion and the site name */
+.header-titles {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.header-om {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--peacock-700), var(--peacock-900));
+    box-shadow: inset 0 0 0 2px rgb(226 198 124 / .55), var(--shadow-xs);
+    color: var(--zari-300);
+    font-family: var(--font-serif);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.header-titles h1 {
+    min-width: 0;
+    /* A little vertical padding so Telugu vowel signs and conjuncts are
+       not clipped by the overflow the ellipsis needs. */
+    padding-block: 2px;
+    overflow: hidden;
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--peacock-900);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.header-sub { display: none; }
+
+/* On phones the reader, track and japamala screens show only Back and the
+   utilities, so Back has room and the bar stays calm. */
+@media (max-width: 599.98px) {
+    html[data-screen]:not([data-screen="home"]) .header-titles { display: none; }
+}
+
+/* Utilities: bell, search, account. The DOM order is search, account,
+   bell (the e2e test depends on it); CSS order shows the bell first. */
+.header-utilities {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    margin-left: auto;
+}
+.hdr-updates { order: -1; }
+
+.hdr-btn {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.hdr-btn .icon-inline { width: 24px; height: 24px; }
+.hdr-btn:active { transform: scale(.93); }
+
+/* Hover tints only where a real pointer hovers (no stuck tint after a tap) */
+@media (hover: hover) {
+    .back-btn:hover { background: var(--peacock-100); color: var(--peacock-900); }
+    .hdr-btn:hover { background: var(--peacock-50); color: var(--peacock-900); }
+}
+.hdr-label { display: none; }   /* every .hdr-btn carries an aria-label */
+
+/* "Something new" dot: kumkum with an ivory ring at the icon's top-right.
+   #updatesDot is [hidden] until JS shows it. */
+.hdr-dot,
+.hdr-account.has-unread::after {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--kumkum-700);
+    box-shadow: 0 0 0 2px var(--ivory);
+    pointer-events: none;
+}
+.hdr-account.has-unread::after { content: ""; }
+/* If JS marks the bell .has-unread without un-hiding #updatesDot, draw the
+   same dot. Kept as its own rule: browsers without :has() drop only this. */
+.hdr-updates.has-unread:not(:has(> .hdr-dot:not([hidden])))::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--kumkum-700);
+    box-shadow: 0 0 0 2px var(--ivory);
+    pointer-events: none;
+}
+
+/* ============================================================
+   Phone and tablet tab bar (below 1024px)
+   nav.site-navigation lives inside .header so each [data-home-target]
+   exists once; position:fixed takes it to the bottom of the viewport.
+============================================================ */
+@media (max-width: 1023.98px) {
+    .site-navigation {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: var(--z-tabbar);
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        height: calc(var(--tabbar-h) + var(--safe-bottom));
+        padding: 0 var(--safe-right) var(--safe-bottom) var(--safe-left);
+        background: var(--paper);
+        border-top: 1px solid var(--line);
+        box-shadow: 0 -6px 20px rgb(13 59 58 / .06);
+    }
+
+    /* Icon over label. The pill (::before) and the icon share the first
+       grid cell, so the pill always sits exactly behind the icon. */
+    .site-navigation a {
+        display: grid;
+        grid-template-rows: 32px auto;
+        justify-items: center;
+        align-content: center;
+        row-gap: var(--sp-1);
+        min-width: 0;
+        padding: 0 2px;
+        color: var(--ink-3);
+        font-family: var(--font-ui);
+        font-size: var(--fs-xs);
+        font-weight: 500;
+        line-height: 1.3;
+        text-align: center;
+        text-decoration: none;
+        -webkit-user-select: none;
+        user-select: none;
+        transition: color var(--dur-2) var(--ease-out);
+    }
+    .site-navigation a::before {
+        content: "";
+        grid-area: 1 / 1;
+        width: 58px;
+        height: 32px;
+        border-radius: 16px;
+        background: transparent;
+        transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+                    transform var(--dur-1) var(--ease-out);
+    }
+    .site-navigation .nav-icon {
+        grid-area: 1 / 1;
+        align-self: center;
+        transition: transform var(--dur-1) var(--ease-out);
+    }
+    .site-navigation .nav-label {
+        grid-area: 2 / 1;
+        max-width: 100%;
+        white-space: nowrap;
+    }
+    .site-navigation small { display: none; }
+
+    /* Current tab: a zari pill behind the icon plus a heavier label, so the
+       state never rests on colour alone. */
+    .site-navigation a[aria-current] {
+        color: var(--peacock-900);
+        font-weight: 650;
+    }
+    .site-navigation a[aria-current]::before {
+        background: var(--zari-100);
+        box-shadow: inset 0 0 0 1px var(--zari-200);
+    }
+    .site-navigation a[aria-current] .nav-icon { color: var(--peacock-800); }
+
+    /* Press feedback */
+    .site-navigation a:active::before,
+    .site-navigation a:active .nav-icon { transform: scale(.9); }
+    .site-navigation a:not([aria-current]):active::before { background: var(--sand); }
+
+    .site-navigation a:focus-visible {
+        outline-offset: -4px;
+        border-radius: var(--r);
+    }
+
+    /* The Japamala screen is a full-screen tool: no tab bar (Back returns). */
+    html[data-screen="japamala"] .site-navigation { display: none; }
+    html[data-screen="japamala"] body { padding-bottom: 0; }
+}
+
+@media (max-width: 1023.98px) and (hover: hover) {
+    .site-navigation a:hover { color: var(--peacock-800); }
+    .site-navigation a:not([aria-current]):hover::before { background: var(--sand); }
+}
+
+/* Short screens (phones held sideways): a bottom bar would eat the page, so
+   the four tabs become a slim second row of the header (icon beside label).
+   --header-h grows to match, so scroll padding and page heights stay right.
+   Japamala still hides the tabs (rule above), so it keeps the one-row header. */
+@media (max-width: 1023.98px) and (max-height: 520px) {
+    :root { --header-h: 106px; }   /* 60px bar + 45px tab row (1px border + 44px tap) + 1px line */
+    html[data-screen="japamala"] { --header-h: 60px; }
+    .header { height: auto; }
+    .header-content { height: 60px; }
+    .site-navigation {
+        position: static;
+        display: flex;
+        gap: var(--sp-1);
+        height: 45px;
+        padding: 0 max(var(--gutter), var(--safe-right)) 0 max(var(--gutter), var(--safe-left));
+        background: transparent;
+        border-top: 1px solid var(--line);
+        box-shadow: none;
+    }
+    .site-navigation a {
+        display: flex;
+        flex: 1 1 0;
+        align-items: center;
+        justify-content: center;
+        gap: var(--sp-2);
+        border-radius: var(--r-pill);
+        font-size: var(--fs-sm);
+    }
+    .site-navigation a::before { display: none; }
+    .site-navigation .nav-icon { width: 20px; height: 20px; }
+    .site-navigation a[aria-current] {
+        background: var(--zari-100);
+        box-shadow: inset 0 0 0 1px var(--zari-200);
+    }
+    .site-navigation a:not([aria-current]):active { background: var(--sand); }
+    body { padding-bottom: 0; }
+}
+
+/* ============================================================
+   Desktop (1024px and up): one header row
+   back | titles | nav (centre) | utilities, aligned to the content width.
+============================================================ */
+@media (min-width: 1024px) {
+    .header {
+        display: grid;
+        /* Titles shrink (ellipsis) before the tabs ever squeeze. */
+        grid-template-columns: auto minmax(0, max-content) minmax(max-content, 1fr) auto;
+        grid-template-areas: "back titles nav utils";
+        align-items: center;
+        padding-inline:
+            max(var(--gutter), var(--safe-left), calc((100% - var(--content-max)) / 2 + var(--gutter)))
+            max(var(--gutter), var(--safe-right), calc((100% - var(--content-max)) / 2 + var(--gutter)));
+    }
+    .header-content { display: contents; }
+
+    .back-btn {
+        grid-area: back;
+        margin-right: var(--sp-4);
+    }
+
+    .header-titles {
+        grid-area: titles;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        column-gap: var(--sp-3);
+        align-items: center;
+    }
+    .header-om { grid-row: 1 / span 2; }
+    .header-titles h1 {
+        align-self: end;
+        font-size: 21px;
+    }
+    .header-sub {
+        display: block;
+        align-self: start;
+        min-width: 0;
+        overflow: hidden;
+        font-size: var(--fs-xs);
+        font-weight: 500;
+        line-height: 1.35;
+        color: var(--ink-3);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+    /* With Back in the row there is no room for the full Telugu site name
+       beside the tabs and labelled buttons (it would ellipsize to a stub).
+       Off the home screen the ఓం medallion alone stands for the brand, as
+       on phones; the name stays available to screen readers. */
+    html[data-screen]:not([data-screen="home"]) .header-titles h1,
+    html[data-screen]:not([data-screen="home"]) .header-sub {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    /* Tabs: inline, full header height, zari underline on the current one */
+    .site-navigation {
+        grid-area: nav;
+        justify-self: center;
+        align-self: stretch;
+        display: flex;
+        gap: 2px;
+        margin-inline: var(--sp-4);
+    }
+    .site-navigation a {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--sp-2);
+        padding: 0 10px;
+        color: var(--ink-2);
+        font-family: var(--font-ui);
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.3;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: color var(--dur-2) var(--ease-out);
+    }
+    .site-navigation .nav-icon { width: 20px; height: 20px; }
+    .site-navigation small { display: none; }
+    .site-navigation a::after {
+        content: "";
+        position: absolute;
+        left: 10px;
+        right: 10px;
+        bottom: -1px;               /* sits on the header's bottom line */
+        height: 3px;
+        border-radius: 3px 3px 0 0;
+        background: transparent;
+        transition: background-color var(--dur-2) var(--ease-out);
+    }
+    .site-navigation a[aria-current] { color: var(--peacock-900); }
+    .site-navigation a[aria-current]::after { background: var(--zari-500); }
+    .site-navigation a:focus-visible {
+        outline-offset: -8px;
+        border-radius: var(--r-sm);
+    }
+
+    .header-utilities {
+        grid-area: utils;
+        gap: var(--sp-1);
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 1024px) and (hover: hover) {
+    .site-navigation a:hover { color: var(--peacock-800); }
+    .site-navigation a:not([aria-current]):hover::after { background: var(--zari-200); }
+}
+
+/* Wide desktop: the utilities become labelled pills */
+@media (min-width: 1280px) {
+    .header-utilities { gap: 6px; }
+    .hdr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: auto;
+        padding: 0 14px 0 10px;
+        border: 1px solid var(--line-2);
+        border-radius: var(--r-pill);
+        background: var(--paper);
+    }
+    .hdr-btn .icon-inline { width: 22px; height: 22px; }
+    .hdr-label {
+        display: inline;
+        font-size: var(--fs-sm);
+        font-weight: 600;
+        line-height: 1.3;
+        white-space: nowrap;
+    }
+    /* Keep the dot on the icon's top-right inside the pill
+       (10px padding + 1px border + 22px icon) */
+    .hdr-dot,
+    .hdr-account.has-unread::after {
+        left: 26px;
+        right: auto;
+    }
+    .hdr-updates.has-unread:not(:has(> .hdr-dot:not([hidden])))::after {
+        left: 26px;
+        right: auto;
+    }
+}
+@media (min-width: 1280px) and (hover: hover) {
+    .hdr-btn:hover { border-color: var(--peacock-300); background: var(--peacock-50); }
+}
+
+/* ============================================================
+   Page containers
+============================================================ */
+#homePage,
+.reader-page,
+.track-page,
+.japamala-page {
+    width: 100%;
+    margin-inline: auto;
+    padding: var(--sp-5) max(var(--gutter), var(--safe-right)) var(--sp-8) max(var(--gutter), var(--safe-left));
+    /* Short views (an empty Saved tab) keep the footer near the bottom
+       instead of floating mid-screen. The extra 12px keeps the footer's
+       gold diamond below the fold instead of peeking over the tab bar. */
+    min-height: calc(100vh - var(--header-h) - var(--tabbar-h) + var(--sp-3));
+    min-height: calc(100svh - var(--header-h) - var(--tabbar-h) + var(--sp-3));
+}
+#homePage {
+    max-width: var(--content-max);
+    gap: var(--sp-6);
+}
+.reader-page { max-width: calc(var(--reader-max) + 2 * var(--gutter)); }
+.track-page { max-width: 760px; }
+.japamala-page { max-width: 600px; }
+
+/* ============================================================
+   Footer: a quiet feedback pill and the mantra line
+============================================================ */
+.footer {
+    /* On phones the bottom padding clears the 48px scroll-to-top button,
+       which floats 16px above the tab bar on the right. */
+    padding: var(--sp-6) max(var(--gutter), var(--safe-right)) calc(var(--tap) + var(--sp-7)) max(var(--gutter), var(--safe-left));
+    border-top: 1px solid var(--line);
+    text-align: center;
+}
+/* A small zari diamond sitting on the footer line */
+.footer::before {
+    content: "";
+    display: block;
+    width: 8px;
+    height: 8px;
+    margin: calc(-1 * var(--sp-6) - 5px) auto var(--sp-5);
+    border-radius: 1px;
+    background: var(--zari-300);
+    box-shadow: 0 0 0 4px var(--ivory);
+    transform: rotate(45deg);
+}
+.footer-feedback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    max-width: 100%;
+    min-height: var(--tap);
+    padding: 0 var(--sp-5);
+    border: 1.5px solid var(--line-2);
+    border-radius: var(--r-pill);
+    background: var(--paper);
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.3;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.footer-feedback .icon-inline { width: 20px; height: 20px; color: var(--peacock-700); }
+.footer-feedback:hover { border-color: var(--peacock-300); background: var(--peacock-50); color: var(--peacock-900); }
+.footer-feedback:active { transform: scale(.97); }
+.footer-mantra {
+    margin: var(--sp-4) auto 0;
+    max-width: 44ch;
+    font-family: var(--font-serif);
+    font-size: var(--fs-sm);
+    font-weight: 500;
+    line-height: 1.8;
+    color: var(--zari-700);
+    text-wrap: balance;
+}
+@media (min-width: 1024px) {
+    .footer { padding-bottom: calc(var(--sp-7) + var(--safe-bottom)); }
+}
+
+/* ============================================================
+   Scroll to top: a 48px paper circle (placement is in behavior.css)
+============================================================ */
+.scroll-top-btn {
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--peacock-800);
+    box-shadow: var(--shadow);
+    transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.scroll-top-btn .icon-inline { width: 24px; height: 24px; }
+.scroll-top-btn:hover { background: var(--peacock-50); box-shadow: var(--shadow-lg); }
+.scroll-top-btn:active { transform: scale(.93); }
+/* No fill-mode: once it ends, the :active press transform applies freely. */
+.scroll-top-btn.visible { animation: float-in var(--dur-2) var(--ease-out); }
+@keyframes float-in { from { opacity: 0; transform: translateY(8px); } }
+
+/* ============================================================
+   Skip link: a peacock pill (off-screen until focused; behavior.css)
+============================================================ */
+.skip-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 var(--sp-5);
+    border-radius: var(--r-pill);
+    background: var(--peacock-800);
+    color: var(--white);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    box-shadow: var(--shadow-lg);
+}
+.skip-link:hover,
+.skip-link:focus { color: var(--white); }
+
+/* ---------- Integration additions (Phase 3) ---------- */
+/* Before experience.js tags the panels (it loads after the Firebase CDN scripts), show only Home. */
+#homePage:not([data-view]) > .cards-section,
+#homePage:not([data-view]) > .home-primary-actions,
+#homePage:not([data-view]) > .practice-details { display: none; }

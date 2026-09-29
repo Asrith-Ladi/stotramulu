@@ -1,23 +1,30 @@
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const http = require('node:http');
+// End-to-end interaction check of the built site (dist/client) in the local Chrome.
+// Files are served from disk through request interception, so no server is started.
+// Run with: npm run e2e
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright-core');
 const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
-const root = path.resolve('.');
-const server = http.createServer((req,res)=>{
- const name = path.resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://localhost').pathname === '/' ? '/index.html' : new URL(req.url, 'http://localhost').pathname));
- if (!name.startsWith(root+path.sep)) {res.writeHead(403).end();return;}
- fs.readFile(name,(err,data)=>{if(err){res.writeHead(404).end();return;} res.setHeader('Content-Type', name.endsWith('.css')?'text/css':name.endsWith('.js')?'text/javascript':'text/html');res.end(data);});
-});
+const root = path.resolve(__dirname, '..', 'dist', 'client');
+const ORIGIN = 'http://stotram.local';
+const TYPES = {'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.json':'application/json','.woff2':'font/woff2','.woff':'font/woff'};
+function serve(route) {
+ const url = new URL(route.request().url());
+ if (url.origin !== ORIGIN) return route.abort();
+ let file = decodeURIComponent(url.pathname); if (file === '/') file = '/index.html';
+ const abs = path.join(root, file);
+ if (!abs.startsWith(root) || !fs.existsSync(abs) || fs.statSync(abs).isDirectory()) return route.fulfill({status:404,body:''});
+ return route.fulfill({status:200,contentType:TYPES[path.extname(abs)]||'application/octet-stream',body:fs.readFileSync(abs)});
+}
 (async()=>{
- await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
- const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE ? {executablePath:process.env.BROWSER_EXECUTABLE} : {channel:'msedge'})});
+ if (!fs.existsSync(path.join(root, 'index.html'))) throw new Error('dist/client/index.html missing; run npm run build first');
+ const browser=await chromium.launch({headless:true,...(process.env.BROWSER_EXECUTABLE ? {executablePath:process.env.BROWSER_EXECUTABLE} : {channel:'chrome'})});
  try {
  const page=await browser.newPage({viewport:{width:1440,height:1050},reducedMotion:'reduce'});
  const errors=[];page.on('pageerror',error=>errors.push(error.message));
  page.on('console',msg=>{if(msg.type()==='warning' && msg.text().includes('3D')) console.log(msg.text());});
- await page.route(/googletagmanager|gstatic.com\/firebase|firestore.googleapis/,route=>route.abort());
- await page.goto('http://127.0.0.1:'+server.address().port,{waitUntil:'networkidle'});
+ await page.route('**/*', serve);
+ await page.goto(ORIGIN + '/',{waitUntil:'load'});
  await page.locator('.category-filters button').first().waitFor({state:'attached'});
  assert.equal(await page.locator('.cards-section:visible').count(),0,'Home is independent from Library');
  fs.mkdirSync('docs/ui-reviews/devotional',{recursive:true});
@@ -95,8 +102,9 @@ const server = http.createServer((req,res)=>{
  await page.screenshot({path:'docs/ui-reviews/devotional/tracker.png'});
  await page.locator('.header-utilities button').nth(1).click();
  await page.locator('#cloudAuthBox').waitFor({state:'attached'});
+ await page.keyboard.press('Escape');
  await page.locator('[data-home-target="library"]').click();
- await page.reload({waitUntil:'networkidle'});
+ await page.reload({waitUntil:'load'});
  assert.equal(await page.locator('#homePage').getAttribute('data-view'),'library');
  await page.locator('[data-home-target="favoritesSection"]').click();
  await page.goBack();
@@ -135,5 +143,5 @@ const server = http.createServer((req,res)=>{
  assert.equal(await page.locator('.cards-section:visible').count(),1,'cloud-added collection joins the filter');
  assert.deepEqual(errors,[],'no uncaught page errors');
  console.log('PASS: isolated tabs, history/reload, 30 cards, category filters, reader controls/favorites, four mala modes, 3D rendering/tap/rotation/reset/context recovery, tracker, account entry, search, feedback dismissal and every tab at 320/390/768px.');
- } finally {await browser.close();server.close();}
-})().catch(e=>{console.error(e);server.close();process.exitCode=1;});
+ } finally {await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

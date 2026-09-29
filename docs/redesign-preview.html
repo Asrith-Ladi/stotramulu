@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>స్తోత్రములు — కొత్త రూపం · Design preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&family=Noto+Serif+Telugu:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== Proposed design tokens: "Kanchi silk" — peacock teal, zari gold, ivory, kumkum ===== */
+:root {
+  --peacock-950: #082d2c; --peacock-900: #0d3b3a; --peacock-800: #124d4b; --peacock-700: #17615d;
+  --peacock-600: #1d7570; --peacock-200: #bfd9d2; --peacock-100: #dcebe6; --peacock-50: #eef5f1;
+  --zari-700: #8a6720; --zari-500: #c39a3d; --zari-300: #e2c67c; --zari-100: #f6edd3;
+  --kumkum-700: #8e1f26; --kumkum-100: #f7e3e2;
+  --leaf-700: #2f6b45; --leaf-100: #e2f0e6;
+  --ivory: #faf8f2; --sand: #f2ede1; --paper: #fffdf8;
+  --ink: #1b2423; --ink-2: #3d4a48; --ink-3: #5a6764; --reading-ink: #20180f;
+  --line: #e4dece; --line-2: #d2c9b0;
+  --radius-sm: 10px; --radius: 16px; --radius-lg: 22px; --radius-pill: 999px;
+  --shadow-sm: 0 1px 2px rgb(13 59 58 / .06), 0 2px 8px rgb(13 59 58 / .05);
+  --shadow: 0 2px 6px rgb(13 59 58 / .06), 0 10px 28px rgb(13 59 58 / .09);
+  --shadow-lg: 0 12px 40px rgb(8 45 44 / .22);
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --font-ui: "Noto Sans Telugu", system-ui, sans-serif;
+  --font-serif: "Noto Serif Telugu", "Noto Sans Telugu", serif;
+}
+* { box-sizing: border-box; margin: 0; }
+body { font-family: var(--font-ui); color: var(--ink); background: #e9e6dc; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+svg.i { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+svg.i.sm { width: 18px; height: 18px; }
+svg.i.lg { width: 28px; height: 28px; }
+
+/* ===== Preview page chrome (not part of the app) ===== */
+.intro { max-width: 1280px; margin: 0 auto; padding: 40px 28px 8px; }
+.intro h1 { font-family: var(--font-serif); font-size: 30px; color: var(--peacock-900); }
+.intro p { color: var(--ink-2); max-width: 820px; margin-top: 6px; }
+.swatches { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 6px; }
+.sw { width: 132px; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: var(--shadow-sm); font-size: 12px; }
+.sw b { display: block; height: 56px; }
+.sw span { display: block; padding: 7px 10px; color: var(--ink-2); line-height: 1.35; }
+.frames { max-width: 1320px; margin: 0 auto; padding: 18px 20px 60px; display: flex; flex-wrap: wrap; gap: 34px; justify-content: center; }
+.frame { width: 390px; }
+.frame > h2 { font-size: 15px; font-weight: 600; color: var(--ink-2); margin: 0 0 10px 6px; }
+.phone { position: relative; width: 390px; height: 800px; border-radius: 46px; border: 10px solid #1b1f1e; background: var(--ivory); overflow: hidden; box-shadow: 0 30px 60px rgb(0 0 0 / .18); }
+.screen { position: absolute; inset: 0; overflow: hidden; }
+.scroll { position: absolute; inset: 60px 0 76px; overflow: hidden; padding: 14px 16px 24px; }
+
+/* ===== App: top bar ===== */
+.topbar { position: absolute; top: 0; left: 0; right: 0; height: 60px; display: flex; align-items: center; gap: 10px; padding: 0 10px 0 14px; background: rgb(250 248 242 / .96); border-bottom: 1px solid var(--line); z-index: 3; }
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
+.mark { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, var(--peacock-700), var(--peacock-900)); color: var(--zari-300); font-family: var(--font-serif); font-size: 17px; box-shadow: inset 0 0 0 2px rgb(226 198 124 / .55); }
+.brand b { font-family: var(--font-serif); font-size: 18px; font-weight: 600; color: var(--peacock-900); white-space: nowrap; }
+.icon-btn { position: relative; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--peacock-800); background: transparent; border: 0; }
+.icon-btn .dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--kumkum-700); box-shadow: 0 0 0 2px var(--ivory); }
+.back { display: flex; align-items: center; gap: 4px; font-size: 16px; font-weight: 600; color: var(--peacock-800); }
+
+/* ===== App: bottom tab bar ===== */
+.tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 76px; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -6px 20px rgb(13 59 58 / .06); z-index: 3; padding-bottom: 8px; }
+.tab { display: grid; justify-items: center; align-content: center; gap: 3px; color: var(--ink-3); font-size: 13.5px; font-weight: 500; }
+.tab .pill { width: 58px; height: 32px; border-radius: 16px; display: grid; place-items: center; transition: background .2s var(--ease); }
+.tab.on { color: var(--peacock-900); font-weight: 600; }
+.tab.on .pill { background: var(--zari-100); color: var(--peacock-800); }
+
+/* ===== App: shared pieces ===== */
+.eyebrow { font-size: 13px; font-weight: 600; color: var(--zari-700); }
+.h-sec { display: flex; align-items: center; gap: 8px; margin: 22px 2px 10px; }
+.h-sec h3 { font-family: var(--font-serif); font-size: 20px; font-weight: 600; color: var(--ink); }
+.info { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--peacock-200); color: var(--peacock-700); background: var(--paper); flex: none; }
+.info svg { width: 15px; height: 15px; }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; padding: 0 20px; border-radius: 14px; font: 600 16.5px var(--font-ui); border: 0; }
+.btn-primary { background: var(--peacock-800); color: #fff; box-shadow: 0 6px 16px rgb(18 77 75 / .25); }
+.btn-gold { background: linear-gradient(180deg, var(--zari-300), var(--zari-500)); color: var(--peacock-950); }
+.btn-quiet { background: var(--paper); color: var(--peacock-800); border: 1.5px solid var(--line-2); }
+.muted { color: var(--ink-3); }
+
+/* Hero */
+.hero { position: relative; border-radius: var(--radius-lg); padding: 24px 20px 30px; color: #fbf6e6; overflow: hidden;
+  background: radial-gradient(120% 90% at 92% 8%, rgb(226 198 124 / .22), transparent 55%), linear-gradient(150deg, var(--peacock-900), var(--peacock-700)); box-shadow: var(--shadow); }
+.hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+  background: linear-gradient(135deg, transparent 50%, var(--zari-500) 50%) 0 0 / 12px 12px repeat-x, linear-gradient(225deg, transparent 50%, var(--zari-500) 50%) 0 0 / 12px 12px repeat-x; opacity: .9; }
+.hero .eyebrow { color: var(--zari-300); }
+.hero h2 { font-family: var(--font-serif); font-weight: 600; font-size: 29px; line-height: 1.45; margin: 8px 0 8px; }
+.hero p { color: #d7e6e0; font-size: 15.5px; max-width: 220px; }
+.hero .btn { margin-top: 16px; }
+.hero .lamp { position: absolute; right: 12px; top: 26px; width: 108px; opacity: .95; }
+
+.today { padding: 16px; }
+.today .row { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: var(--ivory); border: 1px solid var(--line); margin-top: 10px; font-weight: 600; font-size: 16.5px; }
+.medal { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; background: var(--peacock-50); box-shadow: inset 0 0 0 1.5px var(--zari-300); flex: none; }
+.row .chev { margin-left: auto; color: var(--ink-3); }
+.teaser { display: flex; gap: 12px; align-items: center; padding: 14px 16px; margin-top: 14px; background: linear-gradient(90deg, var(--zari-100), var(--paper)); border: 1px solid #ecdcae; }
+.teaser .medal { background: var(--paper); }
+.teaser b { display: block; font-size: 15.5px; }
+.teaser small { font-size: 13.5px; color: var(--ink-2); }
+
+/* Library */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+.chip { min-height: 42px; padding: 0 14px; border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; background: var(--paper); border: 1.5px solid var(--line-2); color: var(--ink-2); }
+.chip em { font-style: normal; font-size: 12.5px; font-weight: 700; padding: 1px 8px; border-radius: 99px; background: var(--sand); color: var(--ink-2); }
+.chip.on { background: var(--peacock-800); border-color: var(--peacock-800); color: #fff; }
+.chip.on em { background: var(--zari-300); color: var(--peacock-950); }
+.scard { display: grid; grid-template-columns: 52px 1fr; gap: 4px 14px; padding: 16px; margin-top: 12px; }
+.scard .medal { width: 52px; height: 52px; font-size: 26px; grid-row: span 3; }
+.scard h4 { font-family: var(--font-serif); font-size: 18.5px; font-weight: 600; line-height: 1.45; }
+.scard .sub { font-size: 13px; color: var(--ink-3); }
+.scard p { font-size: 14.5px; color: var(--ink-2); line-height: 1.6; }
+.scard .go { grid-column: 2; display: flex; align-items: center; gap: 6px; color: var(--peacock-700); font-weight: 600; font-size: 15px; margin-top: 6px; }
+
+/* Reader */
+.rtitle { text-align: center; padding: 18px 10px 14px; }
+.rtitle h2 { font-family: var(--font-serif); font-size: 25px; font-weight: 600; color: var(--peacock-900); line-height: 1.45; }
+.rtitle .orn { color: var(--zari-500); letter-spacing: 6px; font-size: 14px; }
+.rtitle .sub { font-size: 13px; color: var(--ink-3); }
+.badge { display: inline-flex; align-items: center; gap: 5px; margin-top: 8px; padding: 3px 11px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--leaf-100); color: var(--leaf-700); }
+.rtools { display: flex; gap: 8px; align-items: center; padding: 8px; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow-sm); }
+.size { display: flex; align-items: center; gap: 2px; background: var(--sand); border-radius: 12px; padding: 3px; }
+.size button { width: 42px; height: 40px; border-radius: 10px; border: 0; background: var(--paper); font: 700 15px var(--font-ui); color: var(--peacock-800); }
+.size span { width: 30px; text-align: center; font-weight: 600; font-size: 14px; }
+.rsearch { flex: 1; display: flex; align-items: center; gap: 6px; height: 46px; padding: 0 12px; border-radius: 12px; background: var(--sand); color: var(--ink-3); font-size: 14.5px; }
+.verse { position: relative; margin-top: 14px; padding: 22px 18px 16px; text-align: center; background: #fffcf5; border: 1px solid #ebe3cf; border-radius: 18px; font-family: var(--font-serif); color: var(--reading-ink); font-size: 21px; line-height: 1.95; }
+.verse .lbl { font-family: var(--font-ui); font-size: 13.5px; font-weight: 600; color: var(--zari-700); margin-bottom: 4px; }
+.verse .num { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font: 600 13px var(--font-ui); color: var(--zari-700); box-shadow: inset 0 0 0 1.5px var(--zari-300); }
+.verse .mark-btn { margin-top: 12px; display: inline-flex; align-items: center; gap: 6px; min-height: 42px; padding: 0 16px; border-radius: 99px; font: 600 14.5px var(--font-ui); color: var(--peacock-800); background: var(--paper); border: 1.5px solid var(--line-2); }
+.verse.read { background: var(--peacock-50); border-color: var(--peacock-200); }
+.verse.read::before { content: ""; position: absolute; left: -1px; top: 16px; bottom: 16px; width: 4px; border-radius: 4px; background: var(--peacock-600); }
+.verse.read .mark-btn { background: var(--peacock-800); color: #fff; border-color: var(--peacock-800); }
+.meaning { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line-2); font-family: var(--font-ui); font-size: 15.5px; line-height: 1.7; color: var(--ink-2); text-align: left; }
+.meaning b { color: var(--zari-700); font-size: 13px; display: block; }
+
+/* Practice + Japamala */
+.ptile { display: flex; align-items: center; gap: 14px; padding: 16px; margin-top: 12px; }
+.ptile .medal { width: 52px; height: 52px; color: var(--peacock-800); }
+.ptile b { display: block; font-size: 17px; }
+.ptile small { color: var(--ink-3); font-size: 14px; }
+.counter { padding: 16px; margin-top: 14px; }
+.counter .top { display: flex; align-items: center; gap: 8px; }
+.counter .top b { font-size: 16.5px; }
+.date { margin-left: auto; height: 40px; padding: 0 12px; border-radius: 10px; background: var(--sand); display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink); }
+.cnt { display: flex; justify-content: center; align-items: center; gap: 26px; margin: 14px 0 4px; }
+.round { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--line-2); background: var(--paper); color: var(--peacock-800); box-shadow: var(--shadow-sm); }
+.round.plus { background: var(--peacock-800); color: #fff; border: 0; box-shadow: 0 8px 18px rgb(18 77 75 / .28); }
+.cnt .n { text-align: center; font-family: var(--font-serif); font-size: 46px; font-weight: 600; line-height: 1; color: var(--peacock-900); }
+.cnt .n small { display: block; font: 500 13px var(--font-ui); color: var(--ink-3); margin-top: 6px; }
+.seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; background: var(--sand); border-radius: 14px; }
+.seg span { text-align: center; padding: 9px 2px; border-radius: 11px; font-size: 13.5px; font-weight: 600; color: var(--ink-2); }
+.seg span.on { background: var(--paper); color: var(--peacock-900); box-shadow: var(--shadow-sm); }
+.jcount { text-align: center; margin: 12px 0 4px; font-family: var(--font-serif); color: var(--peacock-900); }
+.jcount b { font-size: 60px; font-weight: 600; line-height: 1; }
+.jcount span { font-size: 20px; color: var(--ink-3); }
+.stage { height: 300px; border-radius: 22px; background: radial-gradient(circle at 50% 45%, #fffef9, var(--sand)); border: 1px solid var(--line); display: grid; place-items: center; }
+.jctl { display: flex; justify-content: center; align-items: center; gap: 22px; margin-top: 16px; }
+.jbtn { width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center; align-content: center; color: #fff; font-weight: 700; font-size: 18px;
+  background: radial-gradient(circle at 35% 30%, var(--peacock-600), var(--peacock-900)); box-shadow: 0 0 0 5px var(--zari-100), 0 0 0 7px var(--zari-500), 0 14px 26px rgb(8 45 44 / .3); }
+.jbtn small { font-size: 12px; font-weight: 500; color: var(--zari-300); }
+
+/* Sheets */
+.scrim { position: absolute; inset: 0; background: rgb(8 29 28 / .5); z-index: 5; }
+.sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--paper); border-radius: 26px 26px 0 0; padding: 10px 18px 26px; box-shadow: var(--shadow-lg); }
+.grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line-2); margin: 0 auto 14px; }
+.sheet h3 { font-family: var(--font-serif); font-size: 21px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+.sheet h3 .x { margin-left: auto; width: 40px; height: 40px; border-radius: 50%; background: var(--sand); display: grid; place-items: center; color: var(--ink-2); }
+.gsign { width: 100%; margin-top: 14px; min-height: 54px; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 16.5px; background: var(--paper); border: 1.5px solid var(--line-2); box-shadow: var(--shadow-sm); }
+.list-item { display: flex; align-items: center; gap: 12px; padding: 14px 4px; border-bottom: 1px solid var(--line); font-size: 16px; font-weight: 500; }
+.list-item:last-child { border-bottom: 0; }
+.list-item .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--peacock-50); color: var(--peacock-800); flex: none; }
+.list-item small { display: block; font-size: 13.5px; color: var(--ink-3); font-weight: 400; }
+.status { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 700; flex: none; }
+.st-new { background: var(--sand); color: var(--ink-2); }
+.st-prog { background: var(--zari-100); color: var(--zari-700); }
+.st-ans { background: var(--leaf-100); color: var(--leaf-700); }
+.upd { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.upd .meta { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--ink-3); }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 99px; font-size: 12.5px; font-weight: 700; }
+.tag-new { background: var(--peacock-100); color: var(--peacock-800); }
+.tag-imp { background: var(--zari-100); color: var(--zari-700); }
+.tag-fix { background: var(--leaf-100); color: var(--leaf-700); }
+.upd b { display: block; font-family: var(--font-serif); font-size: 17.5px; font-weight: 600; margin: 6px 0 2px; }
+.upd p { font-size: 15px; color: var(--ink-2); }
+.infobox p { font-size: 17px; line-height: 1.75; margin-top: 10px; }
+.infobox .en { font-size: 14.5px; color: var(--ink-3); margin-top: 8px; }
+.notes { max-width: 1280px; margin: 0 auto; padding: 0 28px 60px; color: var(--ink-2); font-size: 15px; }
+.notes li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 7h7M9 10.5h5"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="i-mala" viewBox="0 0 24 24"><circle cx="12" cy="10" r="6.5"/><circle cx="12" cy="3.5" r="1.4"/><circle cx="18.5" cy="10" r="1.4"/><circle cx="5.5" cy="10" r="1.4"/><circle cx="16.6" cy="14.6" r="1.4"/><circle cx="7.4" cy="14.6" r="1.4"/><path d="M12 16.5v2.5M10.5 22l1.5-3 1.5 3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m20 20-4.7-4.7"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><path d="M12 10.5V17"/><circle cx="12" cy="7" r=".6" fill="currentColor"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5L20 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a4.5 4.5 0 0 1-.6-9 6 6 0 0 1 11.4 1.5A3.8 3.8 0 0 1 17.5 18z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4"/></symbol>
+</svg>
+
+<section class="intro">
+  <h1>స్తోత్రములు — కొత్త రూపం (ప్రివ్యూ)</h1>
+  <p>Proposed direction: <b>"Kanchi silk"</b>. The chrome uses deep peacock teal, like a traditional Kanchipuram pattu body. Zari gold marks accents and borders, kumkum red appears only as small signals, and the reading surface is calm ivory paper. It's cool and soothing, still clearly traditional, and nothing like Poshana's warm cream. These are static mockups at real phone size (390px). The live site hasn't changed.</p>
+  <div class="swatches">
+    <div class="sw"><b style="background:#0d3b3a"></b><span>Peacock 900<br>#0d3b3a · headers, hero</span></div>
+    <div class="sw"><b style="background:#17615d"></b><span>Peacock 700<br>#17615d · buttons, links</span></div>
+    <div class="sw"><b style="background:#eef5f1"></b><span>Peacock 50<br>#eef5f1 · read marks, tints</span></div>
+    <div class="sw"><b style="background:#c39a3d"></b><span>Zari gold 500<br>#c39a3d · borders, ornaments</span></div>
+    <div class="sw"><b style="background:#f6edd3"></b><span>Zari 100<br>#f6edd3 · active tab, highlights</span></div>
+    <div class="sw"><b style="background:#8e1f26"></b><span>Kumkum 700<br>#8e1f26 · "new" dot only</span></div>
+    <div class="sw"><b style="background:#faf8f2;border-bottom:1px solid #e4dece"></b><span>Ivory<br>#faf8f2 · page</span></div>
+    <div class="sw"><b style="background:#fffcf5;border-bottom:1px solid #e4dece"></b><span>Paper<br>#fffcf5 · verse cards</span></div>
+    <div class="sw"><b style="background:#1b2423"></b><span>Ink<br>#1b2423 · text (15:1)</span></div>
+  </div>
+</section>
+
+<div class="frames">
+
+  <!-- 1. HOME -->
+  <div class="frame"><h2>1 · ముఖపుట / Home</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="mark">ఓం</span><b>శ్రీ దివ్య స్తోత్రములు</b></div>
+      <button class="icon-btn" aria-label="కొత్తవి"><svg class="i"><use href="#i-bell"/></svg><span class="dot"></span></button>
+      <button class="icon-btn" aria-label="వెతకండి"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="icon-btn" aria-label="నా ఖాతా"><svg class="i"><use href="#i-user"/></svg></button>
+    </div>
+    <div class="scroll">
+      <div class="hero">
+        <span class="eyebrow">నిత్య పారాయణం</span>
+        <h2>మనసుకు శాంతి.<br>ప్రతి రోజూ భక్తి.</h2>
+        <p>మీకు ఇష్టమైన స్తోత్రాలు, ఒకే చోట.</p>
+        <button class="btn btn-gold">స్తోత్రాలు చదవండి <svg class="i sm"><use href="#i-chev"/></svg></button>
+        <svg class="lamp" viewBox="0 0 120 120" aria-hidden="true"><defs><radialGradient id="g" cx="50%" cy="40%"><stop offset="0" stop-color="#f6edd3" stop-opacity=".55"/><stop offset="1" stop-color="#f6edd3" stop-opacity="0"/></radialGradient><linearGradient id="b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2c67c"/><stop offset="1" stop-color="#a47b2c"/></linearGradient></defs><circle cx="60" cy="46" r="44" fill="url(#g)"/><path d="M60 14c8 12 11 20 11 27a11 11 0 0 1-22 0c0-7 3-15 11-27z" fill="#f6edd3"/><path d="M60 30c3 6 4 9 4 12a4 4 0 0 1-8 0c0-3 1-6 4-12z" fill="#e2c67c"/><path d="M24 64h72c-4 14-18 22-36 22S28 78 24 64z" fill="url(#b)"/><path d="M56 86h8v12h-8z" fill="#a47b2c"/><path d="M40 102h40l-6-6H46z" fill="url(#b)"/></svg>
+      </div>
+
+      <div class="card teaser">
+        <span class="medal"><svg class="i" style="color:#8a6720"><use href="#i-spark"/></svg></span>
+        <div><b>కొత్తది: సులభమైన కొత్త రూపం</b><small>పెద్ద అక్షరాలు, కింద మెను, ⓘ సహాయం →</small></div>
+      </div>
+
+      <div class="h-sec"><svg class="i" style="color:#c39a3d"><use href="#i-sun"/></svg><h3>ఈ రోజు — సోమవారం</h3><span class="info"><svg><use href="#i-info"/></svg></span></div>
+      <div class="card today">
+        <span class="muted" style="font-size:14.5px">శివ ఆరాధన · సూచనలు మాత్రమే</span>
+        <div class="row"><span class="medal">🙏</span>శ్రీ లింగాష్టకం<svg class="i sm chev"><use href="#i-chev"/></svg></div>
+        <div class="row"><span class="medal">🍃</span>శ్రీ బిల్వాష్టకం<svg class="i sm chev"><use href="#i-chev"/></svg></div>
+        <div class="row"><span class="medal">🔱</span>శివ అష్టోత్తర శతనామావళి<svg class="i sm chev"><use href="#i-chev"/></svg></div>
+      </div>
+    </div>
+    <nav class="tabbar">
+      <span class="tab on"><span class="pill"><svg class="i"><use href="#i-home"/></svg></span>ముఖపుట</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-book"/></svg></span>స్తోత్రాలు</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-star"/></svg></span>ఇష్టమైనవి</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-mala"/></svg></span>నా సాధన</span>
+    </nav>
+  </div></div></div>
+
+  <!-- 2. LIBRARY -->
+  <div class="frame"><h2>2 · స్తోత్రాలు / Library</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="mark">ఓం</span><b>శ్రీ దివ్య స్తోత్రములు</b></div>
+      <button class="icon-btn"><svg class="i"><use href="#i-bell"/></svg></button>
+      <button class="icon-btn"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="icon-btn"><svg class="i"><use href="#i-user"/></svg></button>
+    </div>
+    <div class="scroll">
+      <span class="eyebrow">పవిత్ర సంకలనం</span>
+      <div style="display:flex;align-items:center;gap:8px"><h3 style="font-family:var(--font-serif);font-size:25px;font-weight:600">స్తోత్రాల గ్రంథాలయం</h3><span class="info"><svg><use href="#i-info"/></svg></span></div>
+      <div class="chips">
+        <span class="chip on">అన్నీ <em>30</em></span><span class="chip">సహస్రనామావళి <em>4</em></span>
+        <span class="chip">అష్టోత్తరాలు <em>18</em></span><span class="chip">స్తోత్రములు <em>5</em></span><span class="chip">హారతులు <em>3</em></span>
+      </div>
+      <div class="h-sec" style="margin-top:16px"><h3>సహస్రనామావళి</h3></div>
+      <div class="card scard"><span class="medal">🔱</span><h4>శ్రీ విష్ణు సహస్రనామం</h4><span class="sub">Sri Vishnu Sahasranamam</span><p>మహాభారతంలో భీష్ముడు బోధించిన వెయ్యి నామాలు.</p><span class="go">చదవండి <svg class="i sm"><use href="#i-chev"/></svg></span></div>
+      <div class="card scard"><span class="medal" style="background:#f9ebef">🪷</span><h4>శ్రీ లలితా సహస్రనామం</h4><span class="sub">Sri Lalitha Sahasranamam</span><p>బ్రహ్మాండ పురాణంలో వాగ్దేవతలు రచించినవి.</p><span class="go">చదవండి <svg class="i sm"><use href="#i-chev"/></svg></span></div>
+    </div>
+    <nav class="tabbar">
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-home"/></svg></span>ముఖపుట</span>
+      <span class="tab on"><span class="pill"><svg class="i"><use href="#i-book"/></svg></span>స్తోత్రాలు</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-star"/></svg></span>ఇష్టమైనవి</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-mala"/></svg></span>నా సాధన</span>
+    </nav>
+  </div></div></div>
+
+  <!-- 3. READER -->
+  <div class="frame"><h2>3 · పఠనం / Reader</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar">
+      <span class="back" style="margin-right:auto"><svg class="i"><use href="#i-back"/></svg>వెనుకకు</span>
+      <button class="icon-btn"><svg class="i"><use href="#i-star"/></svg></button>
+      <button class="icon-btn"><svg class="i"><use href="#i-sliders"/></svg></button>
+    </div>
+    <div class="scroll">
+      <div class="rtitle"><div class="orn">❁ ❁ ❁</div><h2>శ్రీ విష్ణు సహస్రనామ స్తోత్రం</h2><div class="sub">Sri Vishnu Sahasranama Stotram</div><span class="badge"><svg class="i sm"><use href="#i-check"/></svg>ప్రధాన పాఠం పరిశీలించబడింది</span></div>
+      <div class="rtools">
+        <div class="size"><button>అ−</button><span>24</span><button>అ+</button></div>
+        <div class="rsearch"><svg class="i sm"><use href="#i-search"/></svg>పాఠంలో వెతకండి…</div>
+      </div>
+      <div class="verse read"><span class="num">1</span><div class="lbl">ధ్యాన శ్లోకం</div>శుక్లాంబరధరం విష్ణుం<br>శశివర్ణం చతుర్భుజమ్ ।<br><button class="mark-btn"><svg class="i sm"><use href="#i-check"/></svg>చదివాను</button></div>
+      <div class="verse"><span class="num">2</span>వ్యాసం వసిష్ఠనప్తారం<br>శక్తేః పౌత్రమకల్మషమ్ ।
+        <div class="meaning"><b>అర్థం</b>వసిష్ఠుని మునిమనుమడు, శక్తి మనుమడు, పరాశరుని కుమారుడు అయిన వ్యాసునికి నమస్కారం.</div>
+        <button class="mark-btn"><svg class="i sm"><use href="#i-check"/></svg>చదివినట్లు గుర్తించు</button></div>
+    </div>
+    <nav class="tabbar">
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-home"/></svg></span>ముఖపుట</span>
+      <span class="tab on"><span class="pill"><svg class="i"><use href="#i-book"/></svg></span>స్తోత్రాలు</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-star"/></svg></span>ఇష్టమైనవి</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-mala"/></svg></span>నా సాధన</span>
+    </nav>
+  </div></div></div>
+
+  <!-- 4. PRACTICE -->
+  <div class="frame"><h2>4 · నా సాధన / Practice</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar">
+      <div class="brand"><span class="mark">ఓం</span><b>శ్రీ దివ్య స్తోత్రములు</b></div>
+      <button class="icon-btn"><svg class="i"><use href="#i-bell"/></svg></button>
+      <button class="icon-btn"><svg class="i"><use href="#i-search"/></svg></button>
+      <button class="icon-btn"><svg class="i"><use href="#i-user"/></svg></button>
+    </div>
+    <div class="scroll">
+      <span class="eyebrow">నిత్య సాధన</span>
+      <h3 style="font-family:var(--font-serif);font-size:25px;font-weight:600">నా సాధన</h3>
+      <div class="card ptile"><span class="medal"><svg class="i lg"><use href="#i-mala"/></svg></span><div><b>జపమాల</b><small>108 నామాల జపం</small></div><svg class="i" style="margin-left:auto;color:#5a6764"><use href="#i-chev"/></svg></div>
+      <div class="card ptile"><span class="medal"><svg class="i lg"><use href="#i-cal"/></svg></span><div><b>పూజా ట్రాక్</b><small>రోజువారీ నమోదు · మొక్కులు</small></div><svg class="i" style="margin-left:auto;color:#5a6764"><use href="#i-chev"/></svg></div>
+      <div class="card counter">
+        <div class="top"><b>ప్రదక్షిణలు</b><span class="info"><svg><use href="#i-info"/></svg></span><span class="date"><svg class="i sm"><use href="#i-cal"/></svg>28 సెప్టెంబర్</span></div>
+        <div class="cnt"><span class="round"><svg class="i lg"><use href="#i-minus"/></svg></span><div class="n">11<small>ఈ రోజు</small></div><span class="round plus"><svg class="i lg"><use href="#i-plus"/></svg></span></div>
+      </div>
+    </div>
+    <div class="scrim"></div>
+    <div class="sheet infobox">
+      <div class="grab"></div>
+      <h3><span class="info" style="width:34px;height:34px"><svg style="width:18px;height:18px"><use href="#i-info"/></svg></span>ప్రదక్షిణ లెక్క<span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></h3>
+      <p>గుడిలో చేసిన ప్రదక్షిణలను ＋ తో లెక్కించండి. తేదీ మార్చి పాత రోజుల లెక్క కూడా వేయవచ్చు; ↻ నొక్కితే ఆ రోజు లెక్క 0 అవుతుంది.</p>
+      <p class="en">Count your circumambulations. Pick a date to log past days.</p>
+      <button class="btn btn-primary" style="width:100%;margin-top:16px">అర్థమైంది</button>
+    </div>
+    <nav class="tabbar">
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-home"/></svg></span>ముఖపుట</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-book"/></svg></span>స్తోత్రాలు</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-star"/></svg></span>ఇష్టమైనవి</span>
+      <span class="tab on"><span class="pill"><svg class="i"><use href="#i-mala"/></svg></span>నా సాధన</span>
+    </nav>
+  </div></div></div>
+
+  <!-- 5. JAPAMALA -->
+  <div class="frame"><h2>5 · జపమాల / Japamala</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar">
+      <span class="back" style="margin-right:auto"><svg class="i"><use href="#i-back"/></svg>వెనుకకు</span>
+      <button class="icon-btn"><svg class="i"><use href="#i-info"/></svg></button>
+    </div>
+    <div class="scroll">
+      <div class="seg"><span class="on">మాల</span><span>దండ</span><span>వలయం</span><span>రుద్రాక్ష</span></div>
+      <div class="jcount"><b>27</b> <span>/ 108</span><div style="font:500 14px var(--font-ui);color:var(--ink-3)">పూర్తయిన మాలలు: 2</div></div>
+      <div class="stage">
+        <svg viewBox="0 0 200 200" width="220" height="220" aria-hidden="true">
+          <defs><radialGradient id="bd" cx="35%" cy="30%"><stop offset="0" stop-color="#a07a50"/><stop offset="1" stop-color="#4a3018"/></radialGradient></defs>
+          <g fill="url(#bd)"><circle cx="100" cy="22" r="7"/><circle cx="127" cy="27" r="7"/><circle cx="151" cy="41" r="7"/><circle cx="168" cy="63" r="7"/><circle cx="177" cy="89" r="7"/><circle cx="176" cy="116" r="7"/><circle cx="165" cy="141" r="7"/><circle cx="146" cy="160" r="7"/><circle cx="73" cy="27" r="7"/><circle cx="49" cy="41" r="7"/><circle cx="32" cy="63" r="7"/><circle cx="23" cy="89" r="7"/><circle cx="24" cy="116" r="7"/><circle cx="35" cy="141" r="7"/><circle cx="54" cy="160" r="7"/></g>
+          <circle cx="100" cy="22" r="10" fill="none" stroke="#c39a3d" stroke-width="2"/>
+          <circle cx="100" cy="172" r="10" fill="#8e1f26"/><path d="M96 182 94 198M100 182v16M104 182l2 16" stroke="#c39a3d" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="jctl"><span class="round"><svg class="i"><use href="#i-reset"/></svg></span><span class="jbtn">జపం<small>ఎక్కడైనా నొక్కండి</small></span><span class="round" style="visibility:hidden"></span></div>
+    </div>
+    <nav class="tabbar">
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-home"/></svg></span>ముఖపుట</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-book"/></svg></span>స్తోత్రాలు</span>
+      <span class="tab"><span class="pill"><svg class="i"><use href="#i-star"/></svg></span>ఇష్టమైనవి</span>
+      <span class="tab on"><span class="pill"><svg class="i"><use href="#i-mala"/></svg></span>నా సాధన</span>
+    </nav>
+  </div></div></div>
+
+  <!-- 6. ACCOUNT & HELP -->
+  <div class="frame"><h2>6 · నా ఖాతా & సహాయం / Account &amp; help</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar"><div class="brand"><span class="mark">ఓం</span><b>శ్రీ దివ్య స్తోత్రములు</b></div></div>
+    <div class="scrim"></div>
+    <div class="sheet" style="top:70px">
+      <div class="grab"></div>
+      <h3>నా ఖాతా<span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></h3>
+      <div class="card" style="padding:16px;margin-top:14px;background:var(--peacock-50);border-color:var(--peacock-100)">
+        <div style="display:flex;gap:10px;align-items:center"><svg class="i" style="color:var(--peacock-700)"><use href="#i-cloud"/></svg><b style="font-size:16.5px">అన్ని ఫోన్‌లలో భద్రంగా</b><span class="info" style="margin-left:auto"><svg><use href="#i-info"/></svg></span></div>
+        <p style="font-size:14.5px;color:var(--ink-2);margin-top:6px">ప్రదక్షిణలు, జపమాల, మొక్కులు, చదివిన గుర్తులు — కొత్త ఫోన్‌లో అవే తిరిగి వస్తాయి.</p>
+        <button class="gsign"><svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.1-10 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.8 6C6.6 42.6 14.6 48 24 48z"/></svg>Google తో సైన్ ఇన్</button>
+      </div>
+      <div style="margin-top:14px">
+        <div class="list-item"><span class="ico"><svg class="i"><use href="#i-flag"/></svg></span><div>సమస్య / తప్పు తెలియజేయండి<small>మేము ప్రతి సందేశం చదువుతాం</small></div><svg class="i sm" style="margin-left:auto;color:var(--ink-3)"><use href="#i-chev"/></svg></div>
+        <div class="list-item"><span class="ico"><svg class="i"><use href="#i-msg"/></svg></span><div>నా సందేశాలు<small>లింగాష్టకం — అక్షర తప్పు</small></div><span class="status st-ans"><svg class="i sm"><use href="#i-check"/></svg>సమాధానం</span></div>
+        <div class="list-item"><span class="ico"><svg class="i"><use href="#i-msg"/></svg></span><div>&nbsp;<small>జపమాల — కొత్త సూచన</small></div><span class="status st-prog">పరిశీలనలో</span></div>
+        <div class="list-item"><span class="ico"><svg class="i"><use href="#i-spark"/></svg></span><div>కొత్తవి / What's new<small>ఈ నెల 3 కొత్త మార్పులు</small></div><svg class="i sm" style="margin-left:auto;color:var(--ink-3)"><use href="#i-chev"/></svg></div>
+        <div class="list-item"><span class="ico" style="background:var(--sand);color:var(--ink-2)"><svg class="i"><use href="#i-reset"/></svg></span><div>బ్యాకప్ ఫైల్<small>సైన్ ఇన్ చేయలేకపోతే మాత్రమే</small></div><svg class="i sm" style="margin-left:auto;color:var(--ink-3)"><use href="#i-chev"/></svg></div>
+      </div>
+    </div>
+  </div></div></div>
+
+  <!-- 7. WHAT'S NEW -->
+  <div class="frame"><h2>7 · కొత్తవి / What's new</h2>
+  <div class="phone"><div class="screen">
+    <div class="topbar"><div class="brand"><span class="mark">ఓం</span><b>శ్రీ దివ్య స్తోత్రములు</b></div></div>
+    <div class="scrim"></div>
+    <div class="sheet" style="top:120px">
+      <div class="grab"></div>
+      <h3><svg class="i" style="color:var(--zari-500)"><use href="#i-spark"/></svg>కొత్తవి<span class="x"><svg class="i sm"><use href="#i-x"/></svg></span></h3>
+      <div class="upd"><div class="meta"><span class="tag tag-new">✦ కొత్తది</span>28 సెప్టెంబర్ 2026</div><b>సులభమైన కొత్త రూపం</b><p>కింద మెను, పెద్ద బటన్లు, ప్రతి సదుపాయం పక్కన ⓘ నొక్కితే వివరణ.</p></div>
+      <div class="upd"><div class="meta"><span class="tag tag-new">✦ కొత్తది</span>28 సెప్టెంబర్ 2026</div><b>నా సందేశాలు</b><p>మీరు పంపిన సమస్యలకు మా జవాబు ఇక్కడే చూడవచ్చు.</p></div>
+      <div class="upd"><div class="meta"><span class="tag tag-fix">✓ సరిచేశాం</span>28 సెప్టెంబర్ 2026</div><b>రోజువారీ జపం లెక్క</b><p>పూజా ట్రాక్‌లో జపం ＋/− ఇప్పుడు సరిగ్గా పని చేస్తుంది.</p></div>
+      <div class="upd" style="border:0"><div class="meta"><span class="tag tag-imp">↑ మెరుగుదల</span>20 సెప్టెంబర్ 2026</div><b>లలితా సహస్రనామం పూర్తి పాఠం</b><p>183 శ్లోకాలు మూలంతో పోల్చి సరిచేశాం.</p></div>
+    </div>
+  </div></div></div>
+</div>
+
+<section class="notes">
+  <p><b>What the preview shows (desktop gets the same system, with the tabs moved into the top header):</b></p>
+  <ul>
+    <li>A fixed bottom menu on phones: 4 big tabs with Telugu labels. It's always in the same place, so nothing has to be hunted for.</li>
+    <li>A compact top bar: a "What's new" bell (a red dot means something new), search, and account.</li>
+    <li>ⓘ buttons next to each feature. Tapping one opens a short plain-Telugu explanation with an English line underneath.</li>
+    <li>Account becomes a single help hub: Google sign-in first, "report a problem", "My messages" with a status for each message (New / In progress / Answered), "What's new", and file backup last.</li>
+    <li>Motion stays gentle: sheets slide up, cards fade in one after another, buttons press in. All of it turns off if the phone asks for reduced motion.</li>
+  </ul>
+</section>
+</body>
+</html>

@@ -1,6 +1,6 @@
 # Application architecture
 
-The site is a Vite-built, no-framework Telugu devotional reading site, deployed as a Cloudflare Worker. There is no component framework and no JavaScript rewrite of the existing reading/behavior code — see "Why no build-step conversion" below.
+The site is a Vite-built Telugu devotional reading site with no component framework, deployed as a Cloudflare Worker. The page is plain HTML (`index.html`), one stylesheet entry (`styles/app.css`) and a set of classic `<script>` files that share one global scope. See "Why no build-step conversion" below for why the scripts stay that way.
 
 ## Deployment
 
@@ -14,63 +14,133 @@ Cloudflare Workers is the single deploy target (`wrangler.jsonc`).
 
 ```
 index.html, admin.html     Vite entries (repo root)
-styles/                    CSS Vite/Tailwind actually processes (bundled + minified at build time)
+styles/                    CSS Vite actually processes (bundled + minified at build time)
+  app.css                    the ONLY stylesheet index.html links; it @imports everything else in order
+  admin.css                  admin.html's own stylesheet (Tailwind v4)
 public/                    Vite's publicDir — copied to the build output byte-for-byte, NEVER processed
   assets/*.js                the site's behavior modules (classic <script> tags, not ES modules)
-  data/stotras/*.js           the 32 bundled prayer datasets
-  data/content-audit.js       source/review metadata for those datasets
-src/                       the Cloudflare Worker (untouched by the Vite/Tailwind work — see below)
+  data/stotras/*.js          the 32 bundled prayer datasets
+  data/content-audit.js      source/review metadata for those datasets
+  data/updates.js            the bundled "What's new" entries
+  icons.svg                  the UI line-icon sprite
+src/                       the Cloudflare Worker (untouched by the Vite work — see below)
+tools/                     verification scripts, the UI contract checker, screenshot and e2e runners
+docs/redesign-research/    the redesign contract (contract.md) and the research behind it
 ```
 
-**Why no build-step conversion for `public/assets/*.js`:** these ~15 files rely on shared globals (`stotramConfig`, `origins`, `meanings`, `escapeHtml`, etc. — set by one script, read by later ones, in a specific `<script>` order in `index.html`) rather than ES module imports. Converting them to real modules was explicitly out of scope for the Vite migration: it would touch every file for zero user-visible benefit, and this codebase's actual verification (the `tools/verify-*.cjs` suite) is keyed to this exact behavior. They're copied through unchanged.
+**Why no build-step conversion for `public/assets/*.js`:** these files rely on shared globals (`stotramConfig`, `origins`, `meanings`, `escapeHtml`, etc. — set by one script, read by later ones, in a specific `<script>` order in `index.html`) rather than ES module imports. Converting them to real modules was explicitly out of scope for the Vite migration: it would touch every file for zero user-visible benefit, and this codebase's actual verification (the `tools/verify-*.cjs` suite) is keyed to this exact behavior. They're copied through unchanged.
 
-## Two CSS systems that coexist — read this before touching site-wide styles
+## Stylesheets
 
-`styles/styles.css`, `styles/reading.css`, and `styles/design-system.css` load in that exact order and **cannot be safely reordered or merged**. A precise per-selector, per-property diff (see the git history around the "premium UI" work) found **126 properties** where `reading.css` and one of the other two files declare a genuinely different value for the same selector — not near-duplicates, real differences in color/spacing/size. The current load order is what makes today's rendering correct; collapsing two of these files into one (one file = one position in the cascade) would silently flip the winner on all of them.
+`index.html` links exactly one stylesheet, `/styles/app.css`. That file contains nothing but `@import` lines, and Vite inlines them into a single bundle in exactly that order, so the import order **is** the cascade order. `app.css` does not import Tailwind; the main site's CSS is hand-written. (Only `admin.css` uses Tailwind — see "Admin dashboard".)
 
-Practically: `styles.css` (an older gold/maroon/cream dark-theme palette, still backing ~168 rules including particles, header chrome, and Japamala) and `design-system.css` (a newer cream/brass "Grandham" palette, added later as an override layer for Home/reader surfaces) are two different design languages layered via cascade order, not a legacy file sitting dead on top of a clean one. Unifying them into one token system is possible but requires resolving those 126 conflicts one at a time with a browser open to verify each — it was deliberately not attempted blind.
+| # | File | Role |
+|---|---|---|
+| 1 | `@fontsource-variable/noto-sans-telugu`, `…/noto-serif-telugu` | The self-hosted fonts (see "Self-hosted fonts"). |
+| 2 | `tokens.css` | Design tokens as custom properties on `:root`, plus the per-deity accent classes. It selects nothing else. |
+| 3 | `base.css` | Reset, typography, the visible `:focus-visible` ring, `.icon-inline` / `.nav-icon`, and utilities (`.visually-hidden`, `.eyebrow`, `.muted`). No layout, and never `overflow` on `html` or `body`. |
+| 4 | `components.css` | Shared components that page files compose instead of restyling: `.btn*`, `.track-btn`, `.icon-btn`, `.info-btn` (the ⓘ button), `.chip`, `.add-chip`, `.medallion`, `.status-pill`, `.tag`, the form fields, the counter family (`.counter-*`, `.count-*`), `.empty-state` and `.surface`. |
+| 5 | `layout.css` | The shell: sticky header, the phone/tablet bottom tab bar (the same `nav.site-navigation` moves into the header row at 1024px and up), page containers, footer, scroll-to-top, skip link. |
+| 6 | `home.css` | Home: the hero, today's suggestions, recent reading, the updates teaser, favourites. |
+| 7 | `library.css` | The library intro, category filter chips and the prayer cards. |
+| 8 | `reader.css` | The reader: title, sticky tool panel, reading options, verse cards, after-content blocks. |
+| 9 | `practice.css` | "My practice" launchers, the pradakshina counter, and the Pooja Track page (calendar, vows, day sheet content). |
+| 10 | `japamala.css` | The Japamala page and its three SVG views (visuals only). |
+| 11 | `japamala-3d.css` | The WebGL Rudraksha stage. Its rendering-critical sizes and positions are marked `KEEP`. |
+| 12 | `overlays.css` | Search, the account hub and the other bottom sheets, the ⓘ info sheet, feedback, the day-sheet container, the confirm dialog and the toast. |
+| 13 | `behavior.css` | The reserved behaviour layer. It **must stay last** (next section). |
 
-`design-system.css` also defines the `--ui-*` custom properties (colors, radius) that `design-system.css`'s own later rules consume — there used to be two separate `:root` blocks silently overriding each other; that's now one block.
+Each page file owns the visuals of its own area and nothing else. The exact markup, class names and state hooks every file styles are frozen in `docs/redesign-research/contract.md` (§3 static markup, §4 JS-generated markup, §7 visual specification); read it before changing CSS or markup.
 
-`styles/japamala-3d.css` has zero selector overlap with the other three, so its position doesn't matter for correctness.
+### behavior.css — the reserved layer
+
+`behavior.css` holds every rule the site needs to *work*, as opposed to how it looks: which page and which Home panel is visible (`[hidden] { display: none !important; }` and the four `#homePage[data-view] > [data-panel]` rules), overlay stacking and the `.active` / `.show` / `.visible` / `.on` state classes, the Japamala SVG rendering, the month-swipe geometry the calendar script measures, the card link's absolutely positioned layers, the reduced-motion switch and the print stylesheet. Because it loads last, nothing can override it by accident.
+
+Two rules keep it that way; `tools/check-ui-contract.cjs` enforces both:
+
+1. **Reserved properties** (contract §0.4). A page file must not declare a property that `behavior.css` already declares for the same selector (the same last compound selector). For example: no `display` on `.reader-page`, no `position` on `.card`, no `transform` on `.reader-deity-bg`. The `::before` / `::after` pseudo-elements of those selectors are free to use.
+2. **Containing-block ban** (contract §0.5). `.header`, `.reader-page`, `.day-sheet-overlay`, `.japamala-page`, `.jm-stage*` and `#homePage` never get `transform`, `filter`, `backdrop-filter`, `perspective`, `contain`, `will-change` or `container-type`: any of those would trap the fixed tab bar, the fixed deity art or the overlays inside the element, and would distort the WebGL canvas. The Japamala stages also never get `display` (JS writes it inline), `animation` or `transition`. `html` and `body` never get `overflow`: the sheets lock scrolling by setting `body.style.overflow` inline, which only reaches the viewport while `html` stays `overflow: visible`, and the sticky header needs it too.
+
+Motion follows from this: pages and Home panels only fade (opacity), and `behavior.css` already does that. Entrances that move use `transform` only on elements outside the ban list (cards, sheets, dialog boxes). The reduced-motion switch turns off every animation and transition, so the base state of every element is its visible final state, and keyframes animate *from* hidden *to* that base.
+
+### Design tokens (`tokens.css`)
+
+The look is "Kanchi silk", the colours of a Kanchipuram pattu saree:
+
+- **Peacock teal** `--peacock-950…50` for the chrome, the hero and primary actions (`--peacock-800` is the primary button colour).
+- **Zari gold** `--zari-800…100` for ornament, borders and highlights. `--zari-700` / `--zari-800` are the text-safe golds.
+- **Kumkum** `--kumkum-*` for tiny signals only (the "new" dot, errors), and **leaf** `--leaf-*` for success / answered / verified.
+- **Surfaces and ink:** `--ivory` (page), `--paper` / `--paper-leaf` (surfaces and verse cards), `--sand` (sunken fields), `--ink`, `--ink-2`, `--ink-3`, `--reading-ink` (verses), `--line`, `--line-2`.
+- **Semantic roles** (`--c-bg`, `--c-surface`, `--c-text`, `--c-primary`, `--c-accent-text`, `--focus-ring`, …) point at the palette, so a role can change without touching every rule.
+- **Type:** `--font-ui` (Noto Sans Telugu Variable) and `--font-serif` (Noto Serif Telugu Variable); the scale `--fs-xs` 14px (the smallest text anywhere) up to `--fs-3xl` 30px, and `--fs-display` for the hero; `--reader-font-size` (default 24px; `reader.js` sets 18–48px and remembers it).
+- **Space, shape, depth, motion:** `--sp-1…9` (4px base), radii `--r-xs…xl` and `--r-pill`, soft teal-tinted shadows `--shadow-xs…lg` and `--shadow-primary`, durations `--dur-1…4` with `--ease-out`.
+- **Layout:** `--content-max`, `--reader-max`, `--gutter`, `--header-h`, `--tabbar-h` (0 on desktop), the safe-area insets and `--tap` (48px, the primary touch target). Breakpoints are 600px (tablet: two-column grids) and 1024px (desktop: the tabs move into the header, three-column grids).
+- **Stacking ladder:** `--z-bg` < `--z-page` < `--z-header` < `--z-tabbar` < `--z-float` < `--z-overlay` < `--z-sheet` < `--z-feedback` < `--z-daysheet` < `--z-confetti` < `--z-info` < `--z-toast` < `--z-dialog` < `--z-skip`. The ⓘ sheet opens above any other sheet.
+- **Per-deity accents:** each card's bare theme class (`.vishnu`) and the reader title's `-theme` class (`.vishnu-theme`) set `--deity` and `--deity-soft`, which the card wash, the medallions and the title underline read.
+- `--gold-light` / `--gold` remain as aliases for older rules in `japamala-3d.css`.
+
+Only `tokens.css` holds raw hex colours. The exceptions are SVG data URIs, the Japamala bead rules and the black-on-white print rules in `behavior.css`. The key contrast pairs are computed from these values by `tools/verify-reader-theme.cjs`, so a token change that breaks AA/AAA fails the tests.
+
+### Self-hosted fonts
+
+The two Noto Telugu variable fonts come from the `@fontsource-variable/noto-sans-telugu` and `@fontsource-variable/noto-serif-telugu` npm packages, imported at the top of `app.css` (and `admin.css`). Vite resolves them from `node_modules` and copies the `.woff2` files into the build with hashed names, so the site makes no request to Google Fonts. Each package splits the font by `unicode-range` (Telugu, Latin, Latin Extended), so a browser downloads only the files the page actually uses, and `font-display: swap` shows the fallback font until they arrive. The fallbacks are listed in `--font-ui` / `--font-serif`. The contract checker fails on any other webfont name in the site CSS.
+
+### Icons (`public/icons.svg`)
+
+UI chrome icons (arrows, close, search, bell, info, calendar, the mala, …) live in one SVG sprite of `<symbol id="icon-x">` elements, referenced across documents with `<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-x"/></svg>`. They draw in `currentColor`, so they take the text colour of their button. `index.html` and `admin.html` share the sprite, and the scripts build the same markup through small `icon('x')` helpers (the contract writes it as `ICON(x)`). `tools/verify.cjs` checks every fragment `index.html` references; the contract checker also checks the scripts and the CSS.
+
+The deity artwork is different on purpose: it is a large inline `<svg style="display:none">` block of `<symbol>`s at the top of `index.html`, referenced with same-document `<use href="#svg-vishnu">` etc. It is brand artwork rather than UI chrome, so it is not merged into `icons.svg`.
+
+### Legacy stylesheets
+
+`styles/styles.css`, `styles/reading.css` and `styles/design-system.css` are the stylesheets from before the redesign. Nothing links or imports them any more; they stay in the repository only as read-only reference and are deleted in Phase 3. Never import them. The contract checker ignores them, and `tools/verify.cjs` fails if `app.css` imports one.
 
 ## Frontend modules
 
+The scripts are classic scripts, not modules, and they share one global scope. That has three consequences for anyone adding code: a file must be valid in strict mode with no `import` / `export`; new code goes inside an IIFE and exports explicitly with `window.x = …`; and no two scripts may declare the same top-level name (the contract checker lists collisions). Any user- or data-derived string is escaped (the global `escapeHtml` from `tracking.js`) before it goes into `innerHTML`.
+
+`index.html` loads them in this order: the data files, then `reader-navigation.js`, `reader.js`, `tracking.js`, `app.js`, `japamala-3d.js`, `japamala.js`, then `site-config.js`, the Firebase compat SDK, `cloud.js`, `admin.js`, `weekday.js`, `library.js`, `experience.js`, and finally `help.js`, `updates.js` and `messages.js`.
+
 - `public/data/stotras/*.js`: bundled prayer datasets.
 - `public/data/content-audit.js`: separate text and meaning sources, review dates, verification statuses, coverage, and edition scope.
-- `styles/styles.css`: older gold/maroon/cream theme — see above.
-- `styles/reading.css`: reading accessibility and feature layouts.
-- `styles/design-system.css`: newer cream/brass "Grandham" tokens and Home/reader surface overrides — see above.
-- `styles/japamala-3d.css`: presentation and mobile input behavior for the WebGL Rudraksha view.
+- `public/data/updates.js`: `window.SITE_UPDATES`, the bundled "What's new" entries (`{id, date, tag, title, body}`, newest first).
 - `public/assets/site-config.js`: the single source of truth for `ADMIN_UID` and the Firebase web config — loads first, before anything that reads them.
-- `public/assets/reader-navigation.js`: reading progress, recent-reading history, section jumps, and Home category navigation.
-- `public/assets/reader.js`: prayer rendering, read marks, font preference, meanings, and in-prayer search. Grandham is the fixed reader presentation defined by the page and styles.
-- `public/assets/tracking.js`: local pooja state, calendar, counters, vows, reminders, and file backup.
-- `public/assets/app.js`: page orchestration, global prayer search, dialogs, feedback, analytics, and startup.
+- `public/assets/reader-navigation.js`: reading progress, recent-reading history, section jumps, meaning coverage, and the Library navigation with its category filters.
+- `public/assets/reader.js`: prayer rendering, read marks, font size (`--reader-font-size`), meanings, and in-prayer search. Grandham is the fixed reader presentation defined by the page and styles.
+- `public/assets/tracking.js`: local pooja state, calendar, counters, vows, reminders, file backup, and the in-app `sitePrompt()` dialog.
+- `public/assets/app.js`: page orchestration, global prayer search, `siteConfirm` / `siteAlert` dialogs, feedback, analytics, and startup.
 - `public/assets/japamala.js`: Japamala views, shared counting state, sound, haptics, reset, and completion feedback.
 - `public/assets/japamala-3d.js`: dependency-free procedural WebGL Rudraksha mesh and gesture renderer, initialized only when selected.
-- `public/assets/library.js`: favorites, semantic prayer-card links, and shareable reader routes.
-- `public/assets/experience.js`: bookmarkable Home views (home/library/favorites/practice) via the URL hash.
-- `public/assets/cloud.js`: optional cloud synchronization (Google sign-in + Firestore backup of pooja/japa data). Main site only.
+- `public/assets/library.js`: favourites, semantic prayer-card links, and shareable reader routes.
+- `public/assets/experience.js`: the bookmarkable Home views (home / library / saved / practice) via the URL hash and `navigateView(view)`. It also keeps `html[data-screen]` (home, reader, track or japamala) and `aria-current` on the four menu links in step with the page that is showing; `layout.css` reads `data-screen` for the back button and the tab bar.
+- `public/assets/cloud.js`: optional cloud synchronization (Google sign-in + Firestore backup of pooja/japa data). It is also the one place the other scripts get Firebase from: `window.StotramCloud = {firebase, auth, db, get user()}`, a `cloud-ready` event once, and a `cloud-auth` event on every sign-in change. If the SDK is blocked or offline it stops quietly.
 - `public/assets/admin.js`: loads published cloud stotras into the main site for every visitor (small, on purpose), plus a discreet link to `/admin.html` shown only when signed in as the admin.
 - `public/assets/weekday.js`: renders the "today's suggestions" Home section. Display only — the editor lives in `admin-dashboard.js`.
-- `public/icons.svg`: a small line-icon sprite for UI chrome (arrows, close, edit, delete, etc. — not the deity artwork), referenced via cross-document `<use href="/icons.svg#icon-x">`. This is a deliberately different pattern from the deity SVGs below (external file vs. inline `<symbol>`), chosen so both `index.html` and `admin.html` can share one sprite without duplicating ~50 lines of markup per page.
-- The deity artwork itself is a large inline `<svg style="display:none">` block of `<symbol>`s at the top of `index.html`, referenced via same-document `<use href="#svg-vishnu">` etc. — unchanged, and NOT merged into `icons.svg` (different purpose: brand artwork vs. UI chrome).
+- `public/assets/help.js`, `updates.js`, `messages.js`: see the next section.
 
-Data loads first. Reader navigation, reader behavior, and tracking load before app.js. Optional cloud and admin modules load afterward.
+### Help (ⓘ), What's new, My messages
+
+- **`help.js`** holds the `HELP` dictionary: a short, plain-Telugu explanation for every feature (a title, one to three short paragraphs, and one English gloss line). Any element with `data-info="KEY"` opens the ⓘ sheet (`#infoOverlay`) with that entry. One capture-phase click listener serves every ⓘ on the page, including the ones other scripts build later, and stops the click there; that is also what keeps the Japamala page's own tap-to-count handler from counting a bead when its ⓘ is tapped. The keys must match every `data-info` in the markup exactly (contract §6); the contract checker compares them. Exports `showInfo(key, trigger)`, `closeInfo()` and `HELP_KEYS`.
+- **`updates.js`** runs the bell in the header, the Home teaser and the `#updatesOverlay` sheet. It merges the bundled `SITE_UPDATES` with the Firestore `updates` collection (which the admin dashboard writes) by id, newest first. "Unread" means the newest entry's date is later than `localStorage.stotramUpdatesSeen`; while something is unread, the kumkum dot on the bell and the teaser are shown, and opening the sheet marks everything seen. If Firestore is unavailable, only the bundled list is shown. Exports `openUpdates()` / `closeUpdates()`.
+- **`messages.js`** turns the four feedback type chips into one radio group that drives the hidden `#fbType` select, keeps a local copy of every message the reader sends (`recordSentMessage(payload)` → `localStorage.stotramMyMessages`, newest first, at most 30), and shows them in the `#messagesOverlay` sheet, merged with the signed-in reader's own Firestore `feedback` documents and the team's replies. Unseen replies set the count in `#messagesBadge` and add `.has-unread` to the header's account button. Exports `openMessages()`, `closeMessages()`, `recordSentMessage()` and `syncFeedbackChips()`.
+
+Every sheet behaves the same way: it saves and restores `document.body.style.overflow` to lock scrolling while open, moves focus into the sheet and back to the button that opened it, closes on a backdrop tap, and closes on Escape (only the top sheet; its capture-phase key listener stops the event).
+
+The site's `localStorage` keys are `readerFontSize`, `showMeanings`, `stotramFavorites`, `stotramReaderPositions`, `stotramLibraryCategory`, `poojaTrack_v1`, `jm_mode_v2`, `feedbackQueue_v1`, `stotramUpdatesSeen`, `stotramMyMessages`, `stotramMessagesSeenAt`, `poojaTrackOwner` and `poojaTrackAside_<uid>`. `poojaTrackOwner` is the uid the pooja data on this device last synced to; `cloud.js` writes it only after a successful push. When a different account signs in on the same phone, it must answer a question (Escape and a tap outside do nothing) before this phone's entries are added to it. Answering no copies the phone's entries into `poojaTrackAside_<previous uid>` and shows only the new account's data; the set-aside entries are merged back, and the key removed after a successful push, when that account signs in on this phone again. This matters because entries made while signed out never reached any account. Local changes are pushed only after the account's cloud copy has been pulled and merged, a failed pull is retried (15 s, 1 min, then every 5 min, and at once when the phone comes back online or the page is shown again), and signing out first sends any change still waiting in the 1.5 s push debounce.
 
 ## Admin dashboard (`admin.html`)
 
 A separate page, not a modal bolted onto the reading site. Loads its own copy of the 32 dataset scripts (so `stotramConfig`/`origins`/`meanings` exist here too) but none of `index.html`'s reader/search/tracking code.
 
-- `public/assets/admin-dashboard.js`: everything — content list/add/edit/delete/revert, OCR-assisted entry, feedback inbox, weekday-map editor, export backup. Gated by Firebase auth + `ADMIN_UID`, but **that check is UI-only**; see "Authorization boundaries" below.
-- `styles/admin.css`: Tailwind CSS (including Preflight) is used directly here — safe because this page has no pre-existing rendering to protect, unlike the main site's hand-authored cascade above.
+- `public/assets/admin-dashboard.js`: everything — content list/add/edit/delete/revert, OCR-assisted entry, feedback inbox, weekday-map editor, "What's new" entries, export backup. Gated by Firebase auth + `ADMIN_UID`, but **that check is UI-only**; see "Authorization boundaries" below.
+- `styles/admin.css`: Tailwind CSS v4 (including Preflight), scanning only the admin sources so the reading site's markup never leaks utilities into this bundle. Its palette mirrors `styles/tokens.css` and it imports the same self-hosted fonts; when a token changes there, change it here too. Tailwind is safe here because this page has no hand-authored cascade to protect.
 - Built as its own Vite entry (`vite.config.js`'s `environments.client.build.rollupOptions.input`), so it ships its own CSS/behavior bundle — the main site never loads admin code, and vice versa.
 
 ## Authorization boundaries
 
 - **`/api/ocr` (Worker, `src/ocr.js`)**: the real check. Verifies the caller's Firebase ID token server-side (`src/auth.js`, via Google's Identity Toolkit), then compares the resulting UID against `ADMIN_UID`. This is enforced regardless of what the client sends.
-- **Firestore (`stotras`, `feedback`, `config` collections, used by `admin.html`)**: gated by Firestore security rules. **These rules are console-managed and not version-controlled in this repo** — if you need to know the exact current rules, check the Firebase console, not this codebase.
+- **Firestore** (`stotras`, `feedback`, `config`, `updates` and `users` collections): gated by Firestore security rules. **The live rules are console-managed and not deployed from this repo** — if you need to know the exact current rules, check the Firebase console, not this codebase. `docs/firestore.rules.proposed` is a version-controlled proposal written for the redesign (public read and admin-only write on `updates`; readers may read back their own `feedback` with `where('uid', '==', uid)`; only the admin writes `status` / `reply`); it takes effect only when someone pastes it into the console. Until then, the new sheets degrade gracefully: `updates.js` falls back to the bundled list and `messages.js` to the local copies.
+- **Feedback flooding (optional hardening).** Anyone can create a `feedback` document; that is the point of the form. The honeypot field stops simple bots, and the rules cap field sizes. A determined script could still fill the inbox. If that ever happens, turn on **Firebase App Check** with reCAPTCHA v3: register the site in the Firebase console (App Check → Apps → reCAPTCHA v3), add the site key to `site-config.js`, initialise `firebase.appCheck().activate(siteKey, true)` in `cloud.js` after `initializeApp`, and switch Firestore to *enforced* only after the console shows that real traffic carries valid tokens. It was not turned on in the redesign because it needs a reCAPTCHA key from the owner and can block older browsers if enforced too early.
 - **Client-side `ADMIN_UID` checks** (`site-config.js`'s value, read by `admin.js`/`admin-dashboard.js`): control which UI renders (the dashboard link, the dashboard page itself) so a non-admin visitor doesn't see controls that would fail anyway. Not a security boundary on their own — anyone can read this value from the shipped JS.
 
 ## Worker modules
@@ -84,8 +154,19 @@ OCR accepts at most six JPEG, PNG, or WebP images, limits individual and combine
 
 ## Verification
 
-Run `node tools/verify.cjs`, `node tools/verify-reader-navigation.cjs`, `node tools/verify-library.cjs`, `node tools/verify-reader-smoke.cjs`, `node tools/verify-worker.cjs`, `node tools/verify-japamala.cjs`, `node tools/verify-reader-theme.cjs`, and `node tools/verify-meanings.cjs` — all file-based/syntax checks, no browser or build step required.
+**`npm run verify`** runs `tools/verify.cjs`, which also runs `verify-reader-smoke`, `verify-worker`, `verify-japamala`, `verify-reader-theme`, `verify-meanings`, `verify-library` and `verify-reader-navigation`. All of them are file-based checks: no browser, no build and no `npm install` needed.
 
-`tools/review-devotional.cjs` is a separate, optional Playwright-driven visual/interaction smoke test (needs Playwright + a browser installed) — not part of the standard check list above.
+- `verify.cjs` checks every dataset and its source metadata, verse sequences and name counts, frontend and inline-script syntax, script load order, the semantic card links, the reader's font-size limits and storage failures, and the stylesheet architecture: `index.html` links only `/styles/app.css`; `app.css` imports `tokens.css`, `base.css` and `components.css` first, every page file, and `behavior.css` last, and none of the legacy files; `tokens.css` defines the core tokens; `behavior.css` keeps `[hidden]`, the four Home panel rules and the reduced-motion switch. It also follows every `@import` and local `url()` from `app.css` and checks the icon sprite and deity-symbol references.
+- `verify-reader-theme.cjs` checks the fixed Grandham reader, the selected category chip and the date-input rule, and computes the key contrast ratios (ink on ivory, reading ink on paper, white on peacock, gold text, the selected chip) from `tokens.css` and `library.css`.
 
-The primary verifier checks all datasets, source metadata, frontend and Worker syntax, asset links, design-system load order, semantic card structure, reader behavior, and module boundaries.
+**`node tools/check-ui-contract.cjs`** checks the redesign contract (`docs/redesign-research/contract.md`). It parses the CSS with `postcss` (a devDependency, so run `npm install` once) and reads `index.html` and the scripts as text; it needs no browser and no build. It prints a report grouped by check and exits with code 1 when anything is wrong (code 2 if `postcss` is not installed):
+
+- (a) no page file re-declares a property `behavior.css` reserves. That covers the same last compound selector and also a more specific one for the same element (`a.card` or `.card.shiva` against `.card`, which would outrank `behavior.css` despite the load order), or one that reaches the same `index.html` element through another id or class (`#readerPage` for `.reader-page`); (b) the containing-block ban; (c) no `overflow` on `html` / `body` in any shipped stylesheet;
+- (d) the `index.html` structure the e2e test relies on (one link per menu target, header button order, the practice launchers, one reader-options summary, the font buttons, the mala mode order, Japamala buttons that stop propagation, no ⓘ inside a `<summary>`, unique ids) and that every inline `on…` handler, in the page and in the markup the scripts build, calls a function some script defines;
+- (e) the `data-info` keys ⇄ the `HELP` dictionary ⇄ contract §6; (f) top-level name collisions between the classic scripts of one page; (g) only self-hosted or system fonts; (h) every class used in the markup or the scripts has a selector (except the JS-only hooks listed, with the reason for each, at the top of the file); (i) every icon reference exists in the sprite; (j) no text under 14px.
+
+It also reports any stylesheet in `styles/` that no page loads, and any script that neither page loads. Use `--all` to print every line, `--only=a,d` to run some checks, `--json` for a machine-readable report, and `--root=DIR` to check another copy of the repository. Run it before committing CSS or markup changes. It is not part of `npm run verify`.
+
+**`npm run shots`** builds the site, then renders `dist/client` in the locally installed Google Chrome (through `playwright-core`; files are served from disk by request interception, so no server is started). It visits every scene (Home, Library, Saved, Practice, the reader in several states, the Japamala views including 3D, Track and the day sheet, search, the account hub, feedback, What's new, My messages, the ⓘ sheet, the confirm dialog, a scroll-lock probe, a motion pass, and the design preview `docs/redesign-preview.html`) at phone (390×844), small phone (320×640) and desktop (1280×860) sizes, plus a phone held sideways (844×390, captured one screen tall so the short-screen layout stays active), with a realistic returning reader seeded into `localStorage`. It writes the screenshots and `report.json` (JS errors, sideways overflow and layout probes) to `docs/ui-reviews/current/`. `npm run shots -- home reader` renders only the scenes whose names contain those words.
+
+**`npm run e2e`** builds the site, then runs `tools/review-devotional.cjs`: an end-to-end interaction test of `dist/client` in the local Chrome, served the same way. It walks the whole site as a reader would (menu, category filters, a prayer, the reading options, the Japamala views including the 3D one and a lost WebGL context, Track, the account hub, search, feedback), asserts the strict locators listed in contract §8, requires zero JS errors, and checks that nothing scrolls sideways at 320, 390 and 768px. It saves screenshots to `docs/ui-reviews/devotional/`. Set `BROWSER_EXECUTABLE` to use a different Chrome binary, or `PLAYWRIGHT_MODULE` to use a full Playwright install.

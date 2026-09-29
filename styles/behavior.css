@@ -1,0 +1,204 @@
+/* ============================================================
+   Behaviour layer. It loads LAST, so nothing can override it.
+   Every rule here is required for function, not looks: which page or
+   panel is visible, overlay stacking, JS-driven state classes, the Japamala
+   SVG rendering, the month-swipe geometry, the reduced-motion switch and print.
+   Page stylesheets may add visuals to these selectors, but must not set
+   display / position / z-index / overflow / transform / animation on them
+   (see docs/redesign-research/contract.md "Reserved selectors").
+============================================================ */
+
+/* ---------- The [hidden] attribute always wins (JS hides many flex/grid elements) ---------- */
+[hidden] { display: none !important; }
+
+/* ---------- Background layers: kept in the DOM for app.js, never shown ---------- */
+.particles, .bg-pattern, .bg-mesh { display: none; }
+
+/* ---------- Skip link ---------- */
+.skip-link { position: fixed; top: -120px; left: 16px; z-index: var(--z-skip); }
+.skip-link:focus { top: 12px; }
+
+/* ---------- Sticky header above pages, below every overlay ---------- */
+.header { position: sticky; top: 0; z-index: var(--z-header); }
+.header-slot-left { display: contents; }
+.back-btn { display: none; }                 /* JS writes inline display:block / none */
+
+/* ---------- Pages ---------- */
+.home-page { display: flex; flex-direction: column; position: relative; z-index: var(--z-page); }   /* JS writes inline display:none / flex */
+.home-page > * { flex-shrink: 0; scroll-margin-top: 8px; }   /* html scroll-padding already clears the header */
+.reader-page, .track-page, .japamala-page { display: none; position: relative; z-index: var(--z-page); }
+.reader-page.active, .track-page.active, .japamala-page.active { display: block; }
+.home-page, .reader-page, .track-page, .japamala-page, .footer { overflow-x: clip; }
+
+/* Home / Library / Saved / Practice views (experience.js tags every direct child) */
+#homePage[data-view="home"] > [data-panel]:not([data-panel="home"]),
+#homePage[data-view="library"] > [data-panel]:not([data-panel="library"]),
+#homePage[data-view="saved"] > [data-panel]:not([data-panel="saved"]),
+#homePage[data-view="practice"] > [data-panel]:not([data-panel="practice"]) { display: none !important; }
+
+/* No tab bar on the phone Japamala screen or in short landscape views, so floating
+   controls and page padding (all driven by --tabbar-h) drop back to the bottom edge. */
+@media (max-width: 1023.98px) {
+    html[data-screen="japamala"] { --tabbar-h: 0px; }
+}
+@media (max-width: 1023.98px) and (max-height: 520px) {
+    :root { --tabbar-h: 0px; }
+}
+
+/* Entrances: OPACITY ONLY. A transform here would re-anchor the fixed deity art
+   inside the reader and upset the WebGL canvas size in Japamala. */
+.reader-page.active, .track-page.active, .japamala-page.active,
+#homePage[data-view] > [data-panel] { animation: page-in var(--dur-3) var(--ease-out) both; }
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ---------- Overlays and sheets ---------- */
+.search-overlay {
+    position: fixed; inset: 0; z-index: var(--z-overlay);
+    display: none; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+.search-overlay.active { display: block; }
+
+.sheet-overlay {
+    position: fixed; inset: 0; z-index: var(--z-overlay);
+    display: none; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+.sheet-overlay.active { display: flex; }
+#updatesOverlay, #messagesOverlay { z-index: var(--z-sheet); }
+#infoOverlay { z-index: var(--z-info); }
+
+.feedback-overlay {
+    position: fixed; inset: 0; z-index: var(--z-feedback);
+    display: none; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+.feedback-overlay.active { display: block; }
+#fbWebsite { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+.day-sheet-overlay { position: fixed; inset: 0; z-index: var(--z-daysheet); display: none; }
+.day-sheet-overlay.active { display: block; }
+.day-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto;
+    max-height: 88vh; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+}
+
+/* In-app confirm/alert (app.js siteConfirm): visible on append, fades in on .show,
+   removed 180ms after close, so the fade must stay under 180ms. */
+.sc-overlay {
+    position: fixed; inset: 0; z-index: var(--z-dialog);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 150ms ease;
+}
+.sc-overlay.show { opacity: 1; }
+.sc-box { width: min(420px, calc(100vw - 32px)); }
+.sc-msg { white-space: pre-line; }
+
+/* Toast (cloud.js) and floating controls sit above the phone tab bar */
+.cloud-toast {
+    position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 20px); z-index: var(--z-toast);
+    transform: translateX(-50%) translateY(16px); opacity: 0; pointer-events: none;
+    transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
+}
+.cloud-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.scroll-top-btn {
+    position: fixed; right: max(16px, var(--safe-right)); bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
+    z-index: var(--z-float); display: none;
+}
+.scroll-top-btn.visible { display: grid; }
+
+.reminder-banner { display: none; }
+.reminder-banner.show { display: flex; }
+
+/* ---------- Reader ---------- */
+.reader-deity-bg {
+    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(640px, 92vw); aspect-ratio: 1; z-index: var(--z-bg); pointer-events: none;
+}
+.slokam-block { position: relative; scroll-margin-top: 4px; }   /* html scroll-padding already clears the header and reader tools */
+.slokam-text { white-space: pre-line; overflow-wrap: anywhere; word-break: normal; font-size: var(--reader-font-size); }
+.reader-verse-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px; }
+.reader-verse-row .slokam-text { min-width: 0; }
+.slokam-meaning { display: none; position: relative; overflow-wrap: anywhere; }
+body.show-meanings .slokam-meaning { display: block; }
+.origin-block { display: none; }
+.origin-block.visible { display: block; }
+#readerLinkStatus:empty { display: none; }
+
+.meaning-toggle { cursor: pointer; user-select: none; -webkit-user-select: none; }
+.toggle-switch { position: relative; flex: none; }
+.toggle-switch::after { content: ""; position: absolute; top: 3px; left: 3px; transition: transform var(--dur-2) var(--ease-out); }
+.meaning-toggle.on .toggle-switch::after { transform: translateX(22px); }
+
+/* ---------- Library cards (absolute children must stay inside the link) ---------- */
+.card { position: relative; overflow: hidden; }
+.card-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.card-deity-svg { position: absolute; z-index: 0; width: 120px; height: 120px; pointer-events: none; }
+.card-content { position: relative; z-index: 1; }
+
+/* ---------- Track calendar: month = scrollLeft / clientWidth (tracking.js) ---------- */
+.month-strip {
+    display: flex; overflow-x: auto; overflow-y: hidden; gap: 0; padding: 0; margin: 0;
+    scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.month-strip::-webkit-scrollbar { display: none; }
+.month-card { flex: 0 0 100%; min-width: 0; margin: 0; scroll-snap-align: start; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-day.future { pointer-events: none; }
+
+/* ---------- Japamala: SVG rendering needs these ---------- */
+.jm-stage { cursor: pointer; -webkit-tap-highlight-color: transparent; }   /* never set display here: JS writes it inline */
+.jm-modes { display: flex; }
+.jm-rounds { min-height: 1.6em; }
+.jm-svg { display: block; width: min(78vw, 300px); height: auto; margin: 0 auto; overflow: visible; }
+.jm-svg-full { width: min(84vw, 320px); }
+.jm-svg-flow { width: min(88vw, 340px); }
+.jm-thread { stroke: rgba(150, 110, 55, .5); stroke-width: 1.4; }
+.jm-focus { animation: jmFocusPulse 3.2s ease-in-out infinite; }
+.jm-bead { transition: none; }
+.jm-bead.cur circle { stroke: rgba(255, 235, 180, .9); stroke-width: 1.1; filter: drop-shadow(0 0 5px rgba(255, 223, 133, .9)); }
+.jm-fbead { transition: fill .25s ease; transform-box: fill-box; transform-origin: center; }
+.jm-fbead.cur { stroke: rgba(255, 235, 180, .95); stroke-width: 1; filter: drop-shadow(0 0 5px rgba(255, 223, 133, .95)); }
+.jm-fbead.pop { animation: jmPop .3s ease; }
+.jm-flowbead circle { transition: fill .25s ease; }
+.jm-flowbead.cur circle { stroke: rgba(255, 235, 180, .95); stroke-width: 1; filter: drop-shadow(0 0 5px rgba(255, 223, 133, .95)); }
+.jm-tassel-thread { fill: none; stroke: #caa24a; stroke-width: 1.8; stroke-linecap: round; opacity: .9; }
+.jm-svg.celebrate { animation: jmGlow .9s ease; }
+.jm-confetti {
+    position: fixed; top: -20px; width: 9px; height: 14px; border-radius: 2px;
+    z-index: var(--z-confetti); pointer-events: none; animation: jmFall linear forwards;
+}
+
+/* ---------- Voice recording indicator (the only sign the mic is listening) ---------- */
+.mic-btn.listening, .rs-mic.listening, .mic-mini.listening {
+    background: var(--kumkum-700) !important; border-color: var(--kumkum-700) !important; color: var(--white) !important;
+    animation: micPulse 1.2s infinite;
+}
+
+/* ---------- Hero lamp flame (transform-origin is in SVG user units) ---------- */
+.diya-flame { transform-origin: 220px 183px; animation: lampBreath 5s ease-in-out infinite; }
+
+/* ---------- Keyframes JS-driven classes depend on ---------- */
+@keyframes jmPop { 40% { transform: scale(1.9); } }
+@keyframes jmGlow { 40% { filter: drop-shadow(0 0 24px rgba(255, 223, 133, .85)); } }
+@keyframes jmFall { to { transform: translateY(110vh) rotate(720deg); opacity: .15; } }
+@keyframes jmFocusPulse { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+@keyframes micPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(142, 31, 38, .5); } 50% { box-shadow: 0 0 0 14px rgba(142, 31, 38, 0); } }
+@keyframes lampBreath { 0%, 100% { opacity: .88; transform: scaleX(.94); } 50% { opacity: 1; transform: scaleX(1.04); } }
+
+/* ---------- Reduced motion: switch every animation and transition off ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* ---------- Print: only the prayer, black on white ---------- */
+@media print {
+    .header, .site-navigation, .footer, .skip-link, .scroll-top-btn, .cloud-toast,
+    .reader-tool-panel, .reader-options, .reader-after-content, .reader-report,
+    .verse-read-button, .reader-deity-bg, .info-btn, .home-primary-actions, .practice-details,
+    .library-navigation, .recent-reading-section, .updates-teaser { display: none !important; }
+    body { background: #fff !important; color: #000 !important; }
+    .slokam-text, .slokam-meaning, .reader-verse-number { color: #000 !important; }
+    .slokam-block { break-inside: avoid; box-shadow: none !important; border-color: #ccc !important; background: #fff !important; }
+}

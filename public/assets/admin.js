@@ -13,20 +13,25 @@
    src/ocr.js's server-side check for the OCR endpoint.
 
    Classic script → shares app.js globals (stotramConfig, origins,
-   meanings, buildSearchIndex, openReader, searchIndex, escapeHtml).
-   Loads after cloud.js.
+   meanings, buildSearchIndex, searchIndex). Loads after cloud.js and
+   takes Firebase from window.StotramCloud; without it (SDK blocked or
+   offline) it does nothing.
 ============================================================ */
 (function () {
+  'use strict';
+
+  if (typeof stotramConfig === 'undefined' || typeof origins === 'undefined' || typeof meanings === 'undefined') return;
+
   const ADMIN_UID = window.ADMIN_UID;
 
   // theme → deity svg + accent + icon (mirrors the built-in cards)
   const THEMES = {
     vishnu:  { svg: '#svg-vishnu',  color: '#3070c0', icon: '🔱', label: 'విష్ణు' },
-    lalitha: { svg: '#svg-lalitha', color: '#c04070', icon: '🪷', label: 'లలిత/దేవి' },
+    lalitha: { svg: '#svg-lalitha', color: '#c04070', icon: '🌺', label: 'లలిత/దేవి' },
     shiva:   { svg: '#svg-shiva',   color: '#5088b0', icon: '🙏', label: 'శివ' },
     venkat:  { svg: '#svg-venkat',  color: '#c89838', icon: '⛰️', label: 'వేంకటేశ్వర' },
     ganesha: { svg: '#svg-ganesha', color: '#e08040', icon: '🐘', label: 'గణేశ' },
-    hanuman: { svg: '#svg-hanuman', color: '#d06030', icon: '🦍', label: 'హనుమాన్' },
+    hanuman: { svg: '#svg-hanuman', color: '#d06030', icon: '🚩', label: 'హనుమాన్' },
     lakshmi: { svg: '#svg-lakshmi', color: '#e0b840', icon: '💎', label: 'లక్ష్మి' },
     saibaba: { svg: '#svg-saibaba', color: '#d08040', icon: '🌟', label: 'సాయి' },
     ayyappa: { svg: '#svg-ayyappa', color: '#4080c8', icon: '🏔️', label: 'అయ్యప్ప' },
@@ -35,9 +40,25 @@
     bilva:   { svg: '#svg-bilva',   color: '#409848', icon: '🍃', label: 'బిల్వ' },
     harati:  { svg: '#svg-diya',    color: '#ffaa3c', icon: '🪔', label: 'హారతి' },
   };
+  const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+  // Doc ids and category slugs go into attribute selectors; quote-safe them.
+  function cssStr(v) {
+    const s = String(v == null ? '' : v);
+    return (window.CSS && typeof CSS.escape === 'function') ? CSS.escape(s) : s.replace(/["\\]/g, '\\$&');
+  }
 
   let db = null;
-  function fs() { if (!db && window.firebase) db = firebase.firestore(); return db; }
+  function fs() {
+    if (db) return db;
+    const c = window.StotramCloud;
+    if (c && c.db) db = c.db;
+    return db;
+  }
   const cloudKeys = new Set();          // stotras that exist ONLY in Firestore
   const overrideKeys = new Set();       // built-in stotras currently overridden
 
@@ -53,7 +74,7 @@
       meanings: JSON.parse(JSON.stringify(meanings[k] || {})),
     };
   });
-  const isBuiltin = (k) => Object.prototype.hasOwnProperty.call(BUILTIN, k);
+  const isBuiltin = (k) => hasOwn(BUILTIN, k);
 
   /* ---------- load + render published cloud stotras (every visitor) ---------- */
   async function loadCloudStotras() {
@@ -86,7 +107,7 @@
         return;
       }
 
-      const th = THEMES[s.theme] || THEMES.vishnu;
+      const th = hasOwn(THEMES, s.theme) ? THEMES[s.theme] : THEMES.vishnu;
       stotramConfig[key] = {
         title: s.title || '', subtitle: s.subtitle || '',
         theme: (s.theme || 'vishnu') + '-theme',
@@ -99,7 +120,7 @@
       origins[key] = s.origin || '';
       meanings[key] = s.meanings || {};
       cloudKeys.add(key);
-      renderCard(key);
+      try { renderCard(key); } catch (e) { console.warn('[stotras] card not shown:', key, e); }
     });
 
     try { searchIndex = buildSearchIndex(); } catch (e) {}
@@ -142,7 +163,7 @@
 
   // Update the title/subtitle/description shown on a built-in's hand-written card.
   function patchCardText(key, title, subtitle, desc) {
-    const card = document.querySelector('.card[data-stotram="' + key + '"]');
+    const card = document.querySelector('.card[data-stotram="' + cssStr(key) + '"]');
     if (!card) return;
     const h3 = card.querySelector('h3');
     const sub = card.querySelector('.card-sub');
@@ -152,8 +173,10 @@
     if (ds && desc) ds.textContent = desc;
   }
 
+  // Same shape as the static sections in index.html:
+  // div.cards-section[data-cat] > .section-divider (h2.section-title + .section-sub) + .cards-grid
   function gridForCategory(slug, label) {
-    let sec = document.querySelector('.cards-section[data-cat="' + slug + '"]');
+    let sec = document.querySelector('.cards-section[data-cat="' + cssStr(slug) + '"]');
     if (!sec) {
       const home = document.getElementById('homePage');
       sec = document.createElement('div');
@@ -161,46 +184,59 @@
       sec.dataset.cat = slug;
       sec.innerHTML =
         '<div class="section-divider"><h2 class="section-title">' +
-        escapeHtml(label || slug) + '</h2><div class="section-sub"></div></div>' +
+        esc(label || slug) + '</h2><div class="section-sub"></div></div>' +
         '<div class="cards-grid"></div>';
       home.appendChild(sec);
     }
     return sec.querySelector('.cards-grid');
   }
 
+  // Same structure as the static cards in index.html (contract §3 "Card"):
+  // a.card.<theme>[href][data-stotram] > .card-bg, svg.card-deity-svg,
+  // .card-content > .card-icon-wrap > span.deity-icon, h3, .card-sub, .card-desc,
+  // span.card-action ("చదవండి" + arrow icon). The cloud-card class marks it for removal on reload.
   function renderCard(key) {
     const cfg = stotramConfig[key];
-    const themeKey = (cfg.theme || '').replace('-theme', '');
+    const themeKey = String(cfg.theme || '').replace('-theme', '').replace(/[^\w-]/g, '');
     const grid = gridForCategory(cfg.__cat, cfg.__catLabel);
     const desc = cfg.__desc || (cfg.origin ? (cfg.origin.slice(0, 90) + '…') : '');
-    const div = document.createElement('a');
-    div.className = 'card cloud-card ' + themeKey;
-    div.href = '?stotram=' + encodeURIComponent(key);
-    div.dataset.stotram = key;
-    div.innerHTML =
+    const card = document.createElement('a');
+    card.className = 'card cloud-card' + (themeKey ? ' ' + themeKey : '');
+    card.href = '?stotram=' + encodeURIComponent(key);
+    card.dataset.stotram = key;
+    card.innerHTML =
       '<div class="card-bg"></div>' +
-      '<svg class="card-deity-svg" style="color:' + cfg.svgColor + '"><use href="' + cfg.svgId + '"/></svg>' +
+      '<svg class="card-deity-svg" style="color:' + esc(cfg.svgColor) + '" aria-hidden="true"><use href="' + esc(cfg.svgId) + '"/></svg>' +
       '<div class="card-content">' +
-        '<div class="card-icon-wrap"><span class="deity-icon">' + (cfg.__icon || '🕉️') + '</span></div>' +
-        '<h3>' + escapeHtml(cfg.title) + '</h3>' +
-        '<div class="card-sub">' + escapeHtml(cfg.subtitle || '') + '</div>' +
-        '<div class="card-desc">' + escapeHtml(desc) + '</div>' +
+        '<div class="card-icon-wrap"><span class="deity-icon">' + esc(cfg.__icon || '🕉️') + '</span></div>' +
+        '<h3>' + esc(cfg.title) + '</h3>' +
+        '<div class="card-sub">' + esc(cfg.subtitle || '') + '</div>' +
+        '<div class="card-desc">' + esc(desc) + '</div>' +
         '<span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span>' +
       '</div>';
-    grid.appendChild(div);
+    grid.appendChild(card);
   }
 
-  /* ---------- discreet link to the admin dashboard page ---------- */
-  function isAdmin(u) { return u && ADMIN_UID && u.uid === ADMIN_UID; }
+  /* ---------- discreet link to the admin dashboard page (contract §4.10) ---------- */
+  function isAdmin(u) { return !!(u && ADMIN_UID && u.uid === ADMIN_UID); }
 
-  if (window.firebase) {
-    firebase.auth().onAuthStateChanged((u) => {
-      const box = document.getElementById('adminLinkBox');
-      if (!box) return;
-      box.innerHTML = isAdmin(u)
-        ? '<a class="track-btn admin-dash-link" href="/admin.html">⚙️ నిర్వాహక డాష్‌బోర్డ్ / Admin dashboard</a>'
-        : '';
-    });
+  let adminLinkShown = false;
+  function renderAdminLink(u) {
+    const box = document.getElementById('adminLinkBox');
+    if (!box) return;
+    const show = isAdmin(u);
+    if (show === adminLinkShown) return;       // auth refreshes often; only redraw on a change
+    adminLinkShown = show;
+    box.innerHTML = show
+      ? '<a class="btn btn-quiet btn-block admin-dash-link" href="/admin.html">' +
+          '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-sliders"/></svg>' +
+          'నిర్వాహక డాష్‌బోర్డ్</a>'
+      : '';
+  }
+
+  const cloud = window.StotramCloud;
+  if (cloud && cloud.auth) {
+    try { cloud.auth.onAuthStateChanged(renderAdminLink); } catch (e) { console.warn('[admin] auth watch failed', e); }
   }
 
   // kick off cloud-content load

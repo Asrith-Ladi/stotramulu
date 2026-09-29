@@ -1,0 +1,562 @@
+{
+  "summary": "Read-only inventory of the DOM/CSS contract in the five JS files (app.js, reader.js, reader-navigation.js, library.js, experience.js), checked against index.html, the current CSS, and the other scripts that share globals. No files were edited.\n\nMUST-KEEP rules for the new CSS (each one breaks the site if missed):\n(1) Add a global `[hidden]{display:none!important}`. JS hides `.cards-section`, #readerSectionNav, #meaningToggle, #meaningToggleRow, `.rs-nav` and #readerLinkFallback with the hidden attribute. Any rule that sets `display` on those elements would override it (today this lives in design-system.css:23).\n(2) `#homePage[data-view=X] > [data-panel]:not([data-panel=X]){display:none}` for home/library/saved/practice (today design-system.css:213-216). Without it, every home panel shows at once.\n(3) The pages and overlays are hidden by default and shown only with `.active`: .reader-page, .track-page, .japamala-page, .search-overlay (also used by #accountOverlay), .feedback-overlay, .day-sheet-overlay.\n(4) `.back-btn` is display:none by default. JS only writes inline display 'block'/'none'. `.scroll-top-btn` is hidden until `.visible`. `.origin-block` is hidden until `.visible`. `.reminder-banner` is hidden until `.show`.\n(5) `.slokam-meaning` is hidden unless `body.show-meanings`. It must use `font-size: var(--reader-font-size)`, because re-rendering drops its inline size.\n(6) `white-space: pre-line` on `.slokam-text` and `.sc-msg`. Verse text and dialog messages use \\n line breaks.\n(7) `.sc-overlay` is visible (display:flex) as soon as it is appended. `.show` fades it in. Its exit transition must be 180ms or less, because the node is removed after 180ms.\n(8) #homePage gets inline `display:flex` from goHome() (app.js:96). The home layout must be a flex column. A grid layout would be overridden after the first navigation.\n(9) Keep `scroll-margin-top` on `.slokam-block` so the sticky header does not cover a verse after jumpToVerse. Add a `:focus-visible` treatment, because verse blocks and #homePage receive programmatic focus.\n\nHTML hooks that must survive the index.html restructure:\n- #particles must exist. createParticles() has no null check. If it is missing, app.js throws at load and initMeaningsToggle, initVoice, showDueReminders and initHomePradakshina never run.\n- #micBtn and #reminderBanner are also used at load time with no null check.\n- `.primary-link` and `.skip-link` are queried with no null check (experience.js:47, 62). If `.primary-link` is missing, the rest of the handler dies: no data-view is set, so everything is visible.\n- `.welcome-section` and `.home-primary-actions` are required (reader-navigation.js:166-168, 308, 356). `.practice-details` must exist, or `home.append(actions, null)` inserts a literal \"null\" text node.\n- Cards must stay `<a class=\"card\" data-stotram=\"key\">` inside `.cards-section[data-cat]`, with an `h2.section-title`. The library.js selector is tag-qualified (`a.card[data-stotram]`).\n- The font buttons must keep the exact attribute strings `onclick=\"changeFontSize(-2)\"` and `onclick=\"changeFontSize(2)\"`. The min/max disabling matches on that literal text.\n- #meaningToggle must keep a literal `onclick` attribute and a child `<label>`.\n- `.rs-nav` buttons must sit inside `.reader-search`.\n- #verseJump stays a `<select>`, #sourceDetails a `<details>`, #readerLinkFallback an `<input>`, #fbType a `<select>`, #restoreFile a file input.\n\nClass names that JS overwrites (static classes added there are wiped): #readerTitleSection becomes 'reader-title-section <theme>-theme' and #sourceStatusBadge becomes 'source-status-badge <state>'.\n\nContainers whose contents JS wipes (put no static markup inside them): #slokamContainer, #searchResults, #readerDeityBg, #originBlock, #reminderBanner, #readerSectionNav, #sourceContent, #verseJump, #favoritesSection, #recentReadingSection, .category-filters.\n\nFinal order of #homePage children after load, with the panel each gets:\nwelcome-section[home] → #recentReadingSection[home] → #todaySection (weekday.js)[home] → nav#library.library-navigation[library] → .cards-section×N[library] → #favoritesSection[saved] → .home-primary-actions#practice[practice] → details.practice-details[practice].\nAny new direct child of #homePage (for example a 'What's new / updates' block) is tagged data-panel=home automatically, so it shows only on the Home tab. The matcher list is hard-coded in experience.js:12-14.\n\nExisting problems found:\n- reader.js:5 and reader-navigation.js:360 look for `.card[onclick]`, but cards are now onclick-free `<a>` elements. As a result, stotramCategory falls back to cfg.__cat or the /108$/ regex, and only #meaningToggle gets the keyboard enhancement.\n- Search results (app.js:167) are onclick `<div>`s and the reminder close (app.js:280) is an onclick `<span>`. Neither is keyboard-focusable. Search title and subtitle are inserted unescaped.\n- The `<details class=\"origin-details\">` wrapper (index.html:1033) is never hidden when a stotram has no origin, so an empty expander shows. Its summary also repeats the '📜 ఉద్భవం & ప్రాముఖ్యత' label that app.js:69 puts inside.\n- library.js:71 reads #todaySection but never uses it.\n- Outside these five files: the global function `bumpJapa` is defined twice, in tracking.js:216 `bumpJapa(i,delta)` and japamala.js:306 `bumpJapa()`. The later one wins. So the day-sheet japa −/＋ buttons (tracking.js:170,172) bump the japamala total instead of that day's japa count.\n\nFunctions on window called by index.html inline handlers:\n- app.js: goHome, openSearch, closeSearch, runSearch, startVoice, pickSearch (generated markup), exportBackup, triggerRestore, handleRestoreFile, openFeedback, closeFeedback, listenInto, submitFeedback.\n- reader.js: changeFontSize, onReaderSearchInput, onReaderSearchKey, startReaderVoice, prevSearchMatch, nextSearchMatch, clearReaderSearch, toggleMeanings, resetReading.\n- reader-navigation.js: jumpToVerse, resumeReading.\n- library.js: toggleFavorite, copyReaderLink.\n- Defined elsewhere: openAccount, closeAccountOverlay, openTrack, closeDay, the Home/Stotram date/reset/bump counter functions, shiftMonth, addMokku (tracking.js); openJapamala, setJmMode, resetJapamala, bumpJapa (japamala.js).\n- Also used by other scripts: openReader (weekday.js tiles), siteConfirm/siteAlert (tracking.js, japamala.js, cloud.js), gaEvent, flushFeedback (cloud.js), stopReaderPositionTracking (tracking.js, japamala.js).\n\nCustom events and listeners the new code must not break:\n- 'stotras-updated' is dispatched by admin.js. reader-navigation.js and library.js listen for it and re-run the filter/favorites/recent/card set-up.\n- popstate, hashchange and storage listeners exist in library.js, reader-navigation.js and experience.js.\n- The URL contract is `?stotram=key` for the reader plus `#home|#library|#saved|#practice` for views. experience.js:40 rewrites the nav link hrefs to these.",
+  "items": [
+    {
+      "file": "public/assets/app.js",
+      "line": "24-35",
+      "kind": "generated-markup",
+      "detail": "createParticles(): skipped if prefers-reduced-motion. Otherwise appends 35 `<div class=\"particle big\">` or `<div class=\"particle gold\">` to #particles, with inline style.left (0-100%), style.animationDelay (0-10s) and style.animationDuration (7-15s). Needs a `.particle` absolute-position rule plus a keyframe (currently floatUp in styles.css:82-84), or `.particles{display:none}` (design-system.css:22). #particles is REQUIRED: there is no null check, so a missing element throws and aborts the app.js init at lines 520-524."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "43-44",
+      "kind": "attribute-toggle",
+      "detail": "openReader: #readerLinkStatus textContent=''; #readerLinkFallback.hidden=true."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "47-51",
+      "kind": "style-write",
+      "detail": "openReader: #homePage style.display='none'; #readerPage classList.add('active'); #trackPage remove 'active'; #japamalaPage?.remove 'active'; #backBtn style.display='block'. CSS must show .reader-page only with .active. #backBtn is forced to display:block, so it cannot be inline-flex."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "56-59",
+      "kind": "class-toggle",
+      "detail": "#readerTitleSection.className is OVERWRITTEN to 'reader-title-section ' + cfg.theme. Themes in data: vishnu-theme, lalitha-theme, shiva-theme, bilva-theme, venkat-theme, ganesha-theme, hanuman-theme, lakshmi-theme, saibaba-theme, ayyappa-theme, durga-theme, govinda-theme, chalisa-theme, harati-theme, manidweepa-theme (cloud stotras may carry others). Any extra static class on this element is lost. #readerTitle and #readerSubtitle get textContent."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "62-63",
+      "kind": "generated-markup",
+      "detail": "#readerDeityBg.innerHTML = `<svg style=\"width:100%;height:100%;color:${cfg.svgColor}\"><use href=\"${cfg.svgId}\"/></svg>`. The svgId values (#svg-vishnu, #svg-lalitha, #svg-shiva, #svg-bilva, #svg-venkat, #svg-ganesha, #svg-hanuman, #svg-lakshmi, #svg-saibaba, #svg-ayyappa, #svg-durga, #svg-krishna, #svg-diya) need the hidden sprite `<symbol>`s at index.html:31-535. goHome clears it (app.js:102)."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "66-74",
+      "kind": "generated-markup",
+      "detail": "#originBlock.innerHTML = `<span class=\"origin-label\">📜 ఉద్భవం &amp; ప్రాముఖ్యత</span><div class=\"origin-text\">${originText}</div>` (origin is raw HTML) and it gets classList.add('visible'). With no origin, 'visible' is removed and innerHTML=''. CSS: .origin-block is hidden until .visible. The enclosing details.origin-details (index.html:1033) is never hidden by JS."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "86-108",
+      "kind": "style-write",
+      "detail": "goHome: #searchOverlay and #daySheetOverlay remove 'active'; document.body.style.overflow=''; #homePage style.display='flex' (inline flex, so the home layout must be a flex column); readerPage, trackPage and japamalaPage remove 'active'; #backBtn style.display='none'; #readerDeityBg innerHTML=''. It also calls stopReaderPositionTracking, syncReaderRoute(null) and renderHomePradakshina (tracking.js)."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "114-116",
+      "kind": "class-toggle",
+      "detail": "window scroll: #scrollTopBtn classList.toggle('visible', scrollY>400). CSS: .scroll-top-btn is hidden by default and shown with .visible (styles.css:694)."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "124-135",
+      "kind": "other",
+      "detail": "buildSearchIndex icon map, keyed by theme minus '-theme': vishnu 🔱, lalitha 🪷, shiva 🙏, bilva 🌿, venkat ⛰️, ganesha 🐘, hanuman 🚩, lakshmi 🪙, saibaba 🕉️, ayyappa 🛕, durga 🗡️, govinda 🪈, chalisa 🚩, manidweepa 🌺, harati 🪔; default 🕉️."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "139-151",
+      "kind": "class-toggle",
+      "detail": "openSearch: #searchOverlay add 'active'; body.style.overflow='hidden'; #searchInput focus after 100ms. closeSearch: remove 'active', overflow='', #searchInput.value=''. Note that #accountOverlay also uses class .search-overlay (index.html:1061), so both share its styling."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "152-175",
+      "kind": "generated-markup",
+      "detail": "#searchResults.innerHTML. Empty result: `<div class=\"search-empty\">😔 ఏమీ దొరకలేదు…</div>`. Otherwise one per result: `<div class=\"search-result\" onclick=\"pickSearch('${type}')\"><span class=\"sr-icon\">${icon}</span><div><div class=\"sr-title\">${title}</div><div class=\"sr-sub\">${subtitle}</div></div></div>`. It is a div with no tabindex or role (not keyboard-accessible), and title/subtitle are unescaped."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "183-204",
+      "kind": "style-write",
+      "detail": "initVoice (runs at load, app.js:522): #micBtn is REQUIRED (no null check). style.display='none' when SpeechRecognition is missing. onend/onerror remove 'listening'. #searchInput.value is set. #searchHint textContent is '🔎 \"…\" కోసం వెతుకుతోంది…' or '🎤 మైక్ అనుమతి ఇవ్వండి…'."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "205-213",
+      "kind": "class-toggle",
+      "detail": "startVoice: #micBtn classList.add('listening') (a pulse state is needed: .mic-btn.listening); #searchHint '🎙️ వింటున్నాను… ఇప్పుడు చెప్పండి'."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "220-261",
+      "kind": "generated-markup",
+      "detail": "siteConfirm: appends to body `<div class=\"sc-overlay\"><div class=\"sc-box\" role=\"dialog\" aria-modal=\"true\"><div class=\"sc-msg\">escaped msg</div><div class=\"sc-actions\">[<button class=\"sc-btn\" data-no>cancel</button>]<button class=\"sc-btn primary|danger\" data-yes>ok</button></div></div></div>`. '.show' is added in rAF and removed on close; the node is removed after 180ms (exit transition must be 180ms or less). The overlay must be display:flex/visible by default (opacity animates). Messages contain '\\n\\n' Telugu/English pairs, so .sc-msg needs white-space:pre-line. Esc cancels, Enter confirms, a backdrop click cancels, and the yes button is focused. Default labels: 'సరే / OK', 'రద్దు / Cancel'. It is used by tracking.js, japamala.js and cloud.js too."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "275-285",
+      "kind": "generated-markup",
+      "detail": "showDueReminders (runs at load; #reminderBanner is REQUIRED, no null check). innerHTML = `<span>🔔</span><span>ఈరోజు జ్ఞాపిక: <b>${text}</b>( +N మరిన్ని)</span><span class=\"rb-close\" onclick=\"this.parentElement.classList.remove('show')\">✕</span>`, plus classList add/remove 'show'. CSS: .reminder-banner is hidden until .show. rb-close is a span, not keyboard-accessible. Browser Notification title: '🙏 పూజా జ్ఞాపిక'. The banner lives inside #trackPage."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "289-291",
+      "kind": "other",
+      "detail": "Global Escape keydown calls closeSearch(), closeDay() (tracking.js), closeFeedback() and closeAccountOverlay() (tracking.js). All of #searchOverlay, #searchInput, #feedbackOverlay and #accountOverlay must exist."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "299-339",
+      "kind": "dom-query",
+      "detail": "exportBackup creates a temporary `<a download>` on body. triggerRestore does #restoreFile.click() (must stay input[type=file], index.html:1083). handleRestoreFile uses siteAlert with ❌ or ✅ prefixes."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "355-373",
+      "kind": "style-write",
+      "detail": "openFeedback: #feedbackOverlay add 'active'; #fbName.focus(); body.style.overflow='hidden'. closeFeedback removes both. resetFeedbackBox: #fbForm style.display='block'; #fbThanks style.display='none'; #fbError textContent=''; #fbName, #fbNumber and #fbMessage get value='' and remove 'invalid'."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "377-394",
+      "kind": "class-toggle",
+      "detail": "listenInto(inputId, btn, append), called by the `.mic-mini` buttons in index.html:1233/1239/1245: btn classList add/remove 'listening'; the target input removes 'invalid'. It shows siteAlert when SpeechRecognition is unsupported."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "397-455",
+      "kind": "class-toggle",
+      "detail": "submitFeedback: adds 'invalid' to #fbName and #fbMessage when empty (CSS .fb-input.invalid and .fb-textarea.invalid). Reads #fbType.value (select) and #fbWebsite (honeypot, must stay visually hidden). #fbError text '⚠️ దయచేసి నింపండి: …'. On success: #fbForm style.display='none', #fbThanks style.display='block', auto-close after 2200ms."
+    },
+    {
+      "file": "public/assets/app.js",
+      "line": "520-524",
+      "kind": "other",
+      "detail": "Load-time init, in order: createParticles, initMeaningsToggle, initVoice, showDueReminders, initHomePradakshina. A throw in any step skips the ones after it. Required at parse time: #particles, #meaningToggle (if saved '1'), #micBtn, #reminderBanner, plus the tracking.js home counter ids."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "2-9",
+      "kind": "dom-query",
+      "detail": "stotramCategory: querySelectorAll('.card[onclick]') whose onclick includes \"openReader('type')\", then .closest('.cards-section[data-cat]').dataset.cat. STALE: cards are `<a data-stotram>` without onclick (index.html:623+, admin.js:176), so this never matches. It falls back to cfg.__cat (cloud) or /108$/ → 'ashtottara'. If fixed, query a.card[data-stotram=type]. Keep data-cat on sections."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "54-56",
+      "kind": "generated-markup",
+      "detail": "readerRowsHtml: `<div class=\"reader-verse-row\"><div class=\"slokam-text\" style=\"font-size:${currentFontSize}px\">${text}</div>[<span class=\"reader-verse-number\">${n}</span>]</div>`. Text is raw HTML containing \\n, so .slokam-text needs white-space:pre-line (styles.css:672). The row is currently a 2-column grid (reading.css:85)."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "59-94",
+      "kind": "generated-markup",
+      "detail": "renderSlokams: #slokamContainer innerHTML cleared. Empty state: `<div class=\"reader-empty-state\" role=\"status\">`. Per verse: `<div class=\"slokam-block[ read]\" data-idx=i id=\"verse-i\" tabindex=\"-1\">[<span class=\"slokam-number\">label</span> only for non-numeric labels]{rows}[<div class=\"slokam-meaning\"><span class=\"meaning-label\">అర్థం</span><br>${meaning}</div>]<button class=\"verse-read-button\" aria-pressed=\"true|false\">చదివాను ✓ | చదివినట్లు గుర్తించు</button></div>`."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "111-128",
+      "kind": "class-toggle",
+      "detail": "toggleSlokamRead: .slokam-block classList.toggle('read'). The .verse-read-button inside gets aria-pressed toggled and text swapped 'చదివాను ✓' / 'చదివినట్లు గుర్తించు'. Styles hook on .slokam-block.read and .verse-read-button[aria-pressed=\"true\"]."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "129-140",
+      "kind": "other",
+      "detail": "resetReading: siteConfirm(danger), then re-renders via renderSlokams + setupReaderNavigation WITHOUT calling changeFontSize. Re-rendered .slokam-meaning has no inline font-size, so CSS must use var(--reader-font-size) (reading.css:40)."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "143-151",
+      "kind": "css-var-write",
+      "detail": "changeFontSize(d), range 18-48: #fontSizeDisplay text; inline style.fontSize on every .slokam-text and .slokam-meaning; document.documentElement.style.setProperty('--reader-font-size', N+'px') (default declared in reading.css:2); localStorage readerFontSize. It disables buttons matched by the EXACT attribute selectors [onclick=\"changeFontSize(-2)\"] and [onclick=\"changeFontSize(2)\"], so the redesign must keep those literal onclick strings or update this code. Style the :disabled state."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "154-172",
+      "kind": "body-class",
+      "detail": "toggleMeanings / initMeaningsToggle: document.body.classList toggle('show-meanings'); #meaningToggle classList toggle('on') (styles .meaning-toggle.on .toggle-switch). CSS: .slokam-meaning is display:none unless body.show-meanings (styles.css:549-583). It re-runs the search if #readerSearchInput has a value."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "236-336",
+      "kind": "generated-markup",
+      "detail": "onReaderSearch: #readerSearchClear style.display = q ? '' : 'none' (HTML starts with inline display:none; CSS must NOT hide .rs-clear). Wraps hits in `<mark>` inside #slokamContainer .slokam-text (and .slokam-meaning when body.show-meanings). The first hit gets mark.current. Old marks are unwrapped and normalize() is run. Style mark and mark.current inside both."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "339-347",
+      "kind": "attribute-toggle",
+      "detail": "#readerSearchCount textContent 'i/n' or ''. updateNavButtons sets disabled and hidden on '.reader-search .rs-nav' (the selector depends on the .reader-search wrapper and .rs-nav class). CSS: .rs-nav[hidden] must be display:none (currently !important in reading.css:512)."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "350-376",
+      "kind": "class-toggle",
+      "detail": "next/prevSearchMatch move the 'current' class between `<mark>` elements; scrollIntoView smooth, block:center."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "396-401",
+      "kind": "dom-query",
+      "detail": "clearReaderSearch: #readerSearchInput.value='' (null-checked)."
+    },
+    {
+      "file": "public/assets/reader.js",
+      "line": "407-434",
+      "kind": "class-toggle",
+      "detail": "startReaderVoice: #readerMicBtn classList add/remove 'listening' (.reader-search .rs-mic.listening); #readerSearchInput value; siteAlert '🎤 మైక్ అనుమతి ఇవ్వండి…'."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "53-60",
+      "kind": "dom-query",
+      "detail": "setCurrentVersePosition: #verseJump.value = index (must remain a `<select>`)."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "71-79",
+      "kind": "other",
+      "detail": "jumpToVerse: #verse-N scrollIntoView block:'start' (instant under reduced motion), then block.focus({preventScroll}). The new CSS needs scroll-margin-top on .slokam-block for the sticky header, and a :focus-visible style (the block has tabindex -1)."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "92-111",
+      "kind": "dom-query",
+      "detail": "IntersectionObserver on all .slokam-block elements (reads dataset.idx and #verse-N rects), rootMargin '-12% 0px -55% 0px'. It saves the reading position to localStorage stotramReaderPositions."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "132-169",
+      "kind": "generated-markup",
+      "detail": "renderRecentReading: `<section id=\"recentReadingSection\" class=\"recent-reading-section\" aria-labelledby=\"recentReadingTitle\"><h2 id=\"recentReadingTitle\">ఇటీవల చదివినవి</h2><div class=\"recent-reading-list\">` with up to 3 `<button type=\"button\"><span>{title}</span><small>శ్లోకం N / M నుండి కొనసాగించండి</small></button>`. It is removed when there is no history. Placement: after .welcome-section if .library-navigation exists, else after .home-primary-actions (TypeError if the needed element is missing). It re-runs on storage and stotras-updated."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "178-194",
+      "kind": "attribute-toggle",
+      "detail": "setupMeaningAvailability: #meaningToggle.hidden and aria-hidden (true when 0 meanings). #meaningToggle's child `<label>` text becomes 'అర్థం చూపించు (a/t)' (a label element is REQUIRED inside). #meaningToggleRow.hidden. #readerOptionsSummary text 'అర్థం a/t, శ్లోకం, సేవ్, లెక్క' or 'శ్లోకం, సేవ్, లెక్క'."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "195-240",
+      "kind": "generated-markup",
+      "detail": "appendMeaningReview appends to #sourceContent: `<section class=\"meaning-review-summary\"><h4>అర్థాల స్థితి</h4><p class=\"meaning-coverage\">…</p>[<p class=\"meaning-review-status verified|partial|reference|pending\">✓/◐/◇/△ label</p><p>note</p><p class=\"source-review-meta\">అర్థ మూలాల పరిశీలన: date</p><a href target=\"_blank\" rel=\"noopener noreferrer\">label</a>…]</section>`. Current CSS has no .meaning-review-status.partial rule."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "241-269",
+      "kind": "generated-markup",
+      "detail": "setupReaderNavigation: #verseJump.replaceChildren() and adds `<option value=i>{item.number}</option>` per verse. #readerSectionNav.replaceChildren(), hidden = no sections. When sections exist: `<span class=\"reader-section-label\">విభాగానికి వెళ్లండి</span>` plus one `<button type=\"button\">{label}</button>` per section."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "271-304",
+      "kind": "class-toggle",
+      "detail": "#sourceStatusBadge.className is OVERWRITTEN to 'source-status-badge ' + (verified|partial|review|pending|override), with text '✓ మూలంతో పరిశీలించబడింది' / '◐ ప్రధాన పాఠం…' / '△ పాఠభేదాల…' / '△ మూల పరిశీలన పెండింగ్' / '△ స్థానికంగా మార్చిన పాఠం'. #sourceContent.replaceChildren(), then `<p>note</p>`, `[<p class=\"source-review-meta\">చివరి పరిశీలన: … · scope</p>]`, `<a target=_blank rel=noopener noreferrer>` links, and the meaning review. #sourceDetails.open = needsReview (must stay a `<details>`)."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "306-315",
+      "kind": "generated-markup",
+      "detail": "On DOMContentLoaded it creates `<nav id=\"library\" class=\"library-navigation\" aria-label=\"స్తోత్రాల విభాగాలు / Prayer categories\"><div class=\"library-intro\"><div><span class=\"eyebrow\">THE SACRED COLLECTION</span><h2>స్తోత్రాల గ్రంథాలయం</h2></div><p>మీ మనసుకు దగ్గరైన స్తోత్రాన్ని ఎంచుకోండి.</p></div><div class=\"category-filters\">…</div></nav>`, inserted before the first .cards-section. Do NOT put id=\"library\" in the HTML (it would duplicate). It needs .home-primary-actions in #homePage."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "316-352",
+      "kind": "generated-markup",
+      "detail": "Category filters: .category-filters children `<button type=\"button\" data-category=\"all|<section id>\" aria-pressed=\"true|false\">{title} <span class=\"filter-count\">{n}</span></button>`. 'అన్నీ' is first, then one per .cards-section using its .section-title text (sections without .section-title get no filter). choose() sets .cards-section.hidden for non-selected sections and aria-pressed on buttons (style [aria-pressed=\"true\"]). It assigns section.id ||= 'library-section-i', sets the expando section._setOpen (unused elsewhere), and moves every section before #favoritesSection or .home-primary-actions. The choice is saved in localStorage stotramLibraryCategory. It rebuilds on 'stotras-updated'."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "353-359",
+      "kind": "dom-query",
+      "detail": "home.append(actions, home.querySelector('.practice-details')) moves .home-primary-actions and details.practice-details to the end of #homePage. If .practice-details is missing, a literal 'null' text node is appended."
+    },
+    {
+      "file": "public/assets/reader-navigation.js",
+      "line": "360-374",
+      "kind": "attribute-toggle",
+      "detail": "Keyboard enhancement for '.card[onclick], .meaning-toggle[onclick]': tabIndex=0, role=button, Enter/Space triggers click. For .meaning-toggle, aria-pressed is mirrored from the .on class via MutationObserver. STALE for cards (they have no onclick), so it effectively applies only to #meaningToggle, which must keep a literal onclick attribute. If #meaningToggle becomes a real `<button>`, the aria-pressed sync is lost unless re-implemented."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "27-37",
+      "kind": "attribute-toggle",
+      "detail": "enhancePrayerCards: 'a.card[data-stotram]' (tag-qualified: cards MUST stay `<a>`). It sets href to the absolute '?stotram=key' URL and data-reader-link-ready=\"true\"; a plain left click calls preventDefault + openReader. It re-runs on stotras-updated (covers admin.js cloud cards `a.card.cloud-card`)."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "39-51",
+      "kind": "attribute-toggle",
+      "detail": "syncReaderRoute uses history.pushState for ?stotram. updateFavoriteButton: #favoriteButton text '★ ఇష్టమైన స్తోత్రం' or '☆ ఇష్టమైనవాటిలో చేర్చు', aria-pressed true/false (style via [aria-pressed=\"true\"])."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "52-62",
+      "kind": "dom-query",
+      "detail": "toggleFavorite: #readerLinkStatus textContent (role=status, aria-live) gets the added/removed message."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "63-101",
+      "kind": "generated-markup",
+      "detail": "renderFavorites: `<section id=\"favoritesSection\" class=\"favorites-section\" aria-labelledby=\"favoritesTitle\"><h2 id=\"favoritesTitle\">మీకు ఇష్టమైన స్తోత్రాలు</h2>` then either `<div class=\"today-strip\">` with `<a class=\"today-tile\" href=\"?stotram=key\">{title}</a>` items (reuses weekday tile classes), or `<p>స్తోత్రం తెరిచి ☆ నొక్కండి…</p>`. Always rendered. Inserted before .home-primary-actions, else before the first .cards-section. Line 71 reads #todaySection but never uses it."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "102-119",
+      "kind": "attribute-toggle",
+      "detail": "copyReaderLink: on clipboard success #readerLinkFallback.hidden=true. On failure hidden=false, value=url, focus()+select() (must remain an `<input>`). #readerLinkStatus text is updated."
+    },
+    {
+      "file": "public/assets/library.js",
+      "line": "120-150",
+      "kind": "other",
+      "detail": "applyReaderRoute runs on popstate and on DOMContentLoaded when ?stotram is present (and on stotras-updated for cloud keys). It calls openReader or goHome under the applyingReaderRoute guard. A storage event on stotramFavorites re-renders favorites."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "4-5,39-46",
+      "kind": "attribute-toggle",
+      "detail": "Route map {homePage:'home', library:'library', favoritesSection:'saved', practice:'practice'}. It queries all [data-home-target] links (index.html:551-554), OVERWRITES their href to '#home', '#library', '#saved' or '#practice', and intercepts plain clicks to navigate()."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "10-16",
+      "kind": "attribute-toggle",
+      "detail": "organize(): every DIRECT child of #homePage gets data-panel. '.cards-section, .library-navigation' → library; '.favorites-section' → saved; '.home-primary-actions, .practice-details' → practice; anything else → home (.welcome-section, .recent-reading-section, weekday.js .today-section, and any NEW block such as an updates/what's-new section). It re-runs through a MutationObserver on childList (line 60)."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "17-25",
+      "kind": "attribute-toggle",
+      "detail": "render(): #homePage.dataset.view = home|library|saved|practice, taken from location.hash (default home). The matching nav link gets aria-current=\"page\" and the others lose it. CSS must hide #homePage[data-view=X] > [data-panel]:not([data-panel=X]) (design-system.css:213-216). On the home view the card grids are NOT visible."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "26-38",
+      "kind": "other",
+      "detail": "navigate(view): removes ?stotram, sets the hash, calls goHome() under the applyingReaderRoute guard, uses pushState, render(), scrollTo instant, then #homePage.focus({preventScroll}). #homePage needs tabindex=-1 (index.html:559); suppress or restyle its focus ring."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "47-50",
+      "kind": "dom-query",
+      "detail": "document.querySelector('.primary-link').addEventListener has NO null check (index.html:565). If it is removed or renamed, a TypeError aborts the handler: no popstate/hashchange listeners, no MutationObserver, render() never runs, data-view is never set, and all panels show."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "51-59",
+      "kind": "other",
+      "detail": "popstate re-runs render. On hashchange without ?stotram it calls goHome() under the guard, then render."
+    },
+    {
+      "file": "public/assets/experience.js",
+      "line": "62-66",
+      "kind": "dom-query",
+      "detail": "'.skip-link' is REQUIRED (no null check, index.html:24). A click focuses the first of #readerPage, #trackPage or #japamalaPage that has .active, else #homePage, after setting tabIndex=-1."
+    },
+    {
+      "file": "styles (current) → new CSS",
+      "line": "design-system.css:23,32; styles.css:133-139",
+      "kind": "other",
+      "detail": "Default-state rules JS relies on: [hidden]{display:none!important}. .back-btn{display:none} (JS writes only inline block/none; current code also hides .header-slot-left via :has(.back-btn[style*=\"none\"]) and :has(.back-btn:not([style]))). .reader-page, .track-page, .japamala-page, .search-overlay, .feedback-overlay and .day-sheet-overlay are display:none until .active. .reminder-banner until .show. .origin-block until .visible. .scroll-top-btn until .visible. .slokam-meaning until body.show-meanings. .sc-overlay opacity 0 → .show."
+    },
+    {
+      "file": "public/assets/tracking.js + japamala.js",
+      "line": "tracking.js:216, japamala.js:306",
+      "kind": "other",
+      "detail": "Cross-file global collision (outside the five files, but it affects inline handlers): function bumpJapa(i,delta) in tracking.js is overwritten by bumpJapa() in japamala.js, which loads later (index.html:1320-1323). The day-sheet japa −/＋ buttons (tracking.js:170,172 onclick=\"bumpJapa(i,±1)\") therefore increment the japamala total instead of that day's japa count."
+    }
+  ],
+  "classesReferenced": [
+    "particle",
+    "big",
+    "gold",
+    "particles",
+    "active",
+    "reader-page",
+    "track-page",
+    "japamala-page",
+    "home-page",
+    "back-btn",
+    "reader-title-section",
+    "vishnu-theme",
+    "lalitha-theme",
+    "shiva-theme",
+    "bilva-theme",
+    "venkat-theme",
+    "ganesha-theme",
+    "hanuman-theme",
+    "lakshmi-theme",
+    "saibaba-theme",
+    "ayyappa-theme",
+    "durga-theme",
+    "govinda-theme",
+    "chalisa-theme",
+    "harati-theme",
+    "manidweepa-theme",
+    "origin-block",
+    "origin-label",
+    "origin-text",
+    "visible",
+    "scroll-top-btn",
+    "search-overlay",
+    "search-empty",
+    "search-result",
+    "sr-icon",
+    "sr-title",
+    "sr-sub",
+    "mic-btn",
+    "mic-mini",
+    "listening",
+    "sc-overlay",
+    "sc-box",
+    "sc-msg",
+    "sc-actions",
+    "sc-btn",
+    "primary",
+    "danger",
+    "show",
+    "reminder-banner",
+    "rb-close",
+    "feedback-overlay",
+    "day-sheet-overlay",
+    "fb-input",
+    "fb-textarea",
+    "invalid",
+    "reader-verse-row",
+    "slokam-text",
+    "reader-verse-number",
+    "reader-empty-state",
+    "slokam-block",
+    "read",
+    "slokam-number",
+    "slokam-meaning",
+    "meaning-label",
+    "verse-read-button",
+    "show-meanings",
+    "meaning-toggle",
+    "on",
+    "toggle-switch",
+    "current",
+    "reader-search",
+    "rs-nav",
+    "rs-mic",
+    "rs-clear",
+    "recent-reading-section",
+    "recent-reading-list",
+    "meaning-review-summary",
+    "meaning-coverage",
+    "meaning-review-status",
+    "verified",
+    "partial",
+    "reference",
+    "pending",
+    "review",
+    "override",
+    "source-review-meta",
+    "source-status-badge",
+    "reader-section-label",
+    "library-navigation",
+    "library-intro",
+    "eyebrow",
+    "category-filters",
+    "filter-count",
+    "favorites-section",
+    "today-strip",
+    "today-tile",
+    "card",
+    "cards-section",
+    "section-title",
+    "welcome-section",
+    "home-primary-actions",
+    "practice-details",
+    "primary-link",
+    "skip-link",
+    "cloud-card"
+  ],
+  "idsReferenced": [
+    "particles",
+    "homePage",
+    "readerPage",
+    "trackPage",
+    "japamalaPage",
+    "backBtn",
+    "readerTitleSection",
+    "readerTitle",
+    "readerSubtitle",
+    "readerDeityBg",
+    "originBlock",
+    "readerLinkStatus",
+    "readerLinkFallback",
+    "searchOverlay",
+    "daySheetOverlay",
+    "accountOverlay",
+    "scrollTopBtn",
+    "searchInput",
+    "searchResults",
+    "micBtn",
+    "searchHint",
+    "reminderBanner",
+    "restoreFile",
+    "feedbackOverlay",
+    "fbForm",
+    "fbThanks",
+    "fbError",
+    "fbName",
+    "fbNumber",
+    "fbMessage",
+    "fbType",
+    "fbWebsite",
+    "slokamContainer",
+    "fontSizeDisplay",
+    "meaningToggle",
+    "meaningToggleRow",
+    "readerOptionsSummary",
+    "readerSearchInput",
+    "readerSearchClear",
+    "readerSearchCount",
+    "readerMicBtn",
+    "verseJump",
+    "readerSectionNav",
+    "sourceStatusBadge",
+    "sourceContent",
+    "sourceDetails",
+    "favoriteButton",
+    "favoritesSection (created)",
+    "favoritesTitle (created)",
+    "recentReadingSection (created)",
+    "recentReadingTitle (created)",
+    "library (created nav)",
+    "todaySection (read-only, unused)",
+    "verse-N (created per verse)",
+    "library-section-N (assigned to .cards-section without id)",
+    "practice (hash target on .home-primary-actions)",
+    "svg-vishnu",
+    "svg-lalitha",
+    "svg-shiva",
+    "svg-bilva",
+    "svg-venkat",
+    "svg-ganesha",
+    "svg-hanuman",
+    "svg-lakshmi",
+    "svg-saibaba",
+    "svg-ayyappa",
+    "svg-durga",
+    "svg-krishna",
+    "svg-diya"
+  ],
+  "uiEmojiChrome": [
+    "📜 — origin label in #originBlock (app.js:69)",
+    "🔱 🪷 🙏 🌿 ⛰️ 🐘 🚩 🪙 🕉️ 🛕 🗡️ 🪈 🌺 🪔 — search result .sr-icon per theme, default 🕉️ (app.js:126-133)",
+    "😔 — .search-empty message (app.js:163)",
+    "🔎 — #searchHint while searching a voice transcript (app.js:196)",
+    "🎤 — #searchHint mic-permission message (app.js:202) and reader siteAlert (reader.js:431)",
+    "🎙️ — #searchHint while listening (app.js:211)",
+    "🔔 — reminder banner leading icon (app.js:280)",
+    "✕ — reminder banner .rb-close (app.js:280)",
+    "🙏 — browser Notification title 'పూజా జ్ఞాపిక' (app.js:283)",
+    "❌ / ✅ — backup/restore siteAlert messages (app.js:313, 332, 334)",
+    "⚠️ — #fbError validation prefix (app.js:418)",
+    "✓ — verse-read-button 'చదివాను ✓' (reader.js:87, 124)",
+    "✓ ◐ △ — #sourceStatusBadge status labels (reader-navigation.js:274-278)",
+    "✓ ◐ ◇ △ — .meaning-review-status labels (reader-navigation.js:210-213)",
+    "★ / ☆ — #favoriteButton text (library.js:49)",
+    "☆ — empty favorites hint paragraph (library.js:98)",
+    "'THE SACRED COLLECTION' — English uppercase .eyebrow in the generated library intro (reader-navigation.js:315)"
+  ]
+}

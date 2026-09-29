@@ -1,0 +1,317 @@
+/* ============================================================
+   Library (CSS-2): the library intro and category filters
+   (nav#library, built by reader-navigation.js), the four
+   .cards-section blocks, and the prayer cards.
+   Markup: contract §3 "Card", §4.3.
+
+   Cards come in three flavours that must look identical:
+   bundled cards with an svg.card-deity-svg watermark, bundled cards
+   without one, and cloud cards (a.card.cloud-card, built by admin.js).
+   Layout lives on .card-content only, so the optional watermark never
+   shifts anything.
+
+   behavior.css owns position/overflow on .card, and
+   position/inset/z-index/size on .card-bg, .card-deity-svg and
+   .card-content. This file sets visuals, offsets and inner layout only.
+   Per-deity colour: tokens.css sets --deity and --deity-soft on
+   .vishnu, .lalitha, … .manidweepa.
+============================================================ */
+
+/* ---------- Library intro ---------- */
+.library-navigation {
+    min-width: 0;
+    padding-bottom: var(--sp-5);
+    border-bottom: 1px solid var(--c-border);
+}
+.library-intro {
+    display: grid;
+    justify-items: start;
+    gap: var(--sp-1);
+    min-width: 0;
+}
+.library-intro h2 {
+    font-size: var(--fs-2xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.library-intro p {
+    max-width: 60ch;
+    margin-top: 2px;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+
+/* ---------- Category filters: pills that wrap, never a scroll row ---------- */
+.category-filters {
+    --check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4.5 12.5 5 5L20 7'/%3E%3C/svg%3E");
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+}
+.category-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    max-width: 100%;
+    min-height: 46px;
+    padding: 6px var(--sp-4);
+    border: 1.5px solid var(--c-border-strong);
+    border-radius: var(--r-pill);
+    background: var(--c-surface);
+    color: var(--c-text-soft);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.category-filters button:hover {
+    background: var(--peacock-50);
+    border-color: var(--peacock-300);
+    color: var(--peacock-900);
+}
+.category-filters button:active { transform: scale(.97); }
+.filter-count {
+    flex: none;
+    min-width: 28px;
+    padding: 1px var(--sp-2);
+    border-radius: var(--r-pill);
+    background: var(--sand);
+    color: var(--ink-2);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+/* Selected filter. The check mark means colour is not the only signal. */
+.category-filters button[aria-pressed="true"] {
+    background: var(--peacock-800);
+    border-color: var(--peacock-800);
+    color: var(--white);
+    box-shadow: var(--shadow-sm);
+}
+.category-filters button[aria-pressed="true"]:hover {
+    background: var(--peacock-700);
+    border-color: var(--peacock-700);
+    color: var(--white);
+}
+.category-filters button[aria-pressed="true"]::before {
+    content: "";
+    flex: none;
+    width: 16px;
+    height: 16px;
+    background-color: currentColor;
+    -webkit-mask: var(--check) center / contain no-repeat;
+    mask: var(--check) center / contain no-repeat;
+}
+.category-filters button[aria-pressed="true"] .filter-count {
+    background: var(--zari-300);
+    color: var(--peacock-950);
+}
+
+/* ---------- Section headings ---------- */
+.cards-section { min-width: 0; }
+.section-divider {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: var(--sp-3);
+    row-gap: 2px;
+    margin-bottom: 14px;
+}
+.section-divider::after {    /* a fading zari rule under every heading */
+    content: "";
+    flex: 0 0 100%;
+    height: 1px;
+    margin-top: var(--sp-2);
+    background: linear-gradient(90deg, var(--zari-300), transparent 75%);
+}
+.section-title {
+    font-size: var(--fs-xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.section-sub {
+    font-family: var(--font-ui);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--c-text-muted);
+}
+
+/* ---------- Cards ---------- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--c-border);
+    border-radius: 20px;
+    background: var(--c-surface);
+    color: var(--ink);
+    text-decoration: none;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+                border-color var(--dur-2) var(--ease-out);
+}
+.card:hover {
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    border-color: var(--c-border-strong);
+    border-color: color-mix(in srgb, var(--deity, var(--peacock-600)) 32%, var(--c-border));
+}
+
+/* Deity wash from the top-left corner */
+.card-bg {
+    background: linear-gradient(135deg, var(--deity-soft, var(--peacock-50)), transparent 55%);
+}
+/* Deity art as a faint watermark in the bottom-right corner. The right
+   offset stays well inside the page gutter: the e2e measures unclipped
+   boxes, and at 320px the gutter is 16px. */
+.card-deity-svg {
+    right: -12px;
+    bottom: -16px;
+    opacity: .08;
+    transition: opacity var(--dur-3) var(--ease-out);
+}
+.card:hover .card-deity-svg { opacity: .12; }
+
+/* Two-column grid: 52px medallion | title + subtitle; description and action span the card.
+   The description row absorbs spare height, so actions line up along a grid row. */
+.card-content {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    column-gap: 14px;
+    row-gap: 2px;
+    align-items: start;
+    min-width: 0;
+    padding: 18px 18px var(--sp-4);
+}
+.card-icon-wrap {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--paper);
+    box-shadow: inset 0 0 0 1.5px var(--zari-300), var(--shadow-xs);
+}
+.deity-icon {
+    font-size: 26px;
+    line-height: 1;
+}
+.card h3 {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--peacock-900);
+    overflow-wrap: anywhere;
+}
+.card-sub {
+    grid-column: 2;
+    grid-row: 2;
+    font-family: var(--font-ui);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--c-text-muted);
+    overflow-wrap: anywhere;
+}
+.card-desc {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    margin-top: var(--sp-3);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-soft);
+}
+.card-action {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding-top: var(--sp-3);
+    border-top: 1px dashed var(--c-border-strong);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--peacock-700);
+}
+.card-action .icon-inline {
+    width: 18px;
+    height: 18px;
+    transition: transform var(--dur-2) var(--ease-out);
+}
+.card:focus-visible .card-action .icon-inline { transform: translateX(4px); }
+
+/* Lift and arrow nudge for pointers only (hover sticks on touch screens) */
+@media (hover: hover) {
+    .card:hover { transform: translateY(-2px); }
+    .card:hover .card-action .icon-inline { transform: translateX(4px); }
+}
+.card:active { transform: scale(.99); }
+
+/* Staggered entrance: 40ms per card up to the 12th, the rest together.
+   "backwards" fill applies the hidden start state during the delay only,
+   so the hover transform keeps working after the entrance ends.
+   Reduced motion (behavior.css) removes the animation and cards simply show. */
+.cards-grid > .card {
+    animation: card-in var(--dur-4) var(--ease-out) backwards;
+    animation-delay: calc(var(--card-i, 0) * 40ms);
+}
+.cards-grid > .card:nth-child(2) { --card-i: 1; }
+.cards-grid > .card:nth-child(3) { --card-i: 2; }
+.cards-grid > .card:nth-child(4) { --card-i: 3; }
+.cards-grid > .card:nth-child(5) { --card-i: 4; }
+.cards-grid > .card:nth-child(6) { --card-i: 5; }
+.cards-grid > .card:nth-child(7) { --card-i: 6; }
+.cards-grid > .card:nth-child(8) { --card-i: 7; }
+.cards-grid > .card:nth-child(9) { --card-i: 8; }
+.cards-grid > .card:nth-child(10) { --card-i: 9; }
+.cards-grid > .card:nth-child(11) { --card-i: 10; }
+.cards-grid > .card:nth-child(12) { --card-i: 11; }
+.cards-grid > .card:nth-child(n + 13) { --card-i: 12; }
+@keyframes card-in {
+    from { opacity: 0; transform: translateY(10px); }
+}
+
+/* ---------- Tablet and desktop ---------- */
+@media (min-width: 600px) {
+    .library-intro h2 { font-size: var(--fs-3xl); }
+    .cards-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card-content { padding: var(--sp-5) var(--sp-5) 18px; }
+}
+@media (min-width: 1024px) {
+    .cards-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- Windows high contrast: the selected filter keeps a visible mark ---------- */
+@media (forced-colors: active) {
+    .category-filters button[aria-pressed="true"] { border-width: 3px; }
+    .category-filters button[aria-pressed="true"]::before { forced-color-adjust: none; background-color: ButtonText; }
+}

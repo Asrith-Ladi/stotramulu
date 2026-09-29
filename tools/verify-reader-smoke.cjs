@@ -48,6 +48,7 @@ const context = {
         createElement: tag => element('created-' + tag)
     },
     console,
+    escapeHtml: s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';'),
     renderSlokams(data, type) {
         assert.equal(type, 'demo');
         assert.equal(data.length, 1);

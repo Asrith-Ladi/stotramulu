@@ -2,141 +2,319 @@
 <html lang="te">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d3b3a">
   <title>నిర్వహణ డాష్‌బోర్డ్ · Admin — స్తోత్రములు</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Fonts are self-hosted: admin.css imports @fontsource-variable (Vite bundles them). -->
   <link rel="stylesheet" href="/styles/admin.css">
 </head>
-<body class="min-h-screen">
+<body>
 
-  <!-- Signed-out / not-admin gate -->
-  <div id="signedOutState" class="min-h-screen flex items-center justify-center p-6">
-    <div class="max-w-sm w-full bg-brand-surface rounded-2xl shadow-lg p-8 text-center">
-      <h1 class="text-xl font-bold mb-2">నిర్వహణ డాష్‌బోర్డ్</h1>
-      <p class="ad-gate-msg text-sm text-brand-ink/70 mb-6">కొనసాగించడానికి సైన్ ఇన్ చేయండి. / Sign in to continue.</p>
-      <button class="ad-btn ad-btn-primary w-full" onclick="adminSignIn()">🔐 Google తో సైన్ ఇన్</button>
-      <a href="/" class="block mt-4 text-xs text-brand-ink/50 underline">← సైట్‌కు తిరిగి వెళ్ళండి / Back to site</a>
-    </div>
+  <!-- ============ Sign-in gate (signed out, or signed in but not the admin) ============ -->
+  <div id="signedOutState" class="ad-gate">
+    <main class="ad-gate-card" aria-labelledby="gateTitle">
+      <span class="ad-om" aria-hidden="true">ఓం</span>
+      <h1 id="gateTitle" class="ad-gate-title">నిర్వహణ డాష్‌బోర్డ్</h1>
+      <p class="ad-gate-sub">శ్రీ దివ్య స్తోత్రములు · Admin</p>
+      <p class="ad-gate-msg" role="status" aria-live="polite">సైన్ ఇన్ స్థితి చూస్తోంది… / Checking sign-in…</p>
+      <div class="ad-gate-actions">
+        <button type="button" id="gateSignIn" class="ad-btn ad-btn-google ad-btn-block" onclick="adminSignIn()" hidden><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-google"/></svg>Google తో సైన్ ఇన్ / Sign in</button>
+        <button type="button" id="gateSignOut" class="ad-btn ad-btn-block" onclick="adminSignOut()" hidden><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-user"/></svg>వేరే ఖాతాతో ప్రయత్నించండి / Use another account</button>
+      </div>
+      <a href="/" class="ad-gate-back"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"/></svg>సైట్‌కు తిరిగి వెళ్ళండి / Back to site</a>
+    </main>
   </div>
 
-  <!-- Dashboard -->
+  <!-- ============ Dashboard (admin only) ============ -->
   <div id="dashboard" hidden>
-    <header class="border-b border-brand-accent/20 bg-brand-surface">
-      <div class="max-w-5xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
-        <div class="flex items-center gap-2 min-w-0">
-          <span class="text-lg">🕉️</span>
-          <span class="font-bold truncate">నిర్వహణ డాష్‌బోర్డ్</span>
-          <span id="adminWho" class="text-xs text-brand-ink/50 truncate hidden sm:inline"></span>
+    <a class="ad-skip" href="#adMain">ప్రధాన భాగానికి వెళ్ళండి / Skip to content</a>
+
+    <header class="ad-header">
+      <div class="ad-header-inner">
+        <div class="ad-brand">
+          <span class="ad-om ad-om-sm" aria-hidden="true">ఓం</span>
+          <div class="ad-brand-text">
+            <h1 class="ad-brand-title">నిర్వహణ డాష్‌బోర్డ్</h1>
+            <span id="adminWho" class="ad-brand-who"></span>
+          </div>
         </div>
-        <div class="flex items-center gap-3 shrink-0">
-          <a href="/" class="text-xs text-brand-ink/60 underline">సైట్‌కు వెళ్ళండి</a>
-          <button class="ad-btn" onclick="adminSignOut()">సైన్ అవుట్</button>
+        <div class="ad-header-actions">
+          <a class="ad-btn-light" href="/"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-home"/></svg><span class="ad-hide-sm">సైట్ / Site</span></a>
+          <button type="button" class="ad-btn-light" onclick="adminSignOut()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-lock"/></svg><span class="ad-hide-sm">సైన్ అవుట్ / Sign out</span></button>
         </div>
       </div>
-      <nav class="max-w-5xl mx-auto flex gap-1 px-4 pb-2 overflow-x-auto">
-        <button id="nav-content" class="ad-btn ad-nav-active" onclick="showTab('content')">📚 స్తోత్రాలు</button>
-        <button id="nav-feedback" class="ad-btn" onclick="showTab('feedback')">💬 అభిప్రాయాలు</button>
-        <button id="nav-weekday" class="ad-btn" onclick="showTab('weekday')">🗓️ వార పూజ</button>
-        <button id="nav-export" class="ad-btn" onclick="showTab('export')">⬇️ ఎగుమతి</button>
-      </nav>
     </header>
 
-    <main class="max-w-5xl mx-auto p-4 space-y-4">
+    <nav class="ad-nav" aria-label="డాష్‌బోర్డ్ విభాగాలు / Dashboard sections">
+      <button type="button" id="nav-content" class="ad-nav-btn" aria-controls="tab-content" onclick="showTab('content')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-book"/></svg>స్తోత్రాలు</button>
+      <button type="button" id="nav-feedback" class="ad-nav-btn" aria-controls="tab-feedback" onclick="showTab('feedback')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-message"/></svg>అభిప్రాయాలు<span id="fbNavBadge" class="ad-nav-badge" hidden></span></button>
+      <button type="button" id="nav-updates" class="ad-nav-btn" aria-controls="tab-updates" onclick="showTab('updates')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-sparkle"/></svg>కొత్తవి</button>
+      <button type="button" id="nav-weekday" class="ad-nav-btn" aria-controls="tab-weekday" onclick="showTab('weekday')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-calendar"/></svg>వార పూజ</button>
+      <button type="button" id="nav-export" class="ad-nav-btn" aria-controls="tab-export" onclick="showTab('export')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-download"/></svg>ఎగుమతి</button>
+    </nav>
 
-      <!-- Content tab -->
-      <section id="tab-content">
-        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-semibold">స్తోత్రాలు</h2>
-            <button class="ad-btn ad-btn-primary" onclick="openEditor()">＋ కొత్తది</button>
+    <main id="adMain" class="ad-main" tabindex="-1">
+
+      <!-- ============ Content: list + add/edit ============ -->
+      <section id="tab-content" class="ad-panel" aria-labelledby="contentTitle">
+
+        <!-- Add / edit panel (opens above the list) -->
+        <section id="editorPanel" class="ad-card ad-editor" hidden aria-labelledby="editorTitle">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">సంపాదకం / Editor</span>
+              <h2 id="editorTitle" class="ad-title" tabindex="-1">కొత్త స్తోత్రం</h2>
+            </div>
+            <div class="ad-card-tools">
+              <button type="button" class="ad-btn ad-btn-sm" onclick="closeEditor()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg>మూసివేయి / Close</button>
+            </div>
           </div>
-          <div id="contentTable"></div>
+          <input type="hidden" id="edEditKey">
+          <div id="edBuiltinNote" class="ad-callout" hidden>
+            <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg>
+            <span>ఇది అంతర్నిర్మిత స్తోత్రం. శీర్షిక, ఉపశీర్షిక, వివరణ, ఉద్భవం, శ్లోకాలు మాత్రమే మారుతాయి; అసలు ఫైల్ మారదు, "తిరిగి మార్చు" తో ఎప్పుడైనా అసలు పాఠం వస్తుంది. శ్లోకాల పాఠం మారిస్తే ఈ స్తోత్రానికి అర్థాలు సైట్‌లో కనిపించవు (అవి పాత పాఠానికి సరిపోతాయి).</span>
+          </div>
+
+          <label class="ad-label" for="edTitle">శీర్షిక / Title <span aria-hidden="true">*</span></label>
+          <input class="ad-in" id="edTitle" required autocomplete="off" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">
+          <label class="ad-label" for="edSubtitle">ఉపశీర్షిక (English) / Subtitle</label>
+          <input class="ad-in" id="edSubtitle" autocomplete="off" lang="en" placeholder="Sri Subrahmanya Ashtottaram">
+
+          <div id="edThemeCatRow" class="ad-grid-2">
+            <div>
+              <label class="ad-label" for="edTheme">థీమ్ / Theme</label>
+              <select class="ad-in" id="edTheme"></select>
+            </div>
+            <div>
+              <label class="ad-label" for="edCat">విభాగం / Category</label>
+              <select class="ad-in" id="edCat" onchange="onEdCatChange()"></select>
+            </div>
+          </div>
+          <div id="edCatNewRow" hidden>
+            <label class="ad-label" for="edCatNew">కొత్త విభాగం పేరు / New category name</label>
+            <input class="ad-in" id="edCatNew" autocomplete="off" placeholder="ఉదా: కవచములు">
+          </div>
+
+          <label class="ad-label" for="edDesc">సంక్షిప్త వివరణ / Card line</label>
+          <input class="ad-in" id="edDesc" autocomplete="off" placeholder="కార్డుపై కనిపించే చిన్న వాక్యం">
+          <label class="ad-label" for="edOrigin">ఉద్భవం (ఐచ్ఛికం) / Origin</label>
+          <textarea class="ad-in" id="edOrigin" rows="3"></textarea>
+
+          <div class="ad-label-row">
+            <label class="ad-label" for="edSlokams">శ్లోకాలు / Verses <span aria-hidden="true">*</span></label>
+            <span id="edVerseCount" class="ad-counter" aria-live="polite"></span>
+          </div>
+          <p class="ad-hint"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg><span>ఒక్కో శ్లోకం మధ్య ఒక ఖాళీ లైన్ వదలండి. శ్లోకాల సంఖ్య మారకపోతే ధ్యానం, ఫలశ్రుతి వంటి లేబుళ్ళు అలాగే ఉంటాయి. చిత్రం (ఫోటో) నుండి కూడా పాఠం తీసుకోవచ్చు.</span></p>
+          <div class="ad-ocr-row">
+            <input type="file" id="edImages" class="ad-file" accept="image/*" multiple aria-label="శ్లోకాల చిత్రాలు ఎంచుకోండి / Choose verse images">
+            <button type="button" class="ad-btn ad-btn-sm" id="edOcrBtn" onclick="ocrExtract()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-upload"/></svg>చిత్రం నుండి తీసుకోండి</button>
+            <span id="edOcrStatus" class="ad-msg-slot" aria-live="polite"></span>
+          </div>
+          <div id="edOcrReview"></div>
+          <textarea class="ad-in ad-textarea-tall" id="edSlokams" rows="10" placeholder="మొదటి శ్లోకం…&#10;&#10;రెండవ శ్లోకం…"></textarea>
+
+          <label class="ad-check"><input type="checkbox" id="edPub" checked>ప్రచురించు — అందరికీ కనిపిస్తుంది / Publish</label>
+          <div class="ad-form-actions">
+            <span id="edErr" class="ad-msg-slot" aria-live="polite"></span>
+            <button type="button" class="ad-btn" onclick="closeEditor()">రద్దు / Cancel</button>
+            <button type="button" id="edSaveBtn" class="ad-btn ad-btn-primary" onclick="saveEditor()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-check"/></svg>సేవ్ చేయండి / Save</button>
+          </div>
+        </section>
+
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">గ్రంథాలయం / Library</span>
+              <h2 id="contentTitle" class="ad-title" tabindex="-1">స్తోత్రాలు</h2>
+              <p class="ad-sub">అంతర్నిర్మిత స్తోత్రాలను సవరించండి, లేదా కొత్తవి చేర్చండి. సవరణలు అసలు ఫైల్‌ను మార్చవు.</p>
+            </div>
+            <div class="ad-card-tools">
+              <button type="button" class="ad-btn ad-btn-primary" onclick="openEditor()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>కొత్త స్తోత్రం / New</button>
+            </div>
+          </div>
+          <div class="ad-list-tools">
+            <div class="ad-search">
+              <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-search"/></svg>
+              <input class="ad-in" id="contentSearch" type="search" autocomplete="off" aria-label="స్తోత్రం పేరుతో వెతకండి / Search stotras" placeholder="పేరుతో వెతకండి / Search by name">
+            </div>
+          </div>
+          <p id="contentSummary" class="ad-summary"></p>
+          <div id="contentTable">
+            <div class="ad-skel" role="status" aria-label="తెస్తోంది / Loading"><span></span><span></span><span></span></div>
+          </div>
         </div>
       </section>
 
-      <!-- Feedback tab -->
-      <section id="tab-feedback" hidden>
-        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
-          <h2 class="font-semibold mb-3">అభిప్రాయాలు</h2>
-          <div id="feedbackList"></div>
+      <!-- ============ Feedback triage ============ -->
+      <section id="tab-feedback" class="ad-panel" hidden aria-labelledby="feedbackTitle">
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">చదువరుల సందేశాలు / Reader messages</span>
+              <h2 id="feedbackTitle" class="ad-title">అభిప్రాయాలు / Feedback</h2>
+              <p class="ad-sub">ప్రతి సందేశానికి స్థితి ఇవ్వండి, జవాబు రాయండి. సైన్ ఇన్ చేసి పంపినవారికి మీ జవాబు సైట్‌లోని "నా సందేశాలు" లో కనిపిస్తుంది.</p>
+            </div>
+            <div class="ad-card-tools">
+              <button type="button" class="ad-btn ad-btn-sm" onclick="reloadFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg>మళ్ళీ తెచ్చు / Refresh</button>
+            </div>
+          </div>
+          <div class="ad-list-tools">
+            <div class="ad-seg" id="fbFilters" role="group" aria-label="స్థితి ప్రకారం చూపించు / Filter by status">
+              <button type="button" class="ad-seg-btn" data-fbfilter="open" aria-pressed="true">తెరిచినవి <span class="ad-seg-en">Open</span><span class="ad-count" data-fbcount="open">0</span></button>
+              <button type="button" class="ad-seg-btn" data-fbfilter="answered" aria-pressed="false">జవాబిచ్చినవి <span class="ad-seg-en">Answered</span><span class="ad-count" data-fbcount="answered">0</span></button>
+              <button type="button" class="ad-seg-btn" data-fbfilter="closed" aria-pressed="false">మూసినవి <span class="ad-seg-en">Closed</span><span class="ad-count" data-fbcount="closed">0</span></button>
+              <button type="button" class="ad-seg-btn" data-fbfilter="all" aria-pressed="false">అన్నీ <span class="ad-seg-en">All</span><span class="ad-count" data-fbcount="all">0</span></button>
+            </div>
+            <div class="ad-filter-row">
+              <div class="ad-search">
+                <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-search"/></svg>
+                <input class="ad-in" id="fbSearch" type="search" autocomplete="off" aria-label="సందేశాలలో వెతకండి / Search messages" placeholder="సందేశం, పేరు, స్తోత్రం…">
+              </div>
+              <select class="ad-in" id="fbTypeFilter" aria-label="రకం ప్రకారం / Filter by type">
+                <option value="all">అన్ని రకాలు / All types</option>
+                <option value="correction">స్తోత్రంలో తప్పు / Correction</option>
+                <option value="problem">సమస్య / Problem</option>
+                <option value="suggestion">సూచన / Suggestion</option>
+                <option value="other">ఇతరం / Other</option>
+              </select>
+            </div>
+          </div>
+          <div id="feedbackList">
+            <div class="ad-skel" role="status" aria-label="తెస్తోంది / Loading"><span></span><span></span><span></span></div>
+          </div>
+          <div id="fbMore" class="ad-more" hidden>
+            <button type="button" id="fbMoreBtn" class="ad-btn" onclick="loadMoreFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg>ఇంకా పాతవి చూపించు / Load older</button>
+          </div>
+          <p id="fbListNote" class="ad-list-note"></p>
         </div>
       </section>
 
-      <!-- Weekday tab -->
-      <section id="tab-weekday" hidden>
-        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="font-semibold">వార పూజ క్రమం</h2>
-            <button class="ad-btn ad-btn-primary" onclick="saveWeekday()">సేవ్ చేయండి</button>
+      <!-- ============ What's new (updates) ============ -->
+      <section id="tab-updates" class="ad-panel" hidden aria-labelledby="updatesTitle">
+
+        <!-- Add / edit an update -->
+        <section id="updEditor" class="ad-card ad-editor" hidden aria-labelledby="updEditorTitle">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">కొత్తవి / What's new</span>
+              <h2 id="updEditorTitle" class="ad-title" tabindex="-1">కొత్త మార్పు / New update</h2>
+            </div>
+            <div class="ad-card-tools">
+              <button type="button" class="ad-btn ad-btn-sm" onclick="closeUpdateEditor()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg>మూసివేయి / Close</button>
+            </div>
           </div>
-          <p class="text-xs text-brand-ink/60 mb-3">ఏ రోజు ఏ దేవత స్తోత్రాలు ముందు చూపించాలో ఎంచుకోండి.</p>
-          <div id="weekdayEditor"></div>
+          <input type="hidden" id="updEditId">
+          <div id="updOverrideNote" class="ad-callout ad-callout-spaced" hidden>
+            <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg>
+            <span>ఇది <code>public/data/updates.js</code> ఫైల్‌లోని మార్పుకు డాష్‌బోర్డ్ ప్రతి. సేవ్ చేస్తే సైట్‌లో ఫైల్‌లోనిదానికి బదులుగా ఇదే కనిపిస్తుంది; ఫైల్ మారదు. "తిరిగి మార్చు" నొక్కితే అసలుది మళ్ళీ వస్తుంది. / A copy of a bundled entry: saving shows it on the site in place of the file's version.</span>
+          </div>
+          <div class="ad-grid-2">
+            <div>
+              <label class="ad-label" for="updDate">తేదీ / Date <span aria-hidden="true">*</span></label>
+              <input type="date" class="ad-in" id="updDate" required>
+            </div>
+            <fieldset class="ad-fieldset">
+              <legend class="ad-label">రకం / Tag</legend>
+              <div class="ad-radio-row">
+                <label class="ad-radio"><input type="radio" name="updTag" value="new" checked><span><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-sparkle"/></svg>కొత్తది · New</span></label>
+                <label class="ad-radio"><input type="radio" name="updTag" value="improved"><span><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-up"/></svg>మెరుగుదల · Improved</span></label>
+                <label class="ad-radio"><input type="radio" name="updTag" value="fixed"><span><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-check"/></svg>సరిచేశాం · Fixed</span></label>
+              </div>
+            </fieldset>
+          </div>
+          <p class="ad-hint"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-bell"/></svg><span>చదువరి ఇంతకుముందు చూసిన వాటికంటే కొత్త తేదీ ఉన్న మార్పు ప్రచురిస్తేనే గంట గుర్తు దగ్గర ఎర్ర చుక్క కనిపిస్తుంది.</span></p>
+
+          <div class="ad-label-row">
+            <label class="ad-label" for="updTitle">శీర్షిక / Title <span aria-hidden="true">*</span></label>
+            <span id="updTitleCount" class="ad-counter">0 / 80</span>
+          </div>
+          <input class="ad-in" id="updTitle" maxlength="80" required autocomplete="off" placeholder="ఉదా: లలితా సహస్రనామం పూర్తి పాఠం">
+          <div class="ad-label-row">
+            <label class="ad-label" for="updBody">వివరణ / Body <span aria-hidden="true">*</span></label>
+            <span id="updBodyCount" class="ad-counter">0 / 400</span>
+          </div>
+          <textarea class="ad-in" id="updBody" maxlength="400" rows="4" required placeholder="1–3 చిన్న వాక్యాలు, సరళమైన తెలుగులో."></textarea>
+          <label class="ad-check"><input type="checkbox" id="updPub" checked>ప్రచురించు — సైట్‌లో "కొత్తవి" లో కనిపిస్తుంది / Publish</label>
+
+          <div class="ad-preview">
+            <div class="ad-preview-label"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-sparkle"/></svg>సైట్‌లో ఇలా కనిపిస్తుంది / Preview</div>
+            <div class="ad-preview-sheet" id="updPreview"></div>
+          </div>
+
+          <div class="ad-form-actions">
+            <span id="updMsg" class="ad-msg-slot" aria-live="polite"></span>
+            <button type="button" class="ad-btn" onclick="closeUpdateEditor()">రద్దు / Cancel</button>
+            <button type="button" id="updSaveBtn" class="ad-btn ad-btn-primary" onclick="saveUpdate()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-check"/></svg>సేవ్ చేయండి / Save</button>
+          </div>
+        </section>
+
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">సైట్‌లో గంట గుర్తు / The bell on the site</span>
+              <h2 id="updatesTitle" class="ad-title" tabindex="-1">కొత్తవి / Updates</h2>
+              <p class="ad-sub">చదువరులకు కొత్త సదుపాయాలు, మెరుగుదలలు, సవరణల గురించి చెప్పండి. కొత్తది వచ్చినప్పుడు సైట్‌లో గంట గుర్తు పక్కన చిన్న ఎర్ర చుక్క కనిపిస్తుంది.</p>
+            </div>
+            <div class="ad-card-tools">
+              <button type="button" class="ad-btn ad-btn-sm" onclick="reloadUpdates()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg>మళ్ళీ తెచ్చు</button>
+              <button type="button" class="ad-btn ad-btn-primary" onclick="openUpdateEditor()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>కొత్త మార్పు / New</button>
+            </div>
+          </div>
+          <div class="ad-callout">
+            <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg>
+            <span>ఇక్కడ చేర్చినవి, మరియు <code>public/data/updates.js</code> ఫైల్‌లో ఉన్న అంతర్నిర్మిత మార్పులు రెండూ సైట్‌లో కలిపి, తేదీ ప్రకారం కనిపిస్తాయి. అంతర్నిర్మితమైనదాన్ని ఇక్కడ సవరించినా, దాచినా ఫైల్ మారదు: అదే గుర్తింపుతో ఒక డాష్‌బోర్డ్ ప్రతి సేవ్ అవుతుంది, "తిరిగి మార్చు" తో అసలుది మళ్ళీ వస్తుంది. / Bundled entries also show on the site; editing or hiding one here saves a dashboard copy under the same id.</span>
+          </div>
+          <h3 class="ad-subhead">డాష్‌బోర్డ్ నుండి చేర్చినవి <small>Firestore · updates</small></h3>
+          <div id="updatesList" class="ad-upd-list">
+            <div class="ad-skel" role="status" aria-label="తెస్తోంది / Loading"><span></span><span></span></div>
+          </div>
+          <h3 class="ad-subhead">అంతర్నిర్మిత మార్పులు <small>public/data/updates.js</small></h3>
+          <div id="bundledUpdatesList" class="ad-upd-list"></div>
         </div>
       </section>
 
-      <!-- Export tab -->
-      <section id="tab-export" hidden>
-        <div class="bg-brand-surface rounded-xl shadow-sm p-4">
-          <h2 class="font-semibold mb-3">బ్యాకప్ ఎగుమతి</h2>
-          <p class="text-sm text-brand-ink/70 mb-4">మీరు చేర్చిన స్తోత్రాలు మరియు అంతర్నిర్మిత సవరణలు అన్నీ ఒక JSON ఫైల్‌గా డౌన్‌లోడ్ అవుతాయి.</p>
-          <button class="ad-btn ad-btn-primary" onclick="exportStotras()">⬇️ ఎగుమతి చేయండి</button>
+      <!-- ============ Weekday order ============ -->
+      <section id="tab-weekday" class="ad-panel" hidden aria-labelledby="weekdayTitle">
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">ముఖపుటలో "ఈ రోజు" / Today on the home page</span>
+              <h2 id="weekdayTitle" class="ad-title">వార పూజ క్రమం</h2>
+              <p class="ad-sub">ఏ రోజు ఏ దేవత స్తోత్రాలు ముందు చూపించాలో ఎంచుకోండి. ఒకే దేవత లేదా స్తోత్రం ఎన్ని రోజుల్లో అయినా ఉండవచ్చు. ముఖపుటలో మొదటి 3 మాత్రమే కనిపిస్తాయి.</p>
+            </div>
+            <div class="ad-card-tools">
+              <span id="wdDirty" class="ad-badge ad-dirty" data-kind="edited" hidden><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-edit"/></svg>సేవ్ చేయని మార్పులు</span>
+              <button type="button" id="wdSaveBtn" class="ad-btn ad-btn-primary" onclick="saveWeekday()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-check"/></svg>సేవ్ చేయండి / Save</button>
+            </div>
+          </div>
+          <div id="wdNote"></div>
+          <div id="weekdayEditor" class="ad-wd-list">
+            <div class="ad-skel" role="status" aria-label="తెస్తోంది / Loading"><span></span><span></span></div>
+          </div>
         </div>
       </section>
 
-      <!-- Add/edit panel -->
-      <section id="editorPanel" hidden class="bg-brand-surface rounded-xl shadow-sm p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h2 id="editorTitle" class="font-semibold">➕ కొత్త స్తోత్రం</h2>
-          <button class="ad-mini" onclick="closeEditor()">✕ మూసివేయి</button>
-        </div>
-        <input type="hidden" id="edEditKey">
-        <div id="edBuiltinNote" class="text-xs bg-amber-50 text-amber-700 rounded-md p-2 mb-2" style="display:none">
-          ℹ️ ఇది అంతర్నిర్మిత స్తోత్రం. శీర్షిక, ఉపశీర్షిక, ఉద్భవం, శ్లోకాలు మాత్రమే మారుతాయి.
-        </div>
-
-        <label class="ad-label">శీర్షిక / Title *</label>
-        <input class="ad-in" id="edTitle" placeholder="ఉదా: శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం">
-        <label class="ad-label">Subtitle (English)</label>
-        <input class="ad-in" id="edSubtitle" placeholder="Sri Subrahmanya Ashtottaram">
-
-        <div id="edThemeCatRow" class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="ad-label">థీమ్ / Theme</label>
-            <select class="ad-in" id="edTheme"></select>
+      <!-- ============ Export ============ -->
+      <section id="tab-export" class="ad-panel" hidden aria-labelledby="exportTitle">
+        <div class="ad-card">
+          <div class="ad-card-head">
+            <div>
+              <span class="ad-eyebrow">భద్రత / Backup</span>
+              <h2 id="exportTitle" class="ad-title">బ్యాకప్ ఎగుమతి</h2>
+              <p class="ad-sub">మీరు చేర్చిన స్తోత్రాలు, అంతర్నిర్మిత సవరణలు, "కొత్తవి" మార్పులు, వార పూజ క్రమం — అన్నీ ఒకే JSON ఫైల్‌గా డౌన్‌లోడ్ అవుతాయి. చదువరుల సందేశాలు ఇందులో ఉండవు.</p>
+            </div>
           </div>
-          <div>
-            <label class="ad-label">విభాగం / Category</label>
-            <select class="ad-in" id="edCat" onchange="onEdCatChange()"></select>
+          <div class="ad-form-actions ad-form-actions-start">
+            <button type="button" id="exportBtn" class="ad-btn ad-btn-primary" onclick="exportStotras()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-download"/></svg>ఎగుమతి చేయండి / Download JSON</button>
+            <span id="exportMsg" class="ad-msg-slot" aria-live="polite"></span>
           </div>
-        </div>
-        <input class="ad-in mt-2" id="edCatNew" placeholder="కొత్త విభాగం పేరు" style="display:none">
-
-        <label class="ad-label">సంక్షిప్త వివరణ</label>
-        <input class="ad-in" id="edDesc" placeholder="కార్డుపై కనిపించే చిన్న వాక్యం">
-        <label class="ad-label">ఉద్భవం (ఐచ్ఛికం)</label>
-        <textarea class="ad-in" id="edOrigin" rows="2"></textarea>
-
-        <label class="ad-label">శ్లోకాలు / Slokams * — ఒక్కో శ్లోకం మధ్య ఖాళీ లైన్ వదలండి</label>
-        <div class="flex flex-wrap items-center gap-2 mb-2">
-          <input type="file" id="edImages" accept="image/*" multiple class="text-xs">
-          <button type="button" class="ad-btn" onclick="ocrExtract()">🖼️ చిత్రం నుండి తీసుకోండి</button>
-          <span id="edOcrStatus" class="text-xs text-brand-ink/60"></span>
-        </div>
-        <div id="edOcrReview"></div>
-        <textarea class="ad-in" id="edSlokams" rows="8" placeholder="మొదటి శ్లోకం…&#10;&#10;రెండవ శ్లోకం…"></textarea>
-
-        <label class="flex items-center gap-2 mt-3 text-sm">
-          <input type="checkbox" id="edPub" checked> ప్రచురించు (Publish — అందరికీ కనిపిస్తుంది)
-        </label>
-        <div id="edErr" class="ad-error"></div>
-        <div class="flex justify-end gap-2 mt-3">
-          <button class="ad-btn" onclick="closeEditor()">రద్దు</button>
-          <button class="ad-btn ad-btn-primary" onclick="saveEditor()">సేవ్ చేయండి</button>
         </div>
       </section>
     </main>
   </div>
+
+  <div id="adToast" class="ad-toast" role="status" aria-live="polite"></div>
 
   <!-- Firebase + site config -->
   <script src="/assets/site-config.js"></script>
@@ -178,6 +356,8 @@
   <script src="/data/stotras/arunachala108.js"></script>
   <script src="/data/stotras/aishwaryalakshmi108.js"></script>
   <script src="/data/content-audit.js"></script>
+  <!-- Bundled "what's new" entries (read-only here; shown next to the Firestore ones) -->
+  <script src="/data/updates.js"></script>
 
   <script src="/assets/admin-dashboard.js"></script>
 </body>

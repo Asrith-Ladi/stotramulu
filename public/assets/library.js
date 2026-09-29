@@ -46,7 +46,8 @@ function updateFavoriteButton(type) {
     const button = document.getElementById('favoriteButton');
     if (!button) return;
     const saved = favoriteKeys.has(type);
-    button.textContent = saved ? '★ ఇష్టమైన స్తోత్రం' : '☆ ఇష్టమైనవాటిలో చేర్చు';
+    // CSS draws the outline/filled star from aria-pressed.
+    button.textContent = saved ? 'ఇష్టమైనవాటిలో ఉంది' : 'ఇష్టమైనవాటిలో చేర్చు';
     button.setAttribute('aria-pressed', String(saved));
 }
 function toggleFavorite() {
@@ -60,6 +61,19 @@ function toggleFavorite() {
     renderFavorites();
     document.getElementById('readerLinkStatus').textContent = message;
 }
+// Text for the favourite tile markup (titles and icons can come from the
+// cloud, so they are always escaped).
+function favoriteText(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+}
+function favoriteTileHtml(key) {
+    const cfg = stotramConfig[key];
+    const theme = String(cfg.theme || '').replace(/[^\w-]/g, '');
+    const icon = typeof window.stotramIcon === 'function' ? window.stotramIcon(key) : (cfg.__icon || '🕉️');
+    return '<span class="today-ico medallion' + (theme ? ' ' + theme : '') + '" aria-hidden="true">' + favoriteText(icon) + '</span>' +
+        '<span class="today-title">' + favoriteText(cfg.title) + '</span>' +
+        '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg>';
+}
 function renderFavorites() {
     let section = document.getElementById('favoritesSection');
     if (!section) {
@@ -68,36 +82,50 @@ function renderFavorites() {
         section.className = 'favorites-section';
         section.setAttribute('aria-labelledby', 'favoritesTitle');
         const home = document.getElementById('homePage');
-        const today = document.getElementById('todaySection');
         if (home.querySelector('.home-primary-actions')) home.querySelector('.home-primary-actions').before(section);
         else home.insertBefore(section, home.querySelector('.cards-section'));
     }
+    // Built with appendChild / innerHTML only: tools/verify-library.cjs runs this
+    // against a minimal fake DOM (no append, classList or querySelector).
     section.replaceChildren();
-    const heading = document.createElement('h2');
-    heading.id = 'favoritesTitle';
-    heading.textContent = 'మీకు ఇష్టమైన స్తోత్రాలు';
-    section.appendChild(heading);
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = '<h2 id="favoritesTitle">మీకు ఇష్టమైన స్తోత్రాలు</h2>' +
+        '<button type="button" class="info-btn" data-info="favorites" aria-label="వివరణ: ఇష్టమైన స్తోత్రాలు">' +
+        '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>';
+    section.appendChild(head);
     const list = document.createElement('div');
-    list.className = 'today-strip';
+    list.className = 'today-strip favorites-grid';
+    let count = 0;
     for (const key of favoriteKeys) {
-        const cfg = stotramConfig[key];
         if (!isVisibleStotram(key)) continue;
         const link = document.createElement('a');
         link.className = 'today-tile';
         link.href = readerUrl(key).href;
-        link.textContent = cfg.title;
+        // The plain title first (what a parser-less DOM such as the verify
+        // sandbox keeps), then the full tile: medallion, title, chevron.
+        link.textContent = stotramConfig[key].title;
+        link.innerHTML = favoriteTileHtml(key);
         link.onclick = event => {
             if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
             event.preventDefault();
             openReader(key);
         };
         list.appendChild(link);
+        count++;
     }
-    if (!list.children.length) {
-        const hint = document.createElement('p');
-        hint.textContent = 'స్తోత్రం తెరిచి ☆ నొక్కండి. ఇక్కడ నుంచి సులభంగా మళ్ళీ చదవవచ్చు.';
-        section.appendChild(hint);
-    } else section.appendChild(list);
+    if (count) {
+        section.appendChild(list);
+        return;
+    }
+    const empty = document.createElement('div');
+    empty.className = 'empty-state favorites-empty';
+    empty.innerHTML =
+        '<span class="empty-state-mark" aria-hidden="true"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-star"/></svg></span>' +
+        '<h3>ఇంకా ఇష్టమైనవి లేవు</h3>' +
+        '<p>ఏ స్తోత్రం తెరిచినా "ఇష్టమైనవాటిలో చేర్చు" నొక్కండి — అది ఇక్కడ కనిపిస్తుంది.</p>' +
+        '<a class="btn btn-primary" href="#library" onclick="event.preventDefault(); navigateView(\'library\')">స్తోత్రాలు చూడండి</a>';
+    section.appendChild(empty);
 }
 async function copyReaderLink() {
     if (!currentType) return;

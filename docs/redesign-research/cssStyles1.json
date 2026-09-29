@@ -1,0 +1,280 @@
+{
+  "summary": "I read all of /Users/LA40057633/Project/l/stotramulu/styles/styles.css lines 1-1000 and checked each state class against index.html and public/assets/*.js. I made no edits. What matters for behaviour:\n\n(1) PAGE SWITCHING. The four pages are toggled two ways. The home page uses inline style.display 'none'/'flex' (app.js:47,96; tracking.js:43; japamala.js:55). The reader, track and japamala pages use a .active class. .back-btn is hidden by CSS until JS writes an inline display.\n\n(2) OVERLAYS. .search-overlay is used by both #searchOverlay and #accountOverlay. The page behind is locked with body.style.overflow='hidden', so each overlay must scroll itself.\n\n(3) STATE CLASSES SET BY JS:\n- .reminder-banner.show\n- .scroll-top-btn.visible\n- .origin-block.visible\n- body.show-meanings (shows the meanings)\n- .meaning-toggle.on (also copied into aria-pressed by reader-navigation.js:363-366)\n- mark / mark.current (search matches)\n- .rs-mic.listening and .mic-btn.listening (voice search is recording)\n- .jm-mode-btn.active\n- .jm-bead.cur, .jm-fbead.cur, .jm-fbead.pop, .jm-flowbead.cur\n- .jm-svg.celebrate\n- JS-created .jm-confetti and .particle elements\n\n(4) JAPAMALA SVG NEEDS CSS TO DRAW AT ALL. The thread line/ellipses have no stroke attribute, so without .jm-thread they are invisible. The JS-built tassel paths have no fill or stroke, so without .jm-tassel-thread they render as black blobs. .jm-fbead needs transform-box:fill-box and transform-origin:center, otherwise the pop scale flings the bead toward the SVG origin. JS moves beads by setting transform and opacity every animation frame, so no transform transitions may reach them.\n\n(5) MULTI-LINE VERSES. .slokam-text { white-space: pre-line } is the only rule that turns the \\n in verse data into visible line breaks.\n\n(6) CUSTOM PROPERTIES. No JS reads the :root variables in lines 1-10. But japamala-3d.css:75,88, which is being kept, uses var(--gold-light). --reader-font-size is not defined in styles.css: reader.js:147 sets it, reading.css:2 gives its default, and reading.css:40,88 uses it. The new system must define a default for it. JS also writes inline font-size in px on .slokam-text and .slokam-meaning (reader.js:55,146), so CSS font sizes on those are overridden.\n\n(7) CROSS-FILE DEPENDENCIES (other stylesheets):\n- .reader-search .rs-nav sets display:inline-flex, but reader.js:346 hides the buttons with the hidden attribute. That only works because of design-system.css:23 `[hidden]{display:none !important}` (and reading.css:512). The new system must include a global [hidden] rule.\n- design-system.css:32 hides the empty back-button slot using the back button's inline style.\n- design-system.css:257 supplies display:flex for .jm-modes; line 862 only sets gap.\n\n(8) JS REPLACES CLASSES ON TWO ELEMENTS:\n- app.js:57 overwrites #readerTitleSection className with 'reader-title-section ' + cfg.theme on every reader open. Any extra class put on it in the markup is lost.\n- japamala.js:111/186/238 set the bead classes with setAttribute('class').\n\n(9) OVERFLOW AND STICKY. Horizontal scroll is blocked by body overflow-x:hidden (line 19), html,body overflow-x:hidden plus max-width:100% (line 732), and html overflow-x:clip (design-system.css:13). Because html's overflow is not visible, body's overflow-x:hidden is not passed to the viewport, so body becomes its own scroll container. By the CSS spec that stops a sticky header (or bottom bar) from sticking. I could not confirm this in a browser because the sandbox blocked headless Chrome. For the rewrite: set horizontal-overflow control on html only (for example `overflow-x:hidden; overflow-x:clip`), not on body.\n\n(10) STACKING ORDER. Lines 1-1000 use these z-index values:\n- fixed background layers and .reader-deity-bg: 0\n- pages: 1 (position relative)\n- .scroll-top-btn: 200\n- .search-overlay: 500\n- .jm-confetti: 700\n\nValues later in the file: day-sheet-overlay 600 (line 1094), 550 (line 1386), and the admin layers and toasts at 850/860/900/950 (lines 1283-1329). design-system.css also has a sticky header at 40 and a skip-link at 1000. .header z-index:100 (line 97) does nothing because .header has no position in this file.\n\n(11) PRINT, SCROLL-PADDING, REDUCED MOTION. There are no print rules and no scroll-padding in lines 1-1000; they live at styles.css 1552+, reading.css:38/66+ and design-system.css:13/184. The only reduced-motion rule in range is lines 78-80.\n\n(12) DEAD CODE. These can be dropped:\n- lines 951-1000: .mala-style-*, .mala-card, .mala-stage/.mala-ring/.mala-strand-wrap, .mala-svg/.mala-thread/.mala-bead-svg(.filled/.active)/.mala-guru/.mala-tassel*/.mala-hand(.push), and keyframes beadGlowSvg/handPush. None of these appear in index.html or JS.\n- .jm-full-count and .jm-full-of (909-911): #jmFullCount and #jmFlowCount do not exist, and JS checks for them before use (japamala.js:221,277).\n- .welcome-section .om-symbol and omPulse: .om-symbol has no references.\n- .mala-* in general: no references.",
+  "mustPreserve": [
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "152-155",
+      "selector": ".home-page",
+      "declarations": "display:flex; flex-direction:column; position:relative; z-index:1",
+      "why": "The home page is visible by default with no class. JS hides and shows it with inline style.display 'none'/'flex' (app.js:47,96; tracking.js:43; japamala.js:55). goHome always forces display:flex, so a new layout must be flex-based, or the JS must be changed. z-index:1 keeps it above the fixed background layers at z-index 0."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "339-343",
+      "selector": ".reader-page / .reader-page.active",
+      "declarations": ".reader-page{display:none; position:relative; z-index:1} .reader-page.active{display:block; animation:fadeInUp .6s ease}",
+      "why": "The reader view only appears through .active (app.js:48,97; tracking.js:44; japamala.js:56). experience.js:64 finds the visible page by checking .active. If this is lost the reader never shows, or shows on top of home."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "826-827",
+      "selector": ".track-page / .track-page.active",
+      "declarations": ".track-page{display:none; position:relative; z-index:1} .track-page.active{display:block; animation:fadeInUp .6s ease}",
+      "why": "Toggled by tracking.js:45 and app.js:49,98. tracking.js:20 only re-renders the months when #trackPage has .active."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "851-852",
+      "selector": ".japamala-page / .japamala-page.active",
+      "declarations": ".japamala-page{display:none; position:relative; z-index:1} .japamala-page.active{display:block; animation:fadeInUp .6s ease}",
+      "why": "Toggled by japamala.js:58 and app.js:50,100. The Space-bar counter only works while this page has .active (japamala.js:484). The whole page is the tap-to-count surface (index.html:1152 onclick=bumpJapa)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "133-140, 746",
+      "selector": ".back-btn",
+      "declarations": "display:none (default); position:static !important; transform:none !important; left:auto !important; top:auto !important",
+      "why": "#backBtn has no inline style on first load, so CSS must hide it on home. JS then writes inline display 'block'/'none' (app.js:51,101; tracking.js:46; japamala.js:59). design-system.css:32 hides the empty header slot using .back-btn:not([style]) and [style*=none]. The !important overrides cancel the old absolute positioning from line 134, which overlapped the title."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "752-757",
+      "selector": ".search-overlay / .search-overlay.active",
+      "declarations": "position:fixed; inset:0; z-index:500; display:none; overflow-y:auto; padding:90px 18px 40px | .active{display:block; animation:fadeInUp .3s}",
+      "why": "Used by both #searchOverlay and #accountOverlay (index.html:1043,1061). Opened and closed by app.js:141,148,90; tracking.js:59,64; japamala.js:51. JS locks the page with body.style.overflow='hidden', so the overlay must scroll itself (overflow-y:auto) or long results and account content can't be reached. z-index 500 must stay above the header and pages, and below the day-sheet (600), confetti (700) and admin/toast layers (850-950)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "734",
+      "selector": ".month-strip, .search-overlay, .day-sheet",
+      "declarations": "-webkit-overflow-scrolling:touch",
+      "why": "Gives smooth momentum scrolling inside these scroll containers on iOS versions before 13, which matters for the older-device audience."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "815-823",
+      "selector": ".reminder-banner / .reminder-banner.show / .rb-close",
+      "declarations": ".reminder-banner{display:none} .show{display:flex} .rb-close{margin-left:auto; cursor:pointer}",
+      "why": "app.js:279-281 adds and removes .show. The close control's inline onclick removes .show. Without these rules the banner is either always visible or never visible."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "675-694",
+      "selector": ".scroll-top-btn / .scroll-top-btn.visible",
+      "declarations": "position:fixed; bottom:30px; right:30px; z-index:200; display:none | .visible{display:flex}",
+      "why": "app.js:115 toggles .visible when scrollY > 400. Its position must not cover other fixed controls, such as a future bottom nav."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "549-563, 580-583",
+      "selector": ".slokam-meaning / body.show-meanings .slokam-meaning",
+      "declarations": ".slokam-meaning{display:none; position:relative} body.show-meanings .slokam-meaning{display:block; animation:meaningSlide .5s}",
+      "why": "Meanings are always in the markup (reader.js:76) and are shown only by the body class, which reader.js:155-170 toggles and restores from localStorage. reader.js:264 includes meanings in search only when the class is present. Without this rule meanings are always shown or never shown."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "590-604",
+      "selector": ".origin-block / .origin-block.visible",
+      "declarations": ".origin-block{display:none; position:relative; overflow:hidden} .visible{display:block}",
+      "why": "app.js:70,72 adds .visible only when a stotram has origin text, and otherwise empties the block."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "437-473",
+      "selector": ".meaning-toggle, .toggle-switch, .toggle-switch::after, .meaning-toggle.on .toggle-switch(::after)",
+      "declarations": ".meaning-toggle{cursor:pointer; user-select:none} .toggle-switch{position:relative; width:48px; height:26px} .toggle-switch::after{content:''; position:absolute; top:2px; left:2px; width:20px; height:20px} .meaning-toggle.on .toggle-switch::after{left:24px} (+ .on track colour)",
+      "why": "#meaningToggle is a div with onclick. reader.js:157,170 toggles .on, and reader-navigation.js:360-366 adds role=button, tabindex and aria-pressed copied from .on. The knob position and colour are the only visual sign that meanings are on. Without position:relative the knob ::after escapes the switch."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "672",
+      "selector": ".slokam-text",
+      "declarations": "white-space:pre-line",
+      "why": "Verse data uses \\n line breaks (reader.js:39-50 splits some, and single-row blocks keep the embedded \\n). This is the only rule that shows them as separate lines. Without it each verse collapses into one run-on line. Font-size here is overridden by inline px from JS (reader.js:55,146)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "535-546",
+      "selector": ".slokam-text mark, .slokam-meaning mark / mark.current",
+      "declarations": "mark{background highlight; color:inherit} mark.current{distinct stronger background/colour}",
+      "why": "reader.js:293-316 wraps search matches in <mark>. reader.js:329-373 moves .current and scrolls to it for prev/next. The current match must look different from the other matches, or up/down navigation is meaningless."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "504-517",
+      "selector": ".reader-search .rs-nav, .rs-clear, .rs-nav:disabled",
+      "declarations": "display:inline-flex; .rs-nav:disabled{opacity:.3; cursor:not-allowed}",
+      "why": "reader.js:346 sets both disabled and hidden on .rs-nav. display:inline-flex beats the browser's default [hidden] rule, so hiding depends on design-system.css:23 [hidden]{display:none !important} (or reading.css:512), both being deleted. The new system must include a global [hidden] rule. .rs-clear is shown and hidden by inline style.display (reader.js:239; index.html:981)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "529-532, 781-788",
+      "selector": ".reader-search .rs-mic.listening, .mic-btn.listening, @keyframes micPulse",
+      "declarations": ".listening{red background; color:#fff; animation:micPulse 1.2s infinite}",
+      "why": "This is the only sign that speech recognition is recording. reader.js:427-433 and app.js:198-210 toggle it. micPulse is also used by .mic-mini.listening (styles.css:1424) for the feedback mic (app.js:391-393). If the keyframes are dropped the pulse disappears."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "487-494, 766-767",
+      "selector": ".reader-search:focus-within, .rs-input, .search-input",
+      "declarations": ".rs-input{outline:none} .search-input{outline:none} .reader-search:focus-within{visible border/box-shadow ring}",
+      "why": "The inputs remove their native outline. The only replacement focus indicator is .reader-search:focus-within. The main .search-input has no replacement in this range. If the rewrite keeps outline:none, it must add a focus-within ring on .search-input-wrap too, or keyboard focus is invisible."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "253-256",
+      "selector": ".card:focus-visible",
+      "declarations": "outline:3px solid; outline-offset:4px",
+      "why": "The cards are <a class=\"card\"> links (32 of them, e.g. index.html:623). This is their keyboard focus indicator."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "222-252, 270, 288-299",
+      "selector": ".card, .card::before, .card::after, .card-bg, .card-deity-svg, .card-content",
+      "declarations": ".card{position:relative; overflow:hidden} ::before/::after{position:absolute; pointer-events:none} ::after z-index:3 | .card-bg{position:absolute; inset:0; z-index:0} .card-deity-svg{position:absolute; top/left 50%; translate(-50%,-50%); z-index:1} .card-content{position:relative; z-index:2}",
+      "why": "The markup keeps .card-bg and .card-deity-svg on all 32 cards. Without a positioned, clipped .card these absolute children escape and spread over the page. pointer-events:none on the shimmer layer keeps taps reaching the link. The z-order keeps the text above the deity art. If the markup is simplified, remove the elements too."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "351-356, 722",
+      "selector": ".reader-deity-bg",
+      "declarations": "position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:650px; height:650px (350px at ≤700px); z-index:0; opacity:.04; pointer-events:none",
+      "why": "app.js:62-63 injects <svg style=\"width:100%;height:100%\"> at full colour, so the container must give it a size and fade it. Otherwise it is either the default 300x150 or bright deity art over the verses. pointer-events:none keeps it from blocking taps. goHome clears it (app.js:102)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "23-44, 51-77, 82-90",
+      "selector": ".bg-pattern, .bg-mesh, .particles, .particles::before/::after, .particle",
+      "declarations": "position:fixed; inset:0; z-index:0; pointer-events:none | .particle{position:absolute; animation:floatUp} (JS sets inline left, animationDelay, animationDuration)",
+      "why": "The divs at index.html:26-28 are always present. app.js:24-34 adds 35 .particle.gold/.big elements (skipped under reduced motion). design-system.css:22 currently hides all three. If the new system keeps them they must be fixed, behind content, and non-interactive. If not, hide them with display:none or remove the divs; otherwise the unstyled particles pile up in the page flow."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "78-80",
+      "selector": "@media (prefers-reduced-motion: reduce) .particles::before",
+      "declarations": "animation:none; opacity:.7",
+      "why": "This is the only reduced-motion rule in lines 1-1000. The global reduced-motion kill-switches live in reading.css:62 and design-system.css:180, both being deleted, so the new system needs its own reduced-motion block."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "12, 19, 731-733",
+      "selector": "*, body, html, html body, *::before/*::after",
+      "declarations": "*{margin:0; padding:0; box-sizing:border-box} body{overflow-x:hidden; min-height:100vh} html{scroll-behavior:smooth} html,body{overflow-x:hidden; max-width:100%}",
+      "why": "These stop horizontal scroll on phones. Confetti is placed at left up to 100vw plus its width, and glows and SVGs use overflow:visible. scroll-behavior gives smooth anchor and skip-link jumps. Caveat: overflow-x:hidden on body while html is also non-visible makes body a scroll container, which by the CSS spec breaks position:sticky (not browser-verified). In the rewrite put overflow-x hidden/clip on html only."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "885-891, 904, 914",
+      "selector": ".jm-stage, .jm-svg, .jm-svg-full, .jm-svg-flow",
+      "declarations": ".jm-stage{cursor:pointer; -webkit-tap-highlight-color:transparent} .jm-svg{width:min(78vw,300px); height:auto; display:block; margin:0 auto; overflow:visible} .jm-svg-full{width:min(84vw,320px)} .jm-svg-flow{width:min(88vw,340px)}",
+      "why": "The SVGs are sized only by viewBox plus CSS width, with no width/height attributes. Without the width they render at 300x150 or collapse. overflow:visible lets beads that JS culls at sy -30..452 (japamala.js:145), scaled flow beads, and drop-shadow glows draw outside the viewBox without clipping. Tap highlight is suppressed for fast repeated taps. Stage visibility per mode is set by INLINE style.display (japamala.js:78-82; index.html:1174,1183,1193 start with display:none), so never give .jm-stage a display rule with !important."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "894",
+      "selector": ".jm-thread",
+      "declarations": "stroke:rgba(150,110,55,.5); stroke-width:1.4",
+      "why": "The thread <line> and <ellipse> elements (index.html:1166,1176,1185) have no stroke attribute. Without this rule the silk thread the beads hang on is invisible."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "920",
+      "selector": ".jm-tassel-thread",
+      "declarations": "fill:none; stroke:#caa24a; stroke-width:1.8; stroke-linecap:round; opacity:.9",
+      "why": "The JS-built tassel <path>s (japamala.js:125,196,249) have no fill or stroke attributes. Without fill:none they render as solid black shapes under the guru bead, and without stroke the tassel strands are invisible."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "899-901",
+      "selector": ".jm-bead, .jm-bead.cur circle",
+      "declarations": ".jm-bead{transition:none} .jm-bead.cur circle{stroke:rgba(255,235,180,.9); stroke-width:1.1; filter:drop-shadow(0 0 5px rgba(255,223,133,.9))}",
+      "why": "japamala.js:152-154 sets the transform and opacity attributes on every animation frame and toggles .cur. A transform/opacity transition (for example from a global * rule) would lag the spring animation, so beads must opt out. .cur is the only marker of the bead at the focus."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "905-908",
+      "selector": ".jm-fbead, .jm-fbead.cur, .jm-fbead.pop, @keyframes jmPop",
+      "declarations": ".jm-fbead{transition:fill .25s ease; transform-box:fill-box; transform-origin:center} .cur{stroke; stroke-width:1; filter:drop-shadow} .pop{animation:jmPop .3s ease} @keyframes jmPop{40%{transform:scale(1.9)}}",
+      "why": "The full-loop beads are <circle>s placed with cx/cy (japamala.js:183-187). Without transform-box:fill-box and transform-origin:center, scale(1.9) grows from the SVG origin and the bead jumps across the SVG. japamala.js:219 restarts .pop by removing it, forcing a reflow and re-adding it. japamala.js:215 toggles .cur."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "915-917",
+      "selector": ".jm-flowbead circle, .jm-flowbead.cur circle",
+      "declarations": "circle{transition:fill .25s ease} .cur circle{stroke:rgba(255,235,180,.95); stroke-width:1; filter:drop-shadow(0 0 5px rgba(255,223,133,.95))}",
+      "why": "japamala.js:238 creates the flow beads as <g> and :274-275 sets transform every frame and toggles .cur. Only fill may transition, never transform on the <g>."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "922-923",
+      "selector": ".jm-svg.celebrate, @keyframes jmGlow",
+      "declarations": ".jm-svg.celebrate{animation:jmGlow .9s ease} @keyframes jmGlow{40%{filter:drop-shadow(0 0 24px rgba(255,223,133,.85))}}",
+      "why": "japamala.js:357 removes, reflows and re-adds .celebrate when 108 beads are completed. In rudraksha3d mode the class lands on #jmRudrakshaCanvas, which is not .jm-svg, so this rule doesn't apply there."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "945-949",
+      "selector": ".jm-confetti, @keyframes jmFall",
+      "declarations": "position:fixed; top:-20px; width:9px; height:14px; border-radius:2px; z-index:700; pointer-events:none; animation:jmFall linear forwards | @keyframes jmFall{to{transform:translateY(110vh) rotate(720deg); opacity:.15}}",
+      "why": "japamala.js:362-373 creates 60 divs and sets only inline left, background, animationDelay and animationDuration (1.8-3.0s). CSS supplies the size, fixed position and animation name. JS removes them at 3200ms. pointer-events:none is essential because the japamala page counts on every tap and confetti must not swallow taps. z-index 700 puts it above the overlays."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "862-872",
+      "selector": ".jm-modes, .jm-mode-btn.active",
+      "declarations": ".jm-modes{gap:8px} .jm-mode-btn.active{distinct selected style}",
+      "why": "japamala.js:83-84 toggles .active by data-mode. This is the only sign of which mala look is selected. .jm-modes gets its display:flex from design-system.css:257, which is being deleted, so the new system must set flex itself."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "874-882",
+      "selector": ".jm-count-top #jmCount, .jm-rounds",
+      "declarations": "#jmCount{background gradient + background-clip:text + -webkit-text-fill-color:transparent; font-variant-numeric:tabular-nums} .jm-rounds{min-height:16px}",
+      "why": "The main count is drawn with a text-clipped gradient. If the transparent text fill is kept without the gradient background, the number becomes invisible. tabular-nums stops the count jittering. The min-height keeps #jmRounds from shifting the layout when JS switches it between '' and text (japamala.js:164)."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "925-941",
+      "selector": ".jm-btn-count, .jm-btn-reset",
+      "declarations": ".jm-btn-count{width:96px; height:96px} .jm-btn-reset{width:46px; height:46px} :active{transform:scale(.93/.9)}",
+      "why": "These are the primary tap targets for the older audience. The inline stopPropagation stops a double count with the page-level tap handler. Keep them at least this large."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "380-394, 271-285",
+      "selector": ".reader-title-section.<deity>-theme, .card.<deity> .card-bg",
+      "declarations": "per-theme background tints",
+      "why": "app.js:57 replaces #readerTitleSection className with 'reader-title-section ' + cfg.theme on every open, and admin-added stotras bring their own theme. Any other class put on #readerTitleSection in the markup is wiped. Style the element through its id, the base class or the theme class only."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "1-10",
+      "selector": ":root",
+      "declarations": "--gold, --gold-light, --gold-bright, --gold-dark, --maroon-dark, --cream, --gold-gradient, --gold-shimmer",
+      "why": "No JS reads these. But japamala-3d.css:75,88, which is being kept, uses var(--gold-light) for the 3D hint and fallback text, so either define it in the new system or update that file. Separately, --reader-font-size is set by reader.js:147 and defaulted only in reading.css:2 (being deleted). The new system must declare :root{--reader-font-size:24px} and use it for .slokam-meaning and .reader-verse-number."
+    },
+    {
+      "file": "/Users/LA40057633/Project/l/stotramulu/styles/styles.css",
+      "line": "622-641",
+      "selector": ".slokam-block",
+      "declarations": "position:relative; overflow:hidden",
+      "why": "This is the positioning context for the ::before/::after decorations, and for the .slokam-block.read ✓ badge at styles.css:1664-1672 (reader.js:79,120 toggle .read). Jump-to-verse also relies on scroll-margin-top from reading.css:38, which the new system must carry over."
+    }
+  ],
+  "keyframesUsed": [
+    "fadeInUp (345): runs on JS-added .active for .reader-page, .track-page, .japamala-page and .search-overlay. Nothing breaks without it; it only animates the show.",
+    "meaningSlide (584): runs when JS toggles body.show-meanings, .origin-block.visible and .reminder-banner.show.",
+    "micPulse (785): used by .rs-mic.listening, .mic-btn.listening and .mic-mini.listening (line 1424). This is the only 'recording' indicator for voice search. JS toggles the classes.",
+    "jmPop (908): used by .jm-fbead.pop. JS restarts it with remove, reflow, add (japamala.js:219). Needs transform-box:fill-box.",
+    "jmGlow (923): used by .jm-svg.celebrate. JS restarts it on completing a mala (japamala.js:357).",
+    "jmFall (949): used by the JS-created .jm-confetti elements. JS sets animationDelay/Duration inline and removes the elements at 3.2s, so the animation must finish in about 3s or less.",
+    "floatUp (85): used by the JS-created .particle elements (app.js:29, inline delay/duration). Decorative, and currently hidden by design-system.css:22.",
+    "jmFocusPulse (896): used by the .jm-focus ellipse in the markup. CSS only, decorative opacity pulse.",
+    "shimmerText (127): used by .header h1, .section-title, .reader-title-section h2, .footer, .track-section-head h2 and .jm-head. CSS only, decorative.",
+    "omBreathe (65): used by .particles::before. CSS only, decorative.",
+    "rotateRing (321): used by .card-icon-wrap::before. CSS only, decorative.",
+    "omPulse (167): DEAD. It is only applied to .om-symbol, which has no references.",
+    "beadGlowSvg (982), handPush (996): DEAD. They belong to the removed .mala-* ring view, which has no references in the markup or JS."
+  ],
+  "visualOnlyNotes": "These are free to redesign:\n- All the gold, purple and maroon glass gradients, box-shadows, backdrop-filters and gold hairline ::before/::after rules on .header, .card, .reader-title-section, .font-control, .meaning-toggle, .reader-search, .origin-block, .slokam-block, .slokam-number, .meaning-label, .origin-label, .track-card, .search-input-wrap, .search-result, .jm-btn-* and .footer.\n- Hover transforms, including .card:hover lift and .slokam-block:hover translateX. Hover effects stick on touch screens, so dropping them helps mobile.\n- The per-deity tint colours: keep the class hooks, change the colours freely.\n- The typography sizes and letter-spacing.\n- The 3-slot header grid (738-743), which design-system.css and reading.css already override.\n- The responsive card grid rules (710-725).\n- The ఓం watermark and tiled field (51-77).\n- .account-advanced summary marker hiding (796-797).\n\nTwo things to watch while redesigning:\n- Many headings use background-clip:text with -webkit-text-fill-color:transparent: .header-om, .header h1, .section-title, .card h3, .reader-title-section h2, .track-section-head h2, .jm-head, #jmCount and the whole .footer. If you drop the gradient, also reset the text fill to currentColor. Otherwise the text disappears; .footer would also hide the .footer-feedback button text.\n- The japamala gradients (gWood1-3, gMarker, gGuru, gGuruTop, gGold, gFocus) are SVG <defs> in the always-present 0-size svg.jm-defs at index.html:1138-1149, not CSS. Keep that element rendered: no display:none. JS fills reference url(#gGold) and the others."
+}

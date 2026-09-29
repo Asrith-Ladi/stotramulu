@@ -1,34 +1,56 @@
-﻿/* Fourth Japamala view: a small, dependency-free WebGL Rudraksha strand. */
+/* ============================================================
+   Japamala, look 4: the dependency-free WebGL Rudraksha strand
+   (public/assets/japamala-3d.js). Owner: CSS-4.
+
+   The canvas is transparent (alpha: true, clear colour 0), so this stage's
+   light ivory background and the ::before zari thread are the only backdrop
+   and "string" behind the dark-brown beads.
+   Rules marked KEEP are rendering-critical (docs/redesign-research/
+   cssReadingDesign3d.json); only colours and type were restyled.
+   No display, animation, transform, transition or filter on the stage
+   itself: JS writes its display inline and the canvas measures it.
+============================================================ */
 .jm-stage-rudraksha3d {
+    /* KEEP: the size the canvas measures, and the containing block and
+       stacking context for the aura, thread, hint and fallback layers.
+       pan-y keeps vertical page scroll while horizontal drags rotate the strand. */
     position: relative;
     width: min(100%, 390px);
     min-height: 414px;
     margin-inline: auto;
-    border: 1px solid rgba(220, 170, 82, 0.2);
-    border-radius: 28px;
     overflow: hidden;
     isolation: isolate;
-    background:
-        radial-gradient(circle at 50% 43%, rgba(235, 181, 84, 0.15), transparent 31%),
-        radial-gradient(circle at 50% 52%, #211225 0, #130a18 68%, #0b0710 100%);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 18px 46px rgba(0,0,0,.22);
     touch-action: pan-y;
+
+    /* Look: a light ivory silk mat that contrasts with the dark beads */
+    padding: 0;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-xl);
+    background:
+        radial-gradient(circle at 50% 43%, rgb(226 198 124 / .24), transparent 34%),
+        radial-gradient(circle at 50% 50%, var(--paper) 0, var(--ivory) 58%, var(--sand) 100%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .8), var(--shadow-sm);
 }
 
+/* KEEP: the only thread in the 3D view; it shows through the transparent canvas.
+   Centred with auto margins rather than a transform. */
 .jm-stage-rudraksha3d::before {
-    content: '';
+    content: "";
     position: absolute;
     z-index: 0;
     top: 18px;
     bottom: 34px;
-    left: 50%;
+    left: 0;
+    right: 0;
     width: 2px;
-    transform: translateX(-50%);
-    background: linear-gradient(180deg, transparent, #a97c35 12%, #e0bd69 50%, #a97c35 88%, transparent);
-    box-shadow: 0 0 5px rgba(220, 177, 89, .32);
-    opacity: .8;
+    margin-inline: auto;
+    background: linear-gradient(180deg, transparent, var(--zari-700) 12%, var(--zari-500) 50%, var(--zari-700) 88%, transparent);
+    box-shadow: 0 0 4px rgb(195 154 61 / .35);
+    opacity: .85;
+    pointer-events: none;
 }
 
+/* KEEP: positioning and pointer-events. A soft zari glow behind the focus bead. */
 .jm-rudraksha-aura {
     position: absolute;
     z-index: 0;
@@ -38,11 +60,13 @@
     height: 158px;
     border-radius: 50%;
     transform: translate(-50%, -53%);
-    background: radial-gradient(circle, rgba(255,211,112,.18), rgba(195,113,43,.06) 48%, transparent 72%);
+    background: radial-gradient(circle, rgb(226 198 124 / .4), rgb(195 154 61 / .12) 48%, transparent 72%);
     filter: blur(3px);
     pointer-events: none;
 }
 
+/* KEEP: display, width and aspect-ratio fix the canvas's CSS size, so the
+   drawing buffer (on-screen size x up to 1.5) never grows or distorts. */
 .jm-rudraksha-canvas {
     position: relative;
     z-index: 1;
@@ -51,12 +75,21 @@
     aspect-ratio: 18 / 19;
     cursor: grab;
     -webkit-tap-highlight-color: transparent;
+    border-radius: calc(var(--r-xl) - 1px);     /* lets the inset focus ring follow the stage corners */
 }
 
 .jm-rudraksha-canvas:active {
     cursor: grabbing;
 }
 
+/* The stage clips overflow, so draw the focus ring inside the canvas,
+   in peacock: the default zari ring is faint on the ivory mat. */
+.jm-rudraksha-canvas:focus-visible {
+    outline-color: var(--peacock-700);
+    outline-offset: -4px;
+}
+
+/* KEEP: japamala.js re-adds .celebrate on the canvas when a mala completes */
 .jm-rudraksha-canvas.celebrate {
     animation: jmRudrakshaCelebrate 900ms ease;
 }
@@ -64,52 +97,78 @@
 @keyframes jmRudrakshaCelebrate {
     42% {
         transform: scale(1.025);
-        filter: drop-shadow(0 0 22px rgba(255, 210, 111, .64));
+        filter: drop-shadow(0 0 22px rgb(195 154 61 / .6));
     }
 }
 
+/* KEEP: positioning and pointer-events, so a drag that starts on the hint
+   still reaches the canvas instead of the page's tap-to-count handler. */
 .jm-rudraksha-hint {
     position: absolute;
     z-index: 2;
-    inset: auto 12px 12px;
-    color: var(--gold-light);
-    font-size: 11px;
-    letter-spacing: .8px;
-    opacity: .62;
+    inset: auto 0 12px;
+    width: fit-content;
+    max-width: calc(100% - 16px);
+    margin-inline: auto;
+    padding: 1px 4px;
+    border-radius: var(--r-sm);
+    /* a paper chip: the caption sits where the bead strand passes */
+    background: rgb(255 253 248 / .9);
+    box-shadow: var(--shadow-xs);
+    color: var(--ink-3);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: center;
     pointer-events: none;
 }
 
+/* KEEP: covers the stage above the canvas when WebGL is unavailable or lost,
+   and respects [hidden] (behavior.css forces [hidden] to display:none). */
 .jm-rudraksha-fallback {
     position: absolute;
     z-index: 3;
     inset: 0;
-    padding: 56px 28px;
+    padding: var(--sp-9) var(--sp-6);
     align-content: center;
-    color: var(--gold-light);
-    background: rgba(17, 9, 21, .96);
+    text-align: center;
+    color: var(--ink);
+    background: var(--paper);
 }
 
 .jm-rudraksha-fallback:not([hidden]) {
     display: grid;
     justify-items: center;
-    gap: 10px;
+    gap: var(--sp-3);
 }
 
-.jm-rudraksha-fallback span { font-size: 56px; }
-.jm-rudraksha-fallback strong { font-size: 17px; }
-.jm-rudraksha-fallback small { max-width: 250px; line-height: 1.55; opacity: .72; }
+.jm-rudraksha-fallback .icon-inline {
+    width: 56px;
+    height: 56px;
+    color: var(--zari-700);
+}
+.jm-rudraksha-fallback strong {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--peacock-900);
+}
+.jm-rudraksha-fallback small {
+    max-width: 30ch;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--ink-2);
+}
 
 @media (max-width: 430px) {
-    .jm-mode-btn[data-mode="rudraksha3d"] {
-        grid-column: 1 / -1;
-    }
-
     .jm-stage-rudraksha3d {
-        min-height: 370px;
-        border-radius: 22px;
+        min-height: 370px;                      /* KEEP */
     }
+    .jm-rudraksha-fallback { padding: var(--sp-7) var(--sp-5); }
 }
 
+/* KEEP */
 @media (prefers-reduced-motion: reduce) {
     .jm-rudraksha-aura { filter: none; }
 }

@@ -12,8 +12,10 @@
    a temple bell after a full mala (108).
 
    Data lives in the shared `track` object (track.japamala.total) so
-   it rides backup/restore. Depends on globals from app.js: track,
-   saveTrack, gaEvent.
+   it rides backup/restore. Depends on globals from tracking.js (track,
+   saveTrack), app.js (gaEvent, siteConfirm) and reader-navigation.js
+   (stopReaderPositionTracking). Owns the global bumpJapa() that the page,
+   the COUNT button, the Space key and japamala-3d.js all call.
 ============================================================ */
 const JM_BEADS = 108;
 const JM_CX = 150;        // strand centre x (viewBox units)
@@ -48,9 +50,8 @@ function ensureJapamalaData() {
 /* ---------- open / build ---------- */
 function openJapamala() {
     stopReaderPositionTracking();
-    document.getElementById('searchOverlay').classList.remove('active');
-    document.getElementById('daySheetOverlay').classList.remove('active');
-    document.body.style.overflow = '';
+    if (typeof closeAllSheets === 'function') closeAllSheets();   // app.js: a page change closes open sheets
+    else document.body.style.overflow = '';
 
     document.getElementById('homePage').style.display = 'none';
     document.getElementById('readerPage').classList.remove('active');
@@ -67,7 +68,9 @@ function openJapamala() {
     jmFlowTarget = total0; jmFlow = total0; jmFlowVel = 0;
     setJmMode(jmMode);                   // show the right look + render it
     renderCount();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // a script-requested smooth scroll ignores the CSS reduced-motion switch, so check it here
+    const still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: still ? 'auto' : 'smooth' });
 }
 
 /* ---------- switch between the looks ---------- */
@@ -80,8 +83,11 @@ function setJmMode(mode) {
         const el = document.getElementById(stages[m]);
         if (el) el.style.display = (m === jmMode) ? '' : 'none';
     });
-    document.querySelectorAll('.jm-mode-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.mode === jmMode));
+    document.querySelectorAll('.jm-mode-btn').forEach(b => {
+        const on = b.dataset.mode === jmMode;
+        b.classList.toggle('active', on);
+        b.setAttribute('aria-pressed', String(on));   // screen readers hear which view is chosen
+    });
     const total = ensureJapamalaData().total;
     if (window.Japamala3D && jmMode !== 'rudraksha3d') window.Japamala3D.hide();
     if (jmMode === 'strand') { jmTarget = jmScrollForCount(total); jmScroll = jmTarget; jmVel = 0; renderStrand(); }
@@ -332,13 +338,18 @@ function bumpJapa() {
     renderCount();
 }
 
-// NOTE: named resetJapamala (not resetJapa) — app.js already defines a global
-// resetJapa(i) for the day-sheet japa rows, and this file loads after it.
+// NOTE: named resetJapamala (not resetJapa) — tracking.js already defines a
+// global resetJapa(i) for the day-sheet japa rows. (The same clash once hit
+// bumpJapa; the day-sheet version is now tracking.js bumpDayJapa(i, delta).)
 async function resetJapamala() {
     const jm = ensureJapamalaData();
     if (!jm.total) return;
-    if (!await siteConfirm('జపమాల count 0కి తిరిగి సెట్ చేయాలా?\n\nReset japamala to 0?',
-        { okLabel: 'రీసెట్ / Reset', danger: true })) return;
+    const back = document.activeElement;
+    const ok = await siteConfirm('జపమాల లెక్కను 0కి తిరిగి సెట్ చేయాలా?\n\nReset japamala to 0?',
+        { okLabel: 'రీసెట్ / Reset', danger: true });
+    // the dialog took focus; give it back to the reset button (keyboard users)
+    if (back && back !== document.body && back.isConnected) { try { back.focus({ preventScroll: true }); } catch (e) {} }
+    if (!ok) return;
     jm.total = 0;
     gaEvent('japamala_reset');
     saveTrack();
@@ -358,14 +369,32 @@ function jmCelebrate() {
     jmConfetti();
 }
 
-/* ---------- lightweight confetti (no library) ---------- */
+/* ---------- lightweight confetti (no library) ----------
+   Kanchi-silk colours read from the tokens (hex fallbacks match tokens.css):
+   mostly zari gold and peacock, a touch of kumkum, and ivory pieces with a thin
+   gold edge so they still show on the ivory page. The motion itself is the
+   .jm-confetti keyframe in behavior.css, which reduced motion switches off,
+   so with reduced motion we skip the pieces entirely. */
 function jmConfetti() {
-    const colors = ['#ffdf9e', '#d9b25a', '#b5341f', '#f6ead2', '#e8c25c'];
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let css = null;
+    try { css = getComputedStyle(document.documentElement); } catch (e) {}
+    const tok = (name, fallback) => ((css && css.getPropertyValue(name)) || '').trim() || fallback;
+    const peacock = tok('--peacock-700', '#17615d');
+    const peacockLight = tok('--peacock-600', '#1d7570');
+    const zari = tok('--zari-500', '#c39a3d');
+    const zariLight = tok('--zari-300', '#e2c67c');
+    const kumkum = tok('--kumkum-700', '#8e1f26');
+    const ivory = tok('--ivory', '#faf8f2');
+    const colors = [zari, peacock, zariLight, peacockLight, ivory, zari, kumkum, zariLight];
     for (let i = 0; i < 60; i++) {
         const d = document.createElement('div');
+        const color = colors[i % colors.length];
         d.className = 'jm-confetti';
+        d.setAttribute('aria-hidden', 'true');
         d.style.left = Math.random() * 100 + 'vw';
-        d.style.background = colors[i % colors.length];
+        d.style.background = color;
+        if (color === ivory) d.style.boxShadow = 'inset 0 0 0 1.5px ' + zari;
         d.style.animationDelay = (Math.random() * 0.3).toFixed(2) + 's';
         d.style.animationDuration = (1.8 + Math.random() * 1.2).toFixed(2) + 's';
         document.body.appendChild(d);
@@ -477,12 +506,38 @@ function jmPlayBell() {
     });
 }
 
-/* Space bar advances while the japamala page is open */
-window.addEventListener('keydown', (e) => {
-    if ((e.code === 'Space' || e.key === ' ') &&
-        document.getElementById('japamalaPage') &&
-        document.getElementById('japamalaPage').classList.contains('active')) {
-        e.preventDefault();
-        bumpJapa();
+/* ---------- Space bar counts a bead while the japamala page is open ----------
+   …unless Space belongs to something else. Then the handler steps aside and
+   leaves the browser's own behaviour alone:
+   - the key comes from inside a control or a field: a button (Space presses
+     it, so the జపం button still counts, once, through its own onclick), a
+     summary, input, textarea, select or contenteditable text;
+   - a sheet, overlay or dialog is open on top of the page (search, the
+     account / updates / messages / info sheets, feedback, the day sheet, or
+     a confirm / prompt dialog).
+   The 3D canvas is role="button" but not a real <button>: Space on it counts
+   here, and japamala-3d.js answers only Enter, so a key never counts twice.
+   help.js stops Space for ⓘ buttons in the capture phase before this runs.
+   Holding Space down counts one bead, not a stream. */
+(function () {
+    'use strict';
+    const OWNS_SPACE = 'button, summary, input, textarea, select, [contenteditable]:not([contenteditable="false"])';
+    const LAYERS = '.search-overlay.active, .sheet-overlay.active, .feedback-overlay.active, .day-sheet-overlay.active, .sc-overlay';
+
+    function spaceBelongsElsewhere(e) {
+        const t = e.target;
+        if (t && t.closest && t.closest(OWNS_SPACE)) return true;
+        return !!document.querySelector(LAYERS);
     }
-});
+
+    window.addEventListener('keydown', (e) => {
+        if (!(e.code === 'Space' || e.key === ' ' || e.key === 'Spacebar')) return;
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        const page = document.getElementById('japamalaPage');
+        if (!page || !page.classList.contains('active')) return;
+        if (spaceBelongsElsewhere(e)) return;
+        e.preventDefault();          // Space would otherwise scroll the page
+        if (e.repeat) return;
+        bumpJapa();
+    });
+})();

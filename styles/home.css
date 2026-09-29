@@ -1,0 +1,504 @@
+/* ============================================================
+   Home (CSS-2): hero, recent reading, today by weekday, the
+   "what's new" teaser and favourites (the Saved view).
+   Markup: contract §3 Home and §4.1, 4.2, 4.4, 4.14.
+
+   Rules of this file:
+   - Colours, type, radii, shadows and motion come from tokens.css.
+     The only literal colours are alpha tints of token colours, written
+     the same way components.css writes .info-btn-light and .btn-gold.
+   - Shared components (.medallion, .section-head, .info-btn, .tag,
+     .empty-state, .btn) are composed, never redefined.
+   - behavior.css owns display/position/z-index/overflow/transform/
+     animation for #homePage and its [data-panel] children, and the
+     .diya-flame animation. Nothing here touches them.
+   - Nothing inside #homePage may be wider than the viewport at 320px.
+     The only thing allowed past an edge is .hero-art, and even that
+     stays clipped inside the hero.
+============================================================ */
+
+/* ---------- Hero: .welcome-section ---------- */
+.welcome-section {
+    --focus-ring: var(--zari-300);   /* the peacock ring would vanish on the dark hero */
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    padding: var(--sp-6) var(--sp-5) 36px;       /* bottom clears the 12px zari border */
+    border-radius: 26px;
+    background:
+        radial-gradient(120% 90% at 92% 8%, rgb(226 198 124 / .22), transparent 55%),
+        linear-gradient(150deg, var(--peacock-900), var(--peacock-700));
+    color: var(--ivory);
+    box-shadow: var(--shadow), inset 0 0 0 1px rgb(226 198 124 / .14);
+}
+
+/* Zari temple border along the bottom edge: a 12px row of gold triangles */
+.welcome-section::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 12px;
+    background:
+        linear-gradient(135deg, transparent 50%, var(--zari-500) 50%) 50% 0 / 12px 12px repeat-x,
+        linear-gradient(225deg, transparent 50%, var(--zari-500) 50%) 50% 0 / 12px 12px repeat-x;
+    opacity: .9;
+    pointer-events: none;
+}
+
+.welcome-copy {
+    position: relative;
+    z-index: 1;               /* above the phone lamp art */
+    min-width: 0;
+}
+.welcome-section .eyebrow { color: var(--zari-300); }
+.welcome-section h2 {
+    margin: var(--sp-2) 0 10px;
+    font-family: var(--font-serif);
+    font-size: var(--fs-display);
+    font-weight: 600;
+    line-height: 1.42;
+    color: var(--ivory);
+    /* keeps the heading crisp where it crosses the lamp on small phones */
+    text-shadow: 0 1px 14px rgb(8 45 44 / .5);
+}
+.welcome-copy > p {
+    max-width: 44ch;
+    font-size: var(--fs-md);
+    line-height: var(--lh);
+    color: var(--peacock-100);
+}
+
+.welcome-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-5);
+}
+
+/* Primary call to action: the .btn-gold look on the link experience.js needs */
+.primary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    min-height: 50px;
+    padding: 0 22px;
+    border: 1.5px solid transparent;
+    border-radius: 14px;      /* same corner as .btn */
+    background: linear-gradient(180deg, var(--zari-300), var(--zari-500));
+    color: var(--peacock-950);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 6px 18px rgb(138 103 32 / .28);
+    transition: box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.primary-link:hover {
+    background: linear-gradient(180deg, var(--zari-200), var(--zari-300));
+    color: var(--peacock-950);
+    box-shadow: 0 8px 22px rgb(138 103 32 / .34);
+}
+.primary-link:active { transform: scale(.97); }
+.primary-link .icon-inline {
+    width: 1.2em;
+    height: 1.2em;
+    transition: transform var(--dur-2) var(--ease-out);
+}
+
+/* "How to use" help: a light outline pill on the peacock ground */
+.hero-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    min-height: 50px;
+    padding: 0 var(--sp-5);
+    border: 1.5px solid rgb(226 198 124 / .7);
+    border-radius: var(--r-pill);
+    background: rgb(255 255 255 / .06);
+    color: var(--ivory);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1.3;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.hero-help .icon-inline { width: 20px; height: 20px; color: var(--zari-300); }
+.hero-help:hover { background: rgb(255 255 255 / .13); border-color: var(--zari-300); }
+.hero-help:active { transform: scale(.97); }
+
+.hero-note {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: var(--sp-4);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--peacock-200);
+}
+.hero-note::before {        /* small zari diamond */
+    content: "";
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+    background: var(--zari-300);
+    transform: rotate(45deg);
+}
+
+/* Lamp art. Phones and tablets: decorative, top-right, behind the copy.
+   The flame's breathing animation lives in behavior.css (.diya-flame). */
+.hero-art {
+    position: absolute;
+    top: 10px;
+    right: -6px;
+    z-index: 0;
+    width: 132px;
+    pointer-events: none;
+}
+.hero-art svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 440 / 380;
+}
+.hero-art > span { display: none; }
+
+/* Phones: the two hero actions stretch full width once they wrap */
+@media (max-width: 599.98px) {
+    .welcome-actions > .primary-link,
+    .welcome-actions > .hero-help { flex: 1 1 auto; }
+}
+
+@media (min-width: 600px) {
+    .welcome-section { padding: var(--sp-7) var(--sp-7) 44px; }
+    .hero-art { top: 14px; right: 6px; width: clamp(150px, 26vw, 210px); }
+}
+
+/* Desktop: copy on the left, the lamp in its own column on the right */
+@media (min-width: 1024px) {
+    .welcome-section {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        align-items: center;
+        column-gap: var(--sp-7);
+        padding: 52px var(--sp-9) 60px;
+    }
+    .hero-art {
+        position: relative;
+        top: auto;
+        right: auto;
+        width: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .hero-art svg { max-width: 380px; }
+    .hero-art > span {
+        display: block;
+        font-family: var(--font-serif);
+        font-size: var(--fs-sm);
+        line-height: 1.5;
+        color: var(--zari-200);
+    }
+}
+
+/* ---------- Home surfaces: recent, today, favourites ---------- */
+.recent-reading-section,
+.today-section,
+.favorites-section {
+    min-width: 0;
+    padding: 18px;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+}
+.recent-reading-section > .section-head,
+.favorites-section > .section-head { margin-bottom: 14px; }
+.recent-reading-section h2,
+.favorites-section h2 {
+    font-size: var(--fs-lg);
+    line-height: 1.4;
+    color: var(--ink);
+}
+/* Favourites is the whole Saved tab, so its heading reads as the page title */
+.favorites-section h2 { font-size: var(--fs-xl); }
+
+/* Tile grids. They wrap and never scroll sideways: one column on phones,
+   two on tablets, three once a tile is wide enough (about 260px) for a
+   Telugu title of two lines beside its medallion. */
+.today-strip,
+.recent-reading-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+}
+
+/* ---------- Recent reading ---------- */
+.recent-reading-list > button {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 20px;
+    column-gap: var(--sp-3);
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    padding: var(--sp-3) 14px 14px var(--sp-4);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    background: var(--ivory);
+    color: var(--ink);
+    text-align: left;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.recent-title {
+    grid-column: 1;
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.45;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.recent-reading-list > button > small {
+    grid-column: 1;
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--c-text-muted);
+}
+/* Chevron, drawn with a mask so it takes the text colour */
+.recent-reading-list > button::after {
+    --chev: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 5 7 7-7 7'/%3E%3C/svg%3E");
+    content: "";
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    width: 20px;
+    height: 20px;
+    background-color: var(--ink-3);
+    -webkit-mask: var(--chev) center / contain no-repeat;
+    mask: var(--chev) center / contain no-repeat;
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+/* 4px progress bar; the fill width comes from the inline --p (0..1).
+   The "శ్లోకం n / T" line above says the same thing in words. */
+.recent-progress {
+    grid-column: 1 / -1;
+    display: block;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: var(--r-pill);
+    background:
+        linear-gradient(var(--peacock-600), var(--peacock-600)) 0 0 / clamp(0%, calc(var(--p, 0) * 100%), 100%) 100% no-repeat,
+        var(--sand-2);
+}
+.recent-reading-list > button:hover {
+    background: var(--paper);
+    border-color: var(--peacock-300);
+    box-shadow: var(--shadow-xs);
+}
+.recent-reading-list > button:active { transform: scale(.985); }
+
+/* ---------- Today by weekday ----------
+   Sun disc | "ఈ రోజు — సోమవారం" ⓘ
+            | శివ ఆరాధన
+   The 40px disc keeps heading and ⓘ on one line at 320px. */
+.today-head {
+    display: grid;
+    grid-template-columns: auto minmax(0, max-content) minmax(30px, 1fr);
+    grid-template-areas:
+        "icon day info"
+        "icon note note";
+    align-items: center;
+    column-gap: var(--sp-2);
+    row-gap: 0;
+}
+.today-icon {
+    grid-area: icon;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--zari-100);
+    color: var(--zari-700);
+    box-shadow: inset 0 0 0 1.5px var(--zari-300);
+}
+.today-icon .icon-inline { width: 22px; height: 22px; }
+.today-day {
+    grid-area: day;
+    font-size: var(--fs-lg);
+    line-height: 1.4;
+    color: var(--ink);
+}
+@media (max-width: 359.98px) {
+    .today-day { font-size: var(--fs-md); }   /* "ఈ రోజు — మంగళవారం" stays on one line at 320px */
+}
+.today-note {
+    grid-area: note;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--c-accent-text);
+}
+.today-head > .info-btn { grid-area: info; justify-self: start; }
+.weekday-guidance {
+    margin: var(--sp-3) 0 14px;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-soft);
+}
+
+/* Tiles: <button> in Today, <a> in Favourites. Same look for both. */
+.today-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    min-width: 0;
+    min-height: 64px;
+    padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-2);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    background: var(--ivory);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.45;
+    text-align: left;
+    text-decoration: none;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.today-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.today-tile > .icon-inline {
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.today-tile:hover {
+    background: var(--paper);
+    border-color: var(--peacock-300);
+    color: var(--ink);
+    box-shadow: var(--shadow-xs);
+}
+.today-tile:active { transform: scale(.985); }
+
+/* ---------- "What's new" teaser: last on Home ---------- */
+.updates-teaser { order: 1; }
+.updates-teaser-card {
+    /* The medallion reads these: a paper disc with a zari sparkle */
+    --deity-soft: var(--paper);
+    --deity: var(--zari-700);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    min-height: 72px;
+    padding: 14px var(--sp-4);
+    border: 1px solid var(--zari-200);
+    border-radius: var(--r-lg);
+    background: linear-gradient(90deg, var(--zari-100), var(--paper) 78%);
+    color: var(--ink);
+    text-align: left;
+    box-shadow: var(--shadow-sm);
+    transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.updates-teaser-copy {
+    display: grid;
+    justify-items: start;
+    gap: 3px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.updates-teaser-copy > b {
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.45;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.updates-teaser-copy > small {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    font-size: var(--fs-xs);
+    line-height: 1.55;
+    color: var(--c-text-soft);
+}
+.updates-teaser-card > .icon-inline {
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+.updates-teaser-card:hover { border-color: var(--zari-300); box-shadow: var(--shadow); }
+.updates-teaser-card:active { transform: scale(.99); }
+
+/* ---------- Favourites (Saved view) ---------- */
+/* .favorites-grid also carries .today-strip, so it shares the tile grid above. */
+.favorites-empty {
+    margin-top: var(--sp-1);
+    border: 1.5px dashed var(--c-border-strong);
+    border-radius: var(--r);
+    background: var(--ivory);
+}
+
+/* ---------- Pointer hover niceties (not on touch, where hover sticks) ---------- */
+@media (hover: hover) {
+    .primary-link:hover .icon-inline { transform: translateX(3px); }
+    .recent-reading-list > button:hover::after { background-color: var(--peacock-700); transform: translateX(3px); }
+    .today-tile:hover > .icon-inline,
+    .updates-teaser-card:hover > .icon-inline { color: var(--peacock-700); transform: translateX(3px); }
+}
+
+/* ---------- Tablet and desktop ---------- */
+@media (min-width: 600px) {
+    .recent-reading-section,
+    .today-section,
+    .favorites-section { padding: 22px var(--sp-6) var(--sp-6); }
+    .recent-reading-section h2,
+    .today-day { font-size: var(--fs-xl); }
+    .favorites-section h2 { font-size: var(--fs-2xl); }
+    .today-icon { width: 48px; height: 48px; margin-right: var(--sp-1); }
+    .today-icon .icon-inline { width: 26px; height: 26px; }
+    .today-strip,
+    .recent-reading-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .updates-teaser-card { padding: var(--sp-4) var(--sp-5); }
+}
+/* Two columns only: a lone last tile on Home spans the row instead of leaving a hole */
+@media (min-width: 600px) and (max-width: 899.98px) {
+    .today-strip:not(.favorites-grid) > .today-tile:last-child:nth-child(odd),
+    .recent-reading-list > button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+@media (min-width: 900px) {
+    .today-strip,
+    .recent-reading-list { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-3); }
+}
+
+/* ---------- Windows high contrast: keep the progress fill visible ---------- */
+@media (forced-colors: active) {
+    .recent-progress { forced-color-adjust: none; }
+    .welcome-section { border: 1px solid CanvasText; }
+}
+
+/* ---------- Integration additions (Phase 3) ---------- */
+.today-tile .today-ico { width: 44px; height: 44px; font-size: 22px; }

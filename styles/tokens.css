@@ -1,0 +1,179 @@
+/* ============================================================
+   Design tokens: "Kanchi silk". Peacock teal chrome, zari gold
+   accents, ivory and paper surfaces, kumkum as a rare signal.
+   Every other stylesheet reads these; nothing here selects elements
+   except :root and the per-deity accent classes at the end.
+============================================================ */
+:root {
+    /* Peacock teal: chrome, hero, primary actions */
+    --peacock-950: #082d2c;
+    --peacock-900: #0d3b3a;
+    --peacock-800: #124d4b;
+    --peacock-700: #17615d;
+    --peacock-600: #1d7570;
+    --peacock-300: #93bfb6;
+    --peacock-200: #bfd9d2;
+    --peacock-100: #dcebe6;
+    --peacock-50: #eef5f1;
+
+    /* Zari gold: ornament, borders, highlights (700 is the text-safe gold) */
+    --zari-800: #6f521a;
+    --zari-700: #8a6720;
+    --zari-500: #c39a3d;
+    --zari-300: #e2c67c;
+    --zari-200: #eedcaa;
+    --zari-100: #f6edd3;
+
+    /* Kumkum: small signals only (new-updates dot, errors) */
+    --kumkum-800: #74171d;
+    --kumkum-700: #8e1f26;
+    --kumkum-100: #f7e3e2;
+
+    /* Leaf: success / answered / verified */
+    --leaf-700: #2f6b45;
+    --leaf-100: #e2f0e6;
+
+    /* Surfaces and ink */
+    --ivory: #faf8f2;
+    --sand: #f2ede1;
+    --sand-2: #e9e2d0;
+    --paper: #fffdf8;
+    --paper-leaf: #fffcf5;
+    --ink: #1b2423;
+    --ink-2: #3d4a48;
+    --ink-3: #5a6764;
+    --reading-ink: #20180f;
+    --line: #e4dece;
+    --line-2: #d2c9b0;
+    --white: #ffffff;
+
+    /* Semantic roles */
+    --c-bg: var(--ivory);
+    --c-surface: var(--paper);
+    --c-surface-sunken: var(--sand);
+    --c-text: var(--ink);
+    --c-text-soft: var(--ink-2);
+    --c-text-muted: var(--ink-3);
+    --c-primary: var(--peacock-800);
+    --c-primary-hover: var(--peacock-700);
+    --c-primary-ink: var(--white);
+    --c-accent: var(--zari-500);
+    --c-accent-text: var(--zari-700);
+    --c-link: var(--peacock-700);
+    --c-border: var(--line);
+    --c-border-strong: var(--line-2);
+    --c-danger: var(--kumkum-700);
+    --c-success: var(--leaf-700);
+    --focus-ring: var(--peacock-700);   /* 3:1+ on ivory and paper; dark areas switch to zari-300 */
+
+    /* Legacy aliases still read by kept files (japamala-3d.css) */
+    --gold-light: var(--zari-300);
+    --gold: var(--zari-500);
+
+    /* Type */
+    --font-ui: "Noto Sans Telugu Variable", "Noto Sans Telugu", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-serif: "Noto Serif Telugu Variable", "Noto Serif Telugu", "Noto Sans Telugu Variable", "Noto Sans Telugu", serif;
+    --fs-xs: 14px;     /* smallest text anywhere */
+    --fs-sm: 15px;
+    --fs-md: 17px;     /* body */
+    --fs-lg: 19px;
+    --fs-xl: 22px;
+    --fs-2xl: 26px;
+    --fs-3xl: 30px;
+    --fs-display: clamp(28px, 7vw, 46px);
+    --lh-tight: 1.35;
+    --lh: 1.65;
+    --lh-reading: 1.95;
+    --reader-font-size: 24px;   /* set by reader.js (18-48px) */
+
+    /* Space (4px base) */
+    --sp-1: 4px;
+    --sp-2: 8px;
+    --sp-3: 12px;
+    --sp-4: 16px;
+    --sp-5: 20px;
+    --sp-6: 24px;
+    --sp-7: 32px;
+    --sp-8: 40px;
+    --sp-9: 56px;
+
+    /* Shape */
+    --r-xs: 8px;
+    --r-sm: 12px;
+    --r: 16px;
+    --r-lg: 22px;
+    --r-xl: 28px;
+    --r-pill: 999px;
+
+    /* Elevation (teal-tinted, soft) */
+    --shadow-xs: 0 1px 2px rgb(13 59 58 / .06);
+    --shadow-sm: 0 1px 2px rgb(13 59 58 / .06), 0 2px 10px rgb(13 59 58 / .05);
+    --shadow: 0 2px 6px rgb(13 59 58 / .06), 0 12px 30px rgb(13 59 58 / .09);
+    --shadow-lg: 0 18px 50px rgb(8 45 44 / .24);
+    --shadow-primary: 0 8px 20px rgb(18 77 75 / .26);
+
+    /* Motion */
+    --ease-out: cubic-bezier(.22, 1, .36, 1);
+    --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+    --dur-1: 140ms;
+    --dur-2: 220ms;
+    --dur-3: 320ms;
+    --dur-4: 460ms;
+
+    /* Layout */
+    --content-max: 1120px;
+    --reader-max: 780px;
+    --gutter: 16px;
+    --header-h: 60px;
+    --tabbar-h: 72px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --tap: 48px;        /* minimum touch target */
+
+    /* Stacking ladder: pages < header < tab bar < floating < overlays < dialogs */
+    --z-bg: 0;
+    --z-page: 1;
+    --z-header: 40;
+    --z-tabbar: 45;
+    --z-float: 200;
+    --z-overlay: 500;     /* search, account */
+    --z-sheet: 520;       /* updates, messages */
+    --z-feedback: 550;
+    --z-daysheet: 600;
+    --z-confetti: 700;
+    --z-info: 800;        /* info sheet opens above any of the above */
+    --z-toast: 900;
+    --z-dialog: 950;
+    --z-skip: 1000;
+}
+
+@media (min-width: 600px) {
+    :root { --gutter: 24px; }
+}
+@media (min-width: 1024px) {
+    :root {
+        --header-h: 76px;
+        --tabbar-h: 0px;
+        --gutter: 32px;
+        --fs-md: 17.5px;
+    }
+}
+
+/* Per-deity accent. Cards carry the bare theme class, the reader title the
+   "-theme" class; both expose --deity (strong) and --deity-soft (tint). */
+.vishnu, .vishnu-theme { --deity: #2d5aa0; --deity-soft: #e8eef8; }
+.lalitha, .lalitha-theme { --deity: #a8325f; --deity-soft: #f8e9ef; }
+.shiva, .shiva-theme { --deity: #3c6a8a; --deity-soft: #e7eff4; }
+.ganesha, .ganesha-theme { --deity: #b85a24; --deity-soft: #f9ece3; }
+.venkat, .venkat-theme { --deity: #9a7016; --deity-soft: #f7f0dc; }
+.hanuman, .hanuman-theme,
+.chalisa, .chalisa-theme { --deity: #b04a26; --deity-soft: #f8eae3; }
+.ayyappa, .ayyappa-theme { --deity: #2d62a0; --deity-soft: #e7eef7; }
+.lakshmi, .lakshmi-theme { --deity: #a47a14; --deity-soft: #f8f0da; }
+.durga, .durga-theme { --deity: #a52c3b; --deity-soft: #f8e6e8; }
+.saibaba, .saibaba-theme { --deity: #a8612a; --deity-soft: #f8ece2; }
+.govinda, .govinda-theme { --deity: #2c74ab; --deity-soft: #e6f0f7; }
+.bilva, .bilva-theme { --deity: #2f7342; --deity-soft: #e5f1e8; }
+.harati, .harati-theme { --deity: #b06f12; --deity-soft: #faefdc; }
+.manidweepa, .manidweepa-theme { --deity: #74409f; --deity-soft: #f1e9f7; }

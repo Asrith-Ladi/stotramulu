@@ -13,6 +13,11 @@ function rememberLibraryCategory(sectionId) {
 }
 let readerPositionObserver = null;
 let visibleVerseIndexes = new Set();
+// Only the reader's own scrolling (or a jump) moves the saved place. Opening a
+// stotram lands at the top, and that must not overwrite where they left off.
+let readerPositionArmed = false;
+['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(type =>
+    window.addEventListener(type, () => { readerPositionArmed = true; }, {capture: true, passive: true}));
 
 function isReaderPositionKey(type) {
     return typeof type === 'string' && Object.hasOwn(stotramConfig, type) &&
@@ -91,6 +96,7 @@ function stopReaderPositionTracking() {
 }
 function startReaderPositionTracking() {
     stopReaderPositionTracking();
+    readerPositionArmed = false;
     if (!('IntersectionObserver' in window)) return;
     readerPositionObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
@@ -105,7 +111,7 @@ function startReaderPositionTracking() {
             const bTop = document.getElementById('verse-' + b).getBoundingClientRect().top;
             return Math.abs(aTop - anchor) - Math.abs(bTop - anchor);
         })[0];
-        setCurrentVersePosition(index, true);
+        setCurrentVersePosition(index, readerPositionArmed);
     }, {rootMargin: '-12% 0px -55% 0px', threshold: 0.01});
     document.querySelectorAll('.slokam-block').forEach(block => readerPositionObserver.observe(block));
 }
@@ -145,9 +151,11 @@ function renderRecentReading() {
         section.setAttribute('aria-labelledby', 'recentReadingTitle');
     }
     section.replaceChildren();
-    const heading = document.createElement('h2');
-    heading.id = 'recentReadingTitle';
-    heading.textContent = 'ఇటీవల చదివినవి';
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = '<h2 id="recentReadingTitle">ఇటీవల చదివినవి</h2>' +
+        '<button type="button" class="info-btn" data-info="recent" aria-label="వివరణ: ఇటీవల చదివినవి">' +
+        '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>';
     const list = document.createElement('div');
     list.className = 'recent-reading-list';
     entries.forEach(entry => {
@@ -155,17 +163,27 @@ function renderRecentReading() {
         button.type = 'button';
         button.onclick = () => openRecentReading(entry.type, entry.index);
         const cfg = stotramConfig[entry.type];
+        const total = cfg.data.length;
         const title = document.createElement('span');
+        title.className = 'recent-title';
         title.textContent = cfg.title;
         const detail = document.createElement('small');
-        detail.textContent = 'శ్లోకం ' + (entry.index + 1) + ' / ' + cfg.data.length + ' నుండి కొనసాగించండి';
-        button.append(title, detail);
+        detail.textContent = 'శ్లోకం ' + (entry.index + 1) + ' / ' + total + ' నుండి కొనసాగించండి';
+        // A thin bar filled to the reading position; CSS reads --p (0..1).
+        const progress = document.createElement('span');
+        progress.className = 'recent-progress';
+        progress.setAttribute('aria-hidden', 'true');
+        const share = Math.min(1, Math.max(0, (entry.index + 1) / total));
+        progress.style.setProperty('--p', String(Math.round(share * 1000) / 1000));
+        button.append(title, detail, progress);
         list.appendChild(button);
     });
-    section.append(heading, list);
+    section.append(head, list);
     const categoryNav = home.querySelector('.library-navigation');
-    if (categoryNav) home.querySelector('.welcome-section').after(section);
-    else home.querySelector('.home-primary-actions').after(section);
+    const anchor = home.querySelector(categoryNav ? '.welcome-section' : '.home-primary-actions');
+    // Move it only when it is out of place: re-inserting restarts its entrance animation.
+    if (anchor) { if (section.previousElementSibling !== anchor) anchor.after(section); }
+    else if (home.firstElementChild !== section) home.prepend(section);
 }
 function readerMeaningCoverage(type) {
     const cfg = stotramConfig[type] || {};
@@ -312,7 +330,11 @@ document.addEventListener('DOMContentLoaded', () => {
     nav.setAttribute('aria-label', 'స్తోత్రాల విభాగాలు / Prayer categories');
     const intro = document.createElement('div');
     intro.className = 'library-intro';
-    intro.innerHTML = '<div><span class="eyebrow">THE SACRED COLLECTION</span><h2>స్తోత్రాల గ్రంథాలయం</h2></div><p>మీ మనసుకు దగ్గరైన స్తోత్రాన్ని ఎంచుకోండి.</p>';
+    intro.innerHTML = '<span class="eyebrow">పవిత్ర సంకలనం</span>' +
+        '<div class="section-head"><h2>స్తోత్రాల గ్రంథాలయం</h2>' +
+        '<button type="button" class="info-btn" data-info="categories" aria-label="వివరణ: స్తోత్రాల విభాగాలు">' +
+        '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button></div>' +
+        '<p>మీ మనసుకు దగ్గరైన స్తోత్రాన్ని ఎంచుకోండి.</p>';
     const filters = document.createElement('div');
     filters.className = 'category-filters';
     let sections = [...home.querySelectorAll('.cards-section')];
@@ -345,15 +367,19 @@ document.addEventListener('DOMContentLoaded', () => {
             addFilter(section.id, heading.textContent.trim(), section.querySelectorAll('.card').length);
             section._setOpen = open => { if (open) choose(section.id); };
             // Cloud-created categories belong in the library, before saved/practice.
+            // Only sections that are out of place move (a move replays the card animations).
             const afterLibrary = document.getElementById('favoritesSection') || actions;
-            home.insertBefore(section, afterLibrary);
+            const inPlace = afterLibrary
+                ? !!(section.compareDocumentPosition(afterLibrary) & Node.DOCUMENT_POSITION_FOLLOWING)
+                : section.parentNode === home;
+            if (!inPlace) home.insertBefore(section, afterLibrary);
         });
         choose(sections.some(section => section.id === preferred) ? preferred : 'all', false);
     };
     nav.append(intro, filters);
     sections[0]?.before(nav);
     // Practice tools follow the library; reading is the primary home-page task.
-    home.append(actions, home.querySelector('.practice-details'));
+    home.append(...[actions, home.querySelector('.practice-details')].filter(Boolean));
     refreshFilters();
     document.addEventListener('stotras-updated', refreshFilters);
     renderRecentReading();

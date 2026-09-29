@@ -1,0 +1,660 @@
+/* ============================================================
+   Practice (CSS-4): the "నా సాధన" launchers and pradakshina counter on
+   Home, the Pooja Track page (calendar + mokkulu) and the day-sheet
+   content inside #sheetBody. Markup: contract §3 Home/Track, §4.9,
+   §4.11-4.13. Visuals only; behavior.css owns everything functional:
+   - .reminder-banner / .show display
+   - .month-strip and .month-card geometry (month = scrollLeft / clientWidth),
+     so .month-card gets padding only here, never margin, gap or border
+   - .cal-grid display and 7 columns, .cal-day.future pointer-events
+   Counters, chips, fields, buttons and the ⓘ come from components.css;
+   this file only adjusts their spacing where they sit.
+============================================================ */
+
+/* ---------- #practice launchers (Home "practice" panel) ----------
+   The intro and the ⓘ share the "intro" grid area: the ⓘ sits at its right
+   edge and the intro reserves room for it. The two tiles auto-place below. */
+.home-primary-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "intro";
+    gap: var(--sp-3);
+}
+.practice-intro {
+    grid-area: intro;
+    min-width: 0;
+    padding-inline-end: 52px;
+    margin-bottom: var(--sp-1);
+}
+.practice-intro h2 {
+    margin-top: 2px;
+    font-size: var(--fs-2xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.practice-intro p {
+    max-width: 60ch;
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+.practice-info {
+    grid-area: intro;
+    justify-self: end;
+    align-self: center;
+}
+
+.practice-tile {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-4);
+    width: 100%;
+    min-width: 0;
+    min-height: 84px;
+    padding: var(--sp-4);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    text-align: start;
+    transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.practice-tile:active { transform: scale(.99); box-shadow: var(--shadow-xs); }
+
+/* 56px medallion: the same peacock disc and zari ring as .medallion */
+.practice-symbol {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--peacock-50);
+    color: var(--peacock-800);
+    box-shadow: inset 0 0 0 1.5px var(--zari-300);
+}
+.practice-symbol .icon-inline { width: 28px; height: 28px; }
+
+.practice-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.practice-title {
+    font-size: var(--fs-lg);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.practice-copy small {
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    color: var(--c-text-muted);
+}
+.practice-arrow {
+    width: 22px;
+    height: 22px;
+    color: var(--ink-3);
+    transition: transform var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out);
+}
+
+@media (hover: hover) {
+    .practice-tile:hover {
+        border-color: var(--peacock-200);
+        box-shadow: var(--shadow);
+        transform: translateY(-2px);
+    }
+    .practice-tile:hover .practice-arrow { color: var(--peacock-700); transform: translateX(3px); }
+}
+
+@media (min-width: 600px) {
+    .home-primary-actions {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-areas: "intro intro";
+        gap: var(--sp-4);
+    }
+    .practice-intro h2 { font-size: var(--fs-3xl); }
+}
+@media (min-width: 1024px) {
+    .practice-tile { min-height: 96px; padding: var(--sp-5) var(--sp-6); gap: var(--sp-5); }
+}
+
+/* ---------- details.practice-details (Home pradakshina counter) ---------- */
+.practice-details {
+    min-width: 0;
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+}
+.practice-details > summary {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-height: 56px;
+    padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-5);
+    border-radius: var(--r-lg);
+    list-style: none;                 /* Firefox marker */
+    color: var(--ink);
+    transition: background-color var(--dur-2) var(--ease-out);
+}
+.practice-details > summary::-webkit-details-marker { display: none; }   /* Safari marker */
+.practice-details[open] > summary {
+    border-bottom: 1px solid var(--c-border);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.practice-details > summary .summary-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+}
+/* The chevron sits in a sand disc so it reads as a control; it turns on open. */
+.practice-details > summary .summary-chevron {
+    width: 36px;
+    height: 36px;
+    padding: 7px;
+    border-radius: 50%;
+    background: var(--sand);
+    color: var(--peacock-700);
+    transition: transform var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+}
+.practice-details[open] > summary .summary-chevron { transform: rotate(180deg); }
+
+@media (hover: hover) {
+    .practice-details > summary:hover { background: var(--peacock-50); }
+    .practice-details > summary:hover .summary-chevron { background: var(--paper); }
+}
+
+/* The shared counter card becomes flat content inside the details surface. */
+.practice-details .counter-card {
+    max-width: 640px;
+    margin-inline: auto;
+    padding: var(--sp-4) var(--sp-4) var(--sp-5);
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* ============================================================
+   Track page (#trackPage.track-page)
+============================================================ */
+.track-section-head { margin-bottom: var(--sp-5); }
+.track-section-head h2 {
+    margin-top: 2px;
+    font-size: var(--fs-2xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.track-section-head p {
+    max-width: 60ch;
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+
+/* ---------- Reminder banner (display comes from behavior.css via .show) ---------- */
+.reminder-banner {
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-4);
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+    border: 1px solid var(--zari-300);
+    border-radius: var(--r);
+    background: var(--zari-100);
+    box-shadow: var(--shadow-xs);
+    color: var(--ink);
+}
+.rb-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--zari-700);
+    box-shadow: inset 0 0 0 1.5px var(--zari-300);
+}
+.rb-icon .icon-inline { width: 22px; height: 22px; }
+.rb-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--fs-md);
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+.rb-text b { color: var(--peacock-900); }
+.rb-close {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;                      /* 44px, not 40: the minimum tap target */
+    height: 44px;
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.rb-close .icon-inline { width: 20px; height: 20px; }
+.rb-close:active { transform: scale(.92); }
+@media (hover: hover) {
+    .rb-close:hover { background: var(--paper); color: var(--ink); }
+}
+
+/* ---------- Track cards ---------- */
+.track-card {
+    min-width: 0;
+    padding: var(--sp-4);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--shadow-sm);
+}
+.track-card + .track-card { margin-top: var(--sp-4); }
+.track-card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+}
+.track-card-title {
+    min-width: 0;
+    font-family: var(--font-serif);
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    color: var(--ink);
+}
+
+/* ---------- Calendar ---------- */
+.month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-2);
+}
+.month-arrow {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--c-border);
+    border-radius: 50%;
+    background: var(--sand);
+    color: var(--peacock-800);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.month-arrow .icon-inline { width: 22px; height: 22px; }
+.month-arrow:not(:disabled):active { transform: scale(.93); }
+.month-arrow:disabled { opacity: .35; cursor: not-allowed; }
+@media (hover: hover) {
+    .month-arrow:not(:disabled):hover { background: var(--peacock-50); border-color: var(--peacock-200); }
+}
+.month-label {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--peacock-900);
+}
+
+/* Padding only: with border-box sizing it never changes the card's outer width.
+   It gives the edge cells' focus ring room inside the strip's clipped overflow. */
+.month-card { padding: 3px; }
+
+/* The grid is capped on wide screens so the cells stay a calm size.
+   It sits inside .month-card and does not touch the strip geometry. */
+.cal-grid {
+    gap: 6px;
+    max-width: 520px;
+    margin-inline: auto;
+}
+.track-calendar .month-nav,
+.track-calendar .track-hint { max-width: 520px; margin-inline: auto; }
+
+.cal-weekday {
+    padding-block: var(--sp-1);
+    text-align: center;
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+.cal-weekday .wk-long { display: inline; }
+.cal-weekday .wk-short { display: none; }
+
+/* A day cell is square when there is room and never shorter than 44px
+   (narrow phones get 44px-tall cells). Width is explicit because a grid item
+   with an aspect-ratio would otherwise align to start instead of stretching. */
+.cal-day {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    min-width: 0;
+    aspect-ratio: 1;
+    min-height: 44px;
+    padding: 0;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-sm);
+    background: var(--c-surface);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.cal-day:focus-visible { outline-offset: 0; }
+.cal-num { line-height: 1; }
+
+.cal-day.has-data {
+    background: var(--zari-100);
+    border-color: var(--zari-300);
+}
+/* Today: a thicker border as well as colour, so it is not a colour-only signal */
+.cal-day.today {
+    border: 2px solid var(--peacock-700);
+    background: var(--peacock-50);
+    color: var(--peacock-900);
+    font-weight: 700;
+}
+.cal-day.today.has-data { background: var(--zari-100); }
+
+/* The dot is the non-colour sign that a day has entries */
+.cal-day .dot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 5px;
+    width: 6px;
+    height: 6px;
+    margin-inline: auto;
+    border-radius: 50%;
+    background: var(--peacock-600);
+}
+
+.cal-day.future {
+    opacity: .35;
+    background: transparent;
+    cursor: default;
+}
+.cal-day.empty {
+    visibility: hidden;
+    border-color: transparent;
+    background: transparent;
+}
+
+.cal-day:not(.empty):not(.future):active { transform: scale(.94); }
+@media (hover: hover) {
+    .cal-day:not(.empty):not(.future):not(.today):hover { border-color: var(--peacock-300); background: var(--peacock-50); }
+    .cal-day.today:hover { background: var(--peacock-100); }
+    .cal-day.has-data:not(.future):hover { background: var(--zari-200); }
+}
+
+.track-hint {
+    margin-top: var(--sp-3);
+    text-align: center;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+
+/* ---------- Mokkulu (vows) ---------- */
+.mokku-form {
+    display: grid;
+    gap: var(--sp-3);
+}
+.mokku-row2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: var(--sp-3);
+}
+.mokku-date-label {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+}
+.mokku-date-label > span {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink-2);
+}
+.mokku-add-btn {
+    min-height: 52px;                 /* level with the 52px date field */
+    white-space: nowrap;
+}
+
+.mokku-list {
+    display: grid;
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+}
+.mokku-item {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    min-width: 0;
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r);
+    background: var(--ivory);
+}
+
+/* Not done: a teal ring with a faint tick. Done: filled teal with a white tick. */
+.mokku-check {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 2px solid var(--peacock-600);
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--peacock-200);
+    cursor: pointer;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.mokku-check .icon-inline { width: 22px; height: 22px; }
+.mokku-item.done .mokku-check,
+.mokku-check[aria-pressed="true"] {
+    border-color: var(--peacock-700);
+    background: var(--peacock-700);
+    color: var(--white);
+}
+
+.mokku-body { flex: 1 1 auto; min-width: 0; }
+.mokku-text {
+    font-size: var(--fs-md);
+    line-height: 1.5;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.mokku-item.done .mokku-text {
+    color: var(--ink-3);
+    text-decoration: line-through;
+    text-decoration-thickness: 1.5px;
+}
+.mokku-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: var(--sp-1);
+}
+.mokku-meta:empty { display: none; }
+.mokku-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 2px 10px;
+    border-radius: var(--r-pill);
+    background: var(--sand);
+    color: var(--ink-2);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: 1.5;
+}
+.mokku-badge .icon-inline { width: 15px; height: 15px; }
+/* Due: colour plus the "ఈరోజు!" text JS appends */
+.mokku-badge.due {
+    background: var(--kumkum-100);
+    color: var(--kumkum-800);
+    font-weight: 700;
+    box-shadow: inset 0 0 0 1px rgb(142 31 38 / .22);
+}
+
+.mokku-del {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-3);
+    cursor: pointer;
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.mokku-del .icon-inline { width: 20px; height: 20px; }
+.mokku-check:active, .mokku-del:active { transform: scale(.92); }
+
+@media (hover: hover) {
+    .mokku-item:not(.done) .mokku-check:not([aria-pressed="true"]):hover { background: var(--peacock-50); color: var(--peacock-600); }
+    .mokku-del:hover { background: var(--kumkum-100); color: var(--kumkum-700); }
+}
+
+/* ---------- Empty states (mokku list and day sheet) ---------- */
+.track-empty {
+    padding: var(--sp-4);
+    border: 1.5px dashed var(--c-border-strong);
+    border-radius: var(--r);
+    background: var(--ivory);
+    color: var(--ink-2);
+    text-align: center;
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+}
+
+/* ---------- Privacy note ---------- */
+.track-privacy {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--sp-2);
+    margin-top: var(--sp-5);
+    padding-inline: var(--sp-2);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--c-text-muted);
+}
+.track-privacy .icon-inline {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+    color: var(--peacock-700);
+}
+.track-privacy span { max-width: 60ch; }
+
+/* ---------- Day sheet content (#sheetBody). The sheet container is CSS-1's;
+   counters and chips are shared components, so only spacing lives here. ---------- */
+.day-section-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin: var(--sp-6) 0 var(--sp-3);
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--ink);
+}
+#sheetBody .counter-name { min-width: 0; overflow-wrap: anywhere; }   /* japa names are user-entered */
+#sheetBody .chip-row { margin-top: var(--sp-4); }
+#sheetBody .add-chip { max-width: 100%; text-align: start; }
+
+/* ---------- Responsive ---------- */
+/* The shared counter row needs 272px (64 + 24 + 96 + 24 + 64). On phones up to
+   380px that is wider than a padded card, so the round buttons would squash:
+   tighten the gap and the card's side padding (spacing only). */
+@media (max-width: 380px) {
+    .practice-details .counter-card,
+    #sheetBody .counter-card { padding-inline: var(--sp-3); }
+    .practice-details .counter-row,
+    #sheetBody .counter-row { gap: var(--sp-3); }
+}
+@media (max-width: 419.98px) {
+    .mokku-row2 { grid-template-columns: minmax(0, 1fr); }
+    .mokku-add-btn { width: 100%; }
+    /* Seven columns on a small phone: give the day cells the card's side padding
+       and a narrower column gap, so they come as close to 44px wide as possible
+       (44px at 390px). The head, month row and hint keep a 16px inset. */
+    .track-calendar { padding-inline: var(--sp-2); }
+    .track-calendar > .track-card-head,
+    .track-calendar > .month-nav,
+    .track-calendar > .track-hint { padding-inline: var(--sp-2); }
+    .cal-grid { column-gap: 4px; }
+}
+/* Under 360px (e.g. 320px phones) the full weekday names no longer fit a
+   column: switch to the one-letter forms and win back a little side room. */
+@media (max-width: 359.98px) {
+    .cal-weekday .wk-long { display: none; }
+    .cal-weekday .wk-short { display: inline; }
+    .track-calendar { padding-inline: var(--sp-1); }
+    .track-calendar > .track-card-head,
+    .track-calendar > .month-nav,
+    .track-calendar > .track-hint { padding-inline: var(--sp-3); }   /* text keeps its 16px inset */
+    .cal-grid { column-gap: 3px; }
+}
+@media (min-width: 600px) {
+    .track-card { padding: var(--sp-5); }
+    .track-section-head h2 { font-size: var(--fs-3xl); }
+}
+
+/* ---------- Windows high-contrast: keep the states that rely on a fill ---------- */
+@media (forced-colors: active) {
+    .cal-day.today { border-color: Highlight; }
+    .cal-day .dot { forced-color-adjust: none; background: CanvasText; }
+    .mokku-item.done .mokku-check,
+    .mokku-check[aria-pressed="true"] {
+        forced-color-adjust: none;
+        border-color: Highlight;
+        background: Highlight;
+        color: HighlightText;
+    }
+    .mokku-item:not(.done) .mokku-check:not([aria-pressed="true"]) .icon-inline { visibility: hidden; }
+}

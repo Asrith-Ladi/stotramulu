@@ -1,13 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="te">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#664524">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0d3b3a">
     <meta name="description" content="తెలుగు స్తోత్రాలు, సహస్రనామాలు, అష్టోత్తరాలు మరియు హారతులు — సులభంగా చదవడానికి ఒకే చోట.">
     <title>శ్రీ దివ్య స్తోత్రములు</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@300;400;500;600;700&family=Noto+Serif+Telugu:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Google Analytics (GA4) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-1S66GLXJJ4"></script>
     <script>
@@ -16,17 +14,12 @@
         gtag('js', new Date());
         gtag('config', 'G-1S66GLXJJ4');
     </script>
-    <link rel="stylesheet" href="/styles/styles.css">
-    <link rel="stylesheet" href="/styles/reading.css">
-    <link rel="stylesheet" href="/styles/japamala-3d.css">
-    <link rel="stylesheet" href="/styles/design-system.css">
+    <link rel="stylesheet" href="/styles/app.css">
 </head>
 <body class="grandham">
 <a class="skip-link" href="#homePage">ప్రధాన విషయానికి వెళ్ళండి / Skip to content</a>
 
-<div class="bg-pattern"></div>
-<div class="bg-mesh"></div>
-<div class="particles" id="particles"></div>
+<div class="particles" id="particles" aria-hidden="true"></div>
 
 <!-- DEITY SVG DEFINITIONS (hidden) -->
 <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
@@ -535,35 +528,46 @@
     </defs>
 </svg>
 
-<!-- Header -->
+<!-- Header. On phones .site-navigation becomes the fixed bottom tab bar
+     (it stays inside the header so each data-home-target exists exactly once).
+     The header must never get transform / filter / backdrop-filter / contain:
+     that would trap the fixed tab bar inside it. -->
 <header class="header">
     <div class="header-content">
-        <div class="header-slot header-slot-left">
-            <button class="back-btn" id="backBtn" onclick="goHome()">← వెనుకకు</button>
+        <div class="header-slot-left">
+            <button type="button" class="back-btn" id="backBtn" onclick="goHome()" aria-label="వెనుకకు / Back"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"/></svg><span class="back-label">వెనుకకు</span></button>
         </div>
         <div class="header-titles">
             <div class="header-om" aria-hidden="true">ఓం</div>
             <h1>శ్రీ దివ్య స్తోత్రములు</h1>
             <div class="header-sub">Sri Divya Stotramulu</div>
         </div>
-        <div class="header-utilities"><button type="button" onclick="openSearch()" aria-label="స్తోత్రాలు వెతకండి / Search">⌕ <span>వెతకండి</span></button><button type="button" onclick="openAccount()">నా ఖాతా <span lang="en">/ Account</span></button></div>
+        <div class="header-utilities">
+            <button type="button" class="hdr-btn hdr-search" onclick="openSearch()" aria-label="స్తోత్రాలు వెతకండి / Search"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-search"/></svg><span class="hdr-label">వెతకండి</span></button>
+            <button type="button" class="hdr-btn hdr-account" onclick="openAccount()" aria-label="నా ఖాతా &amp; సహాయం / Account"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-user"/></svg><span class="hdr-label">నా ఖాతా</span></button>
+            <button type="button" class="hdr-btn hdr-updates" id="updatesBtn" onclick="openUpdates()" aria-label="కొత్తవి / What's new"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-bell"/></svg><span class="hdr-label">కొత్తవి</span><span class="hdr-dot" id="updatesDot" hidden></span></button>
+        </div>
     </div>
     <nav class="site-navigation" aria-label="ప్రధాన మార్గదర్శి / Main navigation">
-        <a href="#homePage" data-home-target="homePage">ముఖపుట <small>Home</small></a>
-        <a href="#library" data-home-target="library">స్తోత్రాలు <small>Library</small></a>
-        <a href="#favoritesSection" data-home-target="favoritesSection">ఇష్టమైనవి <small>Saved</small></a>
-        <a href="#practice" data-home-target="practice">నా సాధన <small>Practice</small></a>
+        <a href="#homePage" data-home-target="homePage"><svg class="nav-icon" aria-hidden="true"><use href="/icons.svg#icon-home"/></svg><span class="nav-label">ముఖపుట</span> <small>Home</small></a>
+        <a href="#library" data-home-target="library"><svg class="nav-icon" aria-hidden="true"><use href="/icons.svg#icon-book"/></svg><span class="nav-label">స్తోత్రాలు</span> <small>Library</small></a>
+        <a href="#favoritesSection" data-home-target="favoritesSection"><svg class="nav-icon" aria-hidden="true"><use href="/icons.svg#icon-star"/></svg><span class="nav-label">ఇష్టమైనవి</span> <small>Saved</small></a>
+        <a href="#practice" data-home-target="practice"><svg class="nav-icon" aria-hidden="true"><use href="/icons.svg#icon-mala"/></svg><span class="nav-label">నా సాధన</span> <small>Practice</small></a>
     </nav>
 </header>
 
-<!-- Home Page -->
+<!-- Home Page. Every DIRECT child becomes a view panel (experience.js); keep
+     .welcome-section, .primary-link, #practice and .practice-details here. -->
 <div class="home-page" id="homePage" role="main" tabindex="-1">
     <section class="welcome-section" aria-labelledby="welcomeTitle">
         <div class="welcome-copy">
-            <span class="eyebrow">నిత్య పారాయణం · A MOMENT OF DEVOTION</span>
+            <span class="eyebrow">నిత్య పారాయణం</span>
             <h2 id="welcomeTitle">మనసుకు శాంతి.<br>ప్రతి రోజూ భక్తి.</h2>
-            <p>మీకు ఇష్టమైన స్తోత్రాలు, ఒకే చోట.<br>చదవండి. స్మరించండి. ప్రశాంతంగా గడపండి.</p>
-            <a class="primary-link" href="#library">స్తోత్రాలు చదవండి <span aria-hidden="true">↗</span></a>
+            <p>మీకు ఇష్టమైన స్తోత్రాలు, ఒకే చోట. చదవండి, స్మరించండి, ప్రశాంతంగా గడపండి.</p>
+            <div class="welcome-actions">
+                <a class="primary-link" href="#library">స్తోత్రాలు చదవండి <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-arrow-right"/></svg></a>
+                <button type="button" class="hero-help" data-info="welcome"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg>ఎలా వాడాలి?</button>
+            </div>
             <span class="hero-note">తెలుగులో పఠనం · మీ వేగంలో సాధన</span>
         </div>
         <div class="hero-art" aria-hidden="true">
@@ -587,29 +591,35 @@
         </div>
     </section>
 
-    <section class="home-primary-actions" id="practice" aria-label="నా సాధన / My practice">
-        <div class="practice-intro"><span class="eyebrow">A DAILY RITUAL</span><h2>నా సాధన</h2><p>చిన్న అడుగులు. నిత్య అనుబంధం.</p></div>
-        <button type="button" onclick="openJapamala()"><span class="practice-symbol" aria-hidden="true">◉</span><span>జపమాల</span><small>108 నామాల జపం · Japa mala</small><span class="practice-arrow" aria-hidden="true">↗</span></button>
-        <button type="button" onclick="openTrack()"><span class="practice-symbol" aria-hidden="true">▦</span><span>పూజా ట్రాక్</span><small>రోజువారీ నమోదు · Daily practice</small><span class="practice-arrow" aria-hidden="true">↗</span></button>
+    <!-- "What's new" teaser: filled and un-hidden by updates.js (home panel; shown last via CSS order) -->
+    <section class="updates-teaser" id="updatesTeaser" aria-label="కొత్తవి / What's new" hidden></section>
+
+    <!-- Practice launchers. Japamala must stay the FIRST button, Track the SECOND (e2e). -->
+    <section class="home-primary-actions" id="practice" aria-labelledby="practiceTitle">
+        <div class="practice-intro"><span class="eyebrow">నిత్య సాధన</span><h2 id="practiceTitle">నా సాధన</h2><p>చిన్న అడుగులు. నిత్య అనుబంధం.</p></div>
+        <button type="button" class="practice-tile" onclick="openJapamala()"><span class="practice-symbol" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-mala"/></svg></span><span class="practice-copy"><span class="practice-title">జపమాల</span><small>108 నామాల జపం · పూస పూసకు లెక్క</small></span><svg class="icon-inline practice-arrow" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg></button>
+        <button type="button" class="practice-tile" onclick="openTrack()"><span class="practice-symbol" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-calendar"/></svg></span><span class="practice-copy"><span class="practice-title">పూజా ట్రాక్</span><small>రోజువారీ నమోదు · మొక్కులు</small></span><svg class="icon-inline practice-arrow" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg></button>
+        <button type="button" class="info-btn practice-info" data-info="practice" aria-label="వివరణ: నా సాధన"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
     </section>
 
-    <!-- Pradakshina Counter (today by default; pick any date) -->
-    <details class="home-counter-section practice-details"><summary>&#3114;&#3149;&#3120;&#3110;&#3093;&#3149;&#3127;&#3135;&#3107; &#3122;&#3142;&#3093;&#3149;&#3093;</summary>
+    <!-- Pradakshina counter (today by default; pick any date). Open by default. -->
+    <details class="practice-details" open><summary><span class="summary-title">ప్రదక్షిణ లెక్క</span><svg class="icon-inline summary-chevron" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg></summary>
         <div class="counter-card">
             <div class="counter-head">
-                <span class="counter-name">🕉️ ప్రదక్షిణలు / Pradakshinalu</span>
+                <span class="counter-name">ప్రదక్షిణలు</span>
+                <button type="button" class="info-btn" data-info="pradakshina" aria-label="వివరణ: ప్రదక్షిణ లెక్క"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
                 <div class="counter-actions">
-                    <input type="date" class="counter-date-picker" id="homeDatePicker" onchange="onHomeDateChange(this.value)" title="తేదీ ఎంచుకోండి">
-                    <button class="counter-reset" onclick="resetHomePradakshina()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+                    <input type="date" class="counter-date-picker" id="homeDatePicker" onchange="onHomeDateChange(this.value)" aria-label="తేదీ ఎంచుకోండి">
+                    <button type="button" class="counter-reset" onclick="resetHomePradakshina()" aria-label="ఈ రోజు లెక్క 0కి తిరిగి సెట్ చేయండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg></button>
                 </div>
             </div>
             <div class="counter-row">
-                <button class="count-btn" onclick="bumpHomePradakshina(-1)" aria-label="తగ్గించు">−</button>
+                <button type="button" class="count-btn" onclick="bumpHomePradakshina(-1)" aria-label="ఒకటి తగ్గించు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-minus"/></svg></button>
                 <div class="count-center">
-                    <div class="count-display" id="homePradakshinaCount">0</div>
-                    <div class="count-target" style="cursor:default;text-decoration:none;">Pradakshina</div>
+                    <div class="count-display" id="homePradakshinaCount" aria-live="polite">0</div>
+                    <div class="count-target">ప్రదక్షిణలు</div>
                 </div>
-                <button class="count-btn" onclick="bumpHomePradakshina(1)" aria-label="పెంచు">＋</button>
+                <button type="button" class="count-btn count-btn-plus" onclick="bumpHomePradakshina(1)" aria-label="ఒకటి పెంచు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg></button>
             </div>
         </div>
     </details>
@@ -636,7 +646,7 @@
                 <div class="card-bg"></div>
                 <svg class="card-deity-svg" style="color:#c04070"><use href="#svg-lalitha"/></svg>
                 <div class="card-content">
-                    <div class="card-icon-wrap"><span class="deity-icon">🪷</span></div>
+                    <div class="card-icon-wrap"><span class="deity-icon">🌺</span></div>
                     <h3>శ్రీ లలితా సహస్రనామం</h3>
                     <div class="card-sub">Sri Lalitha Sahasranamam</div>
                     <div class="card-desc">శ్రీ లలితా దేవి వెయ్యి దివ్య నామములు. బ్రహ్మాండ పురాణంలో వాగ్దేవతలు రచించినవి.</div>
@@ -690,7 +700,7 @@
                 <div class="card-bg"></div>
                 <svg class="card-deity-svg" style="color:#c04070"><use href="#svg-lalitha"/></svg>
                 <div class="card-content">
-                    <div class="card-icon-wrap"><span class="deity-icon">🪷</span></div>
+                    <div class="card-icon-wrap"><span class="deity-icon">🌺</span></div>
                     <h3>శ్రీ లలితా అష్టోత్తరం</h3>
                     <div class="card-sub">Lalitha Ashtottaram</div>
                     <div class="card-desc">శ్రీ లలితా దేవి యొక్క 108 దివ్య నామములు.</div>
@@ -734,7 +744,7 @@
                 <div class="card-bg"></div>
                 <svg class="card-deity-svg" style="color:#d06030"><use href="#svg-hanuman"/></svg>
                 <div class="card-content">
-                    <div class="card-icon-wrap"><span class="deity-icon">🦍</span></div>
+                    <div class="card-icon-wrap"><span class="deity-icon">🚩</span></div>
                     <h3>శ్రీ హనుమాన్ అష్టోత్తరం</h3>
                     <div class="card-sub">Hanuman Ashtottaram</div>
                     <div class="card-desc">శ్రీ ఆంజనేయస్వామి 108 దివ్య నామములు.</div>
@@ -809,10 +819,10 @@
             </a>
             <a class="card vishnu" href="?stotram=rama108" data-stotram="rama108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🏹</span></div><h3>శ్రీ రామ అష్టోత్తరం</h3><div class="card-sub">Rama Ashtottaram</div><div class="card-desc">శ్రీరాముని 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
             <a class="card shiva" href="?stotram=subrahmanya108" data-stotram="subrahmanya108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🦚</span></div><h3>శ్రీ సుబ్రహ్మణ్య అష్టోత్తరం</h3><div class="card-sub">Subrahmanya Ashtottaram</div><div class="card-desc">శ్రీ సుబ్రహ్మణ్యస్వామి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
-            <a class="card lalitha" href="?stotram=adilakshmi108" data-stotram="adilakshmi108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🪷</span></div><h3>శ్రీ ఆదిలక్ష్మీ అష్టోత్తరం</h3><div class="card-sub">Adi Lakshmi Ashtottaram</div><div class="card-desc">ఆదిలక్ష్మీ దేవి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
+            <a class="card lalitha" href="?stotram=adilakshmi108" data-stotram="adilakshmi108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🌺</span></div><h3>శ్రీ ఆదిలక్ష్మీ అష్టోత్తరం</h3><div class="card-sub">Adi Lakshmi Ashtottaram</div><div class="card-desc">ఆదిలక్ష్మీ దేవి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
             <a class="card lalitha" href="?stotram=vijayalakshmi108" data-stotram="vijayalakshmi108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🏆</span></div><h3>శ్రీ విజయలక్ష్మీ అష్టోత్తరం</h3><div class="card-sub">Vijaya Lakshmi Ashtottaram</div><div class="card-desc">విజయలక్ష్మీ దేవి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
             <a class="card shiva" href="?stotram=arunachala108" data-stotram="arunachala108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🔱</span></div><h3>శ్రీ అరుణాచలేశ్వర అష్టోత్తరం</h3><div class="card-sub">Arunachaleshvara Ashtottaram</div><div class="card-desc">అరుణాచలేశ్వరుని 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
-            <a class="card lalitha" href="?stotram=aishwaryalakshmi108" data-stotram="aishwaryalakshmi108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🪷</span></div><h3>శ్రీ ఐశ్వర్యలక్ష్మీ అష్టోత్తరం</h3><div class="card-sub">Aishwarya Lakshmi Ashtottaram</div><div class="card-desc">ఐశ్వర్యలక్ష్మీ దేవి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
+            <a class="card lalitha" href="?stotram=aishwaryalakshmi108" data-stotram="aishwaryalakshmi108"><div class="card-bg"></div><div class="card-content"><div class="card-icon-wrap"><span class="deity-icon">🌺</span></div><h3>శ్రీ ఐశ్వర్యలక్ష్మీ అష్టోత్తరం</h3><div class="card-sub">Aishwarya Lakshmi Ashtottaram</div><div class="card-desc">ఐశ్వర్యలక్ష్మీ దేవి 108 దివ్య నామాలు.</div><span class="card-action" aria-hidden="true">చదవండి <svg class="icon-inline"><use href="/icons.svg#icon-arrow-right"/></svg></span></div></a>
         </div>
     </div>
 
@@ -871,7 +881,7 @@
                 <div class="card-bg"></div>
                 <svg class="card-deity-svg" style="color:#d06030"><use href="#svg-hanuman"/></svg>
                 <div class="card-content">
-                    <div class="card-icon-wrap"><span class="deity-icon">🦍</span></div>
+                    <div class="card-icon-wrap"><span class="deity-icon">🚩</span></div>
                     <h3>శ్రీ హనుమాన్ చాలీసా</h3>
                     <div class="card-sub">Hanuman Chalisa</div>
                     <div class="card-desc">తులసీదాస్ రచించిన శ్రీ హనుమాన్ 40 చౌపాయిలు.</div>
@@ -951,78 +961,88 @@
     </div>
 </div>
 
-<!-- Reader Page -->
-<div class="reader-page" id="readerPage">
-    <div class="reader-deity-bg" id="readerDeityBg"></div>
+<!-- Reader Page. #readerTitleSection's className is replaced by app.js on
+     every open; style it through its id / base class / "-theme" class only. -->
+<div class="reader-page" id="readerPage" role="main" tabindex="-1" aria-labelledby="readerTitle">
+    <div class="reader-deity-bg" id="readerDeityBg" aria-hidden="true"></div>
     <div class="reader-title-section" id="readerTitleSection">
         <h2 id="readerTitle"></h2>
         <p id="readerSubtitle"></p>
     </div>
 
-    <section class="reader-tool-panel reader-tool-panel-compact" aria-label="Reading tools">
-        <h3>చదవడానికి</h3>
+    <section class="reader-tool-panel" aria-label="చదివే సాధనాలు / Reading tools">
+        <h3 class="visually-hidden">చదవడానికి</h3>
         <div class="controls">
-            <div class="font-control">
-                <label>అక్షరాలు:</label>
-                <button class="font-btn" onclick="changeFontSize(-2)" aria-label="అక్షరాలు చిన్నవి / Smaller text">−</button>
+            <div class="font-control" role="group" aria-labelledby="fontControlLabel">
+                <span class="font-label" id="fontControlLabel">అక్షరాలు</span>
+                <button type="button" class="font-btn" onclick="changeFontSize(-2)" aria-label="అక్షరాలు చిన్నవి / Smaller text">అ−</button>
                 <span class="font-size-display" id="fontSizeDisplay" aria-live="polite">24</span>
-                <button class="font-btn" onclick="changeFontSize(2)" aria-label="అక్షరాలు పెద్దవి / Larger text">+</button>
+                <button type="button" class="font-btn" onclick="changeFontSize(2)" aria-label="అక్షరాలు పెద్దవి / Larger text">అ+</button>
             </div>
             <div class="reader-search">
-                <span class="rs-icon">🔎</span>
+                <svg class="icon-inline rs-icon" aria-hidden="true"><use href="/icons.svg#icon-search"/></svg>
                 <input type="text" class="rs-input" id="readerSearchInput"
-                       placeholder="పాఠంలో వెతకండి…"
+                       placeholder="వెతకండి" aria-label="ఈ స్తోత్రంలో పదం వెతకండి"
                        oninput="onReaderSearchInput(this.value)"
                        onkeydown="onReaderSearchKey(event)"
-                       autocomplete="off">
-                <span class="rs-count" id="readerSearchCount"></span>
-                <button class="rs-mic" id="readerMicBtn" onclick="startReaderVoice()" title="మాట్లాడి వెతకండి / Voice search" aria-label="Voice">🎤</button>
-                <button class="rs-nav" onclick="prevSearchMatch()" title="మునుపటి ఫలితం" aria-label="Previous match">↑</button>
-                <button class="rs-nav" onclick="nextSearchMatch()" title="తదుపరి ఫలితం" aria-label="Next match">↓</button>
-                <button class="rs-clear" id="readerSearchClear" onclick="clearReaderSearch()" title="వెతుకులాటను తొలగించు" aria-label="Clear" style="display:none">✕</button>
+                       autocomplete="off" enterkeyhint="search">
+                <span class="rs-count" id="readerSearchCount" aria-live="polite"></span>
+                <button type="button" class="rs-mic" id="readerMicBtn" onclick="startReaderVoice()" aria-label="మాట్లాడి వెతకండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
+                <button type="button" class="rs-nav" onclick="prevSearchMatch()" aria-label="మునుపటి ఫలితం"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-up"/></svg></button>
+                <button type="button" class="rs-nav" onclick="nextSearchMatch()" aria-label="తదుపరి ఫలితం"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg></button>
+                <button type="button" class="rs-clear" id="readerSearchClear" onclick="clearReaderSearch()" aria-label="వెతుకులాటను తొలగించు" style="display:none"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
             </div>
+            <button type="button" class="info-btn reader-tools-info" data-info="reader-tools" aria-label="వివరణ: అక్షరాల పరిమాణం, పాఠంలో వెతుకులాట"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
         </div>
     </section>
 
+    <!-- Exactly ONE <summary> inside .reader-options (e2e). No ⓘ inside the summary. -->
     <details class="reader-options">
-        <summary><span>⚙ పఠన ఎంపికలు</span><small id="readerOptionsSummary">అర్థం, శ్లోకం, సేవ్, లెక్క</small></summary>
+        <summary><svg class="icon-inline summary-icon" aria-hidden="true"><use href="/icons.svg#icon-sliders"/></svg><span class="summary-title">పఠన ఎంపికలు</span><small id="readerOptionsSummary">అర్థం, శ్లోకం, సేవ్, లెక్క</small><svg class="icon-inline summary-chevron" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg></summary>
         <div class="reader-options-content">
-            <div class="reader-toggle-row" id="meaningToggleRow">
-                <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
-                    <label>అర్థం చూపించు</label><div class="toggle-switch"></div>
+            <div class="reader-option-group reader-option-meanings">
+                <div class="reader-toggle-row" id="meaningToggleRow">
+                    <div class="meaning-toggle" id="meaningToggle" onclick="toggleMeanings()">
+                        <label>అర్థం చూపించు</label><div class="toggle-switch"></div>
+                    </div>
+                    <button type="button" class="info-btn" data-info="meanings" aria-label="వివరణ: అర్థాలు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
                 </div>
-
             </div>
-            <nav class="reader-navigation" aria-label="పఠన మార్గదర్శి">
-                <label for="verseJump">శ్లోకానికి వెళ్లండి</label>
-                <select id="verseJump" onchange="jumpToVerse(this.value)"></select>
-                <button type="button" onclick="resumeReading()">చదవడం కొనసాగించు</button>
+            <nav class="reader-option-group" aria-label="పఠన మార్గదర్శి">
+                <div class="reader-option-head"><label for="verseJump">శ్లోకానికి వెళ్లండి</label><button type="button" class="info-btn" data-info="jump" aria-label="వివరణ: శ్లోకానికి వెళ్లడం"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button></div>
+                <div class="reader-jump-row">
+                    <select id="verseJump" onchange="jumpToVerse(this.value)"></select>
+                    <button type="button" class="btn btn-quiet resume-btn" onclick="resumeReading()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-book"/></svg>చదవడం కొనసాగించు</button>
+                </div>
                 <div class="reader-section-navigation" id="readerSectionNav" hidden></div>
             </nav>
-            <div class="reader-library-actions">
-                <button type="button" id="favoriteButton" onclick="toggleFavorite()" aria-pressed="false">☆ ఇష్టమైనవాటిలో చేర్చు</button>
-                <button type="button" onclick="copyReaderLink()">లింక్ కాపీ చేయండి</button>
-                <button type="button" class="clear-reading-button" onclick="resetReading()">చదివిన గుర్తులు తొలగించు</button>
+            <div class="reader-option-group">
+                <div class="reader-option-head"><span class="reader-option-title">సేవ్ &amp; పంపండి</span><button type="button" class="info-btn" data-info="save-share" aria-label="వివరణ: ఇష్టమైనవి, లింక్"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button></div>
+                <div class="reader-action-row">
+                    <button type="button" id="favoriteButton" class="btn btn-quiet" onclick="toggleFavorite()" aria-pressed="false">ఇష్టమైనవాటిలో చేర్చు</button>
+                    <button type="button" class="btn btn-quiet" onclick="copyReaderLink()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-link"/></svg>లింక్ కాపీ చేయండి</button>
+                    <button type="button" class="btn btn-ghost" onclick="resetReading()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg>చదివిన గుర్తులు తొలగించు</button>
+                </div>
                 <p id="readerLinkStatus" role="status" aria-live="polite"></p>
-                <input id="readerLinkFallback" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
+                <input id="readerLinkFallback" class="field-input" type="url" readonly hidden aria-label="స్తోత్రం లింక్ / Stotram link">
             </div>
             <section class="reader-practice reader-option-group" aria-label="పారాయణ లెక్క">
-                <h4>పారాయణ లెక్క</h4>
                 <div class="counter-card stotram-counter-card">
                     <div class="counter-head">
-                        <span class="counter-name">📖 <span id="stotramCounterLabel">పారాయణం</span></span>
+                        <span class="counter-name"><span id="stotramCounterLabel">పారాయణం</span></span>
+                        <button type="button" class="info-btn" data-info="parayana" aria-label="వివరణ: పారాయణ లెక్క"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
                         <div class="counter-actions">
-                            <input type="date" class="counter-date-picker" id="stotramDatePicker" onchange="onStotramDateChange(this.value)" title="తేదీ ఎంచుకోండి">
-                            <button class="counter-reset" onclick="resetStotramParayana()" title="0కి తిరిగి సెట్ చేయండి / Reset to 0" aria-label="Reset">↻</button>
+                            <input type="date" class="counter-date-picker" id="stotramDatePicker" onchange="onStotramDateChange(this.value)" aria-label="తేదీ ఎంచుకోండి">
+                            <button type="button" class="counter-reset" onclick="resetStotramParayana()" aria-label="ఈ రోజు పారాయణ లెక్క 0కి తిరిగి సెట్ చేయండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg></button>
                         </div>
                     </div>
                     <div class="counter-row">
-                        <button class="count-btn" onclick="bumpStotramParayana(-1)" aria-label="తగ్గించు">−</button>
+                        <button type="button" class="count-btn" onclick="bumpStotramParayana(-1)" aria-label="ఒకటి తగ్గించు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-minus"/></svg></button>
                         <div class="count-center">
-                            <div class="count-display" id="stotramParayanaCount">0</div>
-                            <div class="count-target">Parayana</div>
+                            <div class="count-display" id="stotramParayanaCount" aria-live="polite">0</div>
+                            <div class="count-target">పారాయణాలు</div>
                         </div>
-                        <button class="count-btn" onclick="bumpStotramParayana(1)" aria-label="పెంచు">＋</button>
+                        <button type="button" class="count-btn count-btn-plus" onclick="bumpStotramParayana(1)" aria-label="ఒకటి పెంచు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg></button>
                     </div>
                 </div>
             </section>
@@ -1031,106 +1051,187 @@
 
     <div class="slokam-container" id="slokamContainer"></div>
 
-    <details class="origin-details reader-after-content">
-        <summary>📜 ఉద్భవం &amp; ప్రాముఖ్యత</summary>
+    <div class="reader-report reader-after-content">
+        <button type="button" class="btn btn-quiet reader-report-btn" onclick="openFeedback('correction')"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-flag"/></svg>ఈ స్తోత్రంలో తప్పు కనిపించిందా? తెలియజేయండి</button>
+    </div>
+    <details class="origin-details reader-after-content" id="originDetails">
+        <summary><svg class="icon-inline summary-icon" aria-hidden="true"><use href="/icons.svg#icon-book"/></svg><span class="summary-title">ఉద్భవం &amp; ప్రాముఖ్యత</span><svg class="icon-inline summary-chevron" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg></summary>
         <div class="origin-block" id="originBlock"></div>
     </details>
     <details class="source-details reader-after-content" id="sourceDetails">
-        <summary><span id="sourceStatusBadge" class="source-status-badge"></span><span>మూలాలు &amp; పాఠం వివరాలు</span></summary>
+        <summary><span id="sourceStatusBadge" class="source-status-badge"></span><span class="summary-title">మూలాలు &amp; పాఠం వివరాలు</span><svg class="icon-inline summary-chevron" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg></summary>
+        <div class="source-help"><span>ఈ గుర్తు అంటే ఏమిటి?</span><button type="button" class="info-btn" data-info="source" aria-label="వివరణ: మూలాల స్థితి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button></div>
         <div id="sourceContent"></div>
     </details>
 </div>
 <!-- ============ SEARCH OVERLAY ============ -->
-<div class="search-overlay" id="searchOverlay">
+<div class="search-overlay" id="searchOverlay" role="dialog" aria-modal="true" aria-label="స్తోత్రాలు వెతకండి / Search" onclick="if(event.target===this)closeSearch()">
     <div class="search-box">
         <div class="search-input-wrap">
+            <svg class="icon-inline search-lead" aria-hidden="true"><use href="/icons.svg#icon-search"/></svg>
             <input type="text" class="search-input" id="searchInput"
-                   placeholder="స్తోత్రం పేరు చెప్పండి లేదా టైప్ చేయండి…"
-                   oninput="runSearch(this.value)" autocomplete="off">
-            <button class="mic-btn" id="micBtn" onclick="startVoice()" title="మాట్లాడి వెతకండి">🎤</button>
-            <button class="search-close-btn" onclick="closeSearch()" title="మూసివేయి"><svg class="icon-inline"><use href="/icons.svg#icon-close"/></svg></button>
+                   placeholder="స్తోత్రం పేరు…" aria-label="స్తోత్రం పేరు"
+                   oninput="runSearch(this.value)" onkeydown="onSearchKey(event)" autocomplete="off" enterkeyhint="search">
+            <button type="button" class="mic-btn" id="micBtn" onclick="startVoice()" aria-label="మాట్లాడి వెతకండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
+            <button type="button" class="sheet-close" onclick="closeSearch()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
         </div>
-        <div class="search-hint" id="searchHint">🎤 బటన్ నొక్కి స్తోత్రం పేరు చెప్పండి — టైప్ చేయవలసిన అవసరం లేదు</div>
+        <div class="search-hint" id="searchHint">మైక్ బటన్ నొక్కి స్తోత్రం పేరు చెప్పండి — టైప్ చేయవలసిన అవసరం లేదు</div>
         <div class="search-results" id="searchResults"></div>
     </div>
 </div>
 
-<!-- ============ ACCOUNT overlay ============
-     Reached directly from the header's నా ఖాతా / Account button — sign-in
-     first and prominent (no file to manage, nothing to lose), backup/restore
-     collapsed below as a fallback for anyone who won't use Google sign-in. -->
-<div class="search-overlay" id="accountOverlay">
-    <div class="search-box account-box">
-        <div class="account-head">
-            <h2>నా ఖాతా <span lang="en">/ My Account</span></h2>
-            <button class="search-close-btn" onclick="closeAccountOverlay()" title="మూసివేయి"><svg class="icon-inline"><use href="/icons.svg#icon-close"/></svg></button>
+<!-- ============ ACCOUNT & HELP HUB ============
+     Sign-in first (nothing to lose), then help: report a problem, my messages,
+     what's new, how to use. File backup last, only for those who can't sign in. -->
+<div class="sheet-overlay" id="accountOverlay" role="dialog" aria-modal="true" aria-labelledby="accountTitle" onclick="if(event.target===this)closeAccountOverlay()">
+    <div class="sheet">
+        <div class="sheet-grab" aria-hidden="true"></div>
+        <div class="sheet-head">
+            <h2 id="accountTitle">నా ఖాతా &amp; సహాయం</h2>
+            <button type="button" class="sheet-close" onclick="closeAccountOverlay()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
         </div>
 
-        <div class="track-card">
-            <div class="track-card-title">☁️ అన్ని ఫోన్‌లలో సేవ్ చేయండి</div>
-            <div id="cloudAuthBox" class="cloud-auth"></div>
+        <section class="account-signin" aria-labelledby="signinTitle">
+            <div class="account-signin-head">
+                <span class="account-signin-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-cloud"/></svg></span>
+                <h3 id="signinTitle">అన్ని ఫోన్‌లలో భద్రంగా</h3>
+                <button type="button" class="info-btn" data-info="signin" aria-label="వివరణ: Google సైన్ ఇన్"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
+            </div>
+            <p class="account-note">ప్రదక్షిణలు, జపమాల లెక్క, మొక్కులు, చదివిన గుర్తులు ఆన్‌లైన్‌లో భద్రంగా ఉంటాయి. కొత్త ఫోన్‌లో సైన్ ఇన్ చేస్తే అవే తిరిగి వస్తాయి.</p>
+            <div id="cloudAuthBox" class="cloud-auth"><p class="cloud-loading">సైన్ ఇన్ సిద్ధమవుతోంది…</p></div>
             <div id="adminLinkBox"></div>
-            <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
-                సైన్ ఇన్ చేస్తే మీ ప్రదక్షిణలు, జపమాల &amp; మొక్కులు ఆన్‌లైన్‌లో సురక్షితంగా ఉంటాయి — కొత్త ఫోన్‌లో అవే తిరిగి వస్తాయి. ఒక్క నొక్కు, ఫైల్ ఏమీ నిర్వహించాల్సిన అవసరం లేదు.
-            </div>
-        </div>
+        </section>
 
-        <details class="track-card account-advanced">
-            <summary class="track-card-title">💾 బ్యాకప్ &amp; రీస్టోర్ <span class="account-advanced-hint">(Google సైన్ ఇన్ చేయలేకపోతే మాత్రమే)</span></summary>
-            <div class="btn-row" style="margin-top:12px;">
-                <button class="track-btn primary" onclick="exportBackup()">📤 బ్యాకప్ తీసుకోండి</button>
-                <button class="track-btn" onclick="triggerRestore()">📥 తిరిగి పొందండి</button>
-            </div>
-            <input type="file" id="restoreFile" accept="application/json,.json" style="display:none" onchange="handleRestoreFile(this)">
-            <div class="track-empty" style="font-size:13px;opacity:0.55;text-align:left;padding:12px 2px 0;line-height:1.7;">
-                "బ్యాకప్" నొక్కితే మీ సమాచారం ఒక ఫైల్‌గా మీ పరికరంలో సేవ్ అవుతుంది (Downloads). దాన్ని Drive/iCloud లో దాచుకోవచ్చు. కొత్త ఫోన్‌లో "తిరిగి పొందండి" నొక్కి ఆ ఫైల్ ఎంచుకోండి. <b>జాగ్రత్త: ఈ ఫైల్ పోతే, డేటా తిరిగి పొందలేరు — సైన్ ఇన్ ఎక్కువ సురక్షితం.</b>
+        <nav class="account-menu" aria-label="సహాయం / Help">
+            <button type="button" class="account-row" onclick="closeAccountOverlay(); openFeedback('problem')">
+                <span class="account-row-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-flag"/></svg></span>
+                <span class="account-row-copy"><b>సమస్య / తప్పు తెలియజేయండి</b><small>మేము ప్రతి సందేశం చదువుతాం</small></span>
+                <svg class="icon-inline account-row-chev" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg>
+            </button>
+            <button type="button" class="account-row" onclick="closeAccountOverlay(); openMessages()">
+                <span class="account-row-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-message"/></svg></span>
+                <span class="account-row-copy"><b>నా సందేశాలు</b><small id="messagesSummary">మీరు పంపిన వాటికి మా జవాబులు</small></span>
+                <span class="account-row-badge" id="messagesBadge" hidden></span>
+                <svg class="icon-inline account-row-chev" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg>
+            </button>
+            <button type="button" class="account-row" onclick="closeAccountOverlay(); openUpdates()">
+                <span class="account-row-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-sparkle"/></svg></span>
+                <span class="account-row-copy"><b>కొత్తవి</b><small>కొత్త సదుపాయాలు, మార్పులు</small></span>
+                <svg class="icon-inline account-row-chev" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg>
+            </button>
+            <button type="button" class="account-row" data-info="welcome">
+                <span class="account-row-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-info-circle"/></svg></span>
+                <span class="account-row-copy"><b>ఈ సైట్ ఎలా వాడాలి?</b><small>ప్రతి సదుపాయం గురించి సులభ వివరణ</small></span>
+                <svg class="icon-inline account-row-chev" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg>
+            </button>
+        </nav>
+
+        <details class="account-advanced">
+            <summary>
+                <span class="account-row-icon account-row-icon-muted" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-download"/></svg></span>
+                <span class="account-row-copy"><b>బ్యాకప్ ఫైల్</b><small>Google సైన్ ఇన్ చేయలేకపోతే మాత్రమే</small></span>
+                <svg class="icon-inline summary-chevron" aria-hidden="true"><use href="/icons.svg#icon-chevron-down"/></svg>
+            </summary>
+            <div class="account-advanced-body">
+                <div class="btn-row">
+                    <button type="button" class="track-btn primary" onclick="exportBackup()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-download"/></svg>బ్యాకప్ తీసుకోండి</button>
+                    <button type="button" class="track-btn" onclick="triggerRestore()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-upload"/></svg>తిరిగి పొందండి</button>
+                </div>
+                <input type="file" id="restoreFile" accept="application/json,.json" hidden onchange="handleRestoreFile(this)">
+                <p class="account-note">"బ్యాకప్" నొక్కితే మీ సమాచారం ఒక ఫైల్‌గా ఫోన్‌లో (Downloads) సేవ్ అవుతుంది. కొత్త ఫోన్‌లో "తిరిగి పొందండి" నొక్కి ఆ ఫైల్ ఎంచుకోండి. <b>ఆ ఫైల్ పోతే సమాచారం తిరిగి రాదు — సైన్ ఇన్ ఎక్కువ సురక్షితం.</b></p>
             </div>
         </details>
+        <p class="account-version">శ్రీ దివ్య స్తోత్రములు</p>
+    </div>
+</div>
+
+<!-- ============ WHAT'S NEW (updates.js) ============ -->
+<div class="sheet-overlay" id="updatesOverlay" role="dialog" aria-modal="true" aria-labelledby="updatesTitle" onclick="if(event.target===this)closeUpdates()">
+    <div class="sheet updates-sheet">
+        <div class="sheet-grab" aria-hidden="true"></div>
+        <div class="sheet-head">
+            <span class="sheet-head-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-sparkle"/></svg></span>
+            <h2 id="updatesTitle">కొత్తవి</h2>
+            <button type="button" class="sheet-close" onclick="closeUpdates()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
+        </div>
+        <p class="sheet-sub">కొత్త సదుపాయాలు, మెరుగుదలలు, సరిచేసినవి.</p>
+        <div class="updates-list" id="updatesList"></div>
+    </div>
+</div>
+
+<!-- ============ MY MESSAGES (messages.js) ============ -->
+<div class="sheet-overlay" id="messagesOverlay" role="dialog" aria-modal="true" aria-labelledby="messagesTitle" onclick="if(event.target===this)closeMessages()">
+    <div class="sheet messages-sheet">
+        <div class="sheet-grab" aria-hidden="true"></div>
+        <div class="sheet-head">
+            <span class="sheet-head-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-message"/></svg></span>
+            <h2 id="messagesTitle">నా సందేశాలు</h2>
+            <button type="button" class="sheet-close" onclick="closeMessages()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
+        </div>
+        <p class="sheet-sub" id="messagesIntro">మీరు పంపిన సమస్యలు, సూచనలు, వాటికి మా జవాబులు.</p>
+        <div class="messages-list" id="messagesList"></div>
+        <button type="button" class="btn btn-primary btn-block" onclick="closeMessages(); openFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>కొత్త సందేశం పంపండి</button>
+    </div>
+</div>
+
+<!-- ============ ⓘ INFO SHEET (help.js) ============ -->
+<div class="sheet-overlay" id="infoOverlay" role="dialog" aria-modal="true" aria-labelledby="infoTitle" onclick="if(event.target===this)closeInfo()">
+    <div class="sheet">
+        <div class="sheet-grab" aria-hidden="true"></div>
+        <div class="sheet-head">
+            <span class="sheet-head-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-info"/></svg></span>
+            <h2 id="infoTitle" tabindex="-1"></h2>
+            <button type="button" class="sheet-close" onclick="closeInfo()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
+        </div>
+        <div class="info-body" id="infoBody"></div>
+        <p class="info-gloss" id="infoGloss" lang="en"></p>
+        <button type="button" class="btn btn-primary btn-block info-done" onclick="closeInfo()">అర్థమైంది</button>
     </div>
 </div>
 
 <!-- ============ TRACK (పూజా ట్రాక్) PAGE ============ -->
-<div class="track-page" id="trackPage">
+<div class="track-page" id="trackPage" role="main" tabindex="-1" aria-labelledby="trackTitle">
     <div class="track-section-head">
-        <h2>📿 నా పూజా ట్రాక్</h2>
-        <p>My Daily Pooja Tracker</p>
+        <span class="eyebrow">నిత్య సాధన</span>
+        <h2 id="trackTitle">నా పూజా ట్రాక్</h2>
+        <p>రోజువారీ ప్రదక్షిణలు, జపం, మొక్కులు — ఒకే చోట.</p>
     </div>
 
-    <div class="reminder-banner" id="reminderBanner"></div>
+    <div class="reminder-banner" id="reminderBanner" role="status"></div>
 
-    <!-- Calendar -->
-    <div class="track-card">
+    <!-- Calendar. .month-strip geometry is fixed in behavior.css (month = scrollLeft / clientWidth). -->
+    <section class="track-card track-calendar" aria-labelledby="calendarTitle">
+        <div class="track-card-head">
+            <h3 class="track-card-title" id="calendarTitle">క్యాలెండర్</h3>
+            <button type="button" class="info-btn" data-info="calendar" aria-label="వివరణ: క్యాలెండర్"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
+        </div>
         <div class="month-nav">
-            <button class="month-arrow" id="prevMonthBtn" onclick="shiftMonth(-1)">‹</button>
-            <div class="month-label" id="monthLabel"></div>
-            <button class="month-arrow" id="nextMonthBtn" onclick="shiftMonth(1)">›</button>
+            <button type="button" class="month-arrow" id="prevMonthBtn" onclick="shiftMonth(-1)" aria-label="మునుపటి నెల"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"/></svg></button>
+            <div class="month-label" id="monthLabel" aria-live="polite"></div>
+            <button type="button" class="month-arrow" id="nextMonthBtn" onclick="shiftMonth(1)" aria-label="తదుపరి నెల"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-right"/></svg></button>
         </div>
         <div class="month-strip" id="monthStrip"></div>
-        <div class="track-empty" style="padding:8px 0 0;font-size:13px;opacity:0.45;">ఒక రోజును నొక్కి ఆ రోజు ప్రదక్షిణలు &amp; పారాయణం నమోదు చేయండి</div>
-    </div>
+        <p class="track-hint">ఏ రోజునైనా నొక్కి ఆ రోజు ప్రదక్షిణలు, జపం నమోదు చేయండి. చుక్క ఉన్న రోజుల్లో నమోదు ఉంది.</p>
+    </section>
 
-    <!-- Mokkulu -->
-    <div class="track-card">
-        <div class="track-card-title">🙏 మొక్కులు (Vows)</div>
+    <!-- Mokkulu (vows) -->
+    <section class="track-card" aria-labelledby="mokkuTitle">
+        <div class="track-card-head">
+            <h3 class="track-card-title" id="mokkuTitle">మొక్కులు</h3>
+            <button type="button" class="info-btn" data-info="mokku" aria-label="వివరణ: మొక్కులు"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
+        </div>
         <div class="mokku-form">
+            <label class="visually-hidden" for="mokkuText">మొక్కు</label>
             <input type="text" class="mokku-input" id="mokkuText" placeholder="మొక్కు ఏమిటి? ఉదా: తిరుమల 11 ప్రదక్షిణలు">
             <div class="mokku-row2">
-                <input type="date" class="mokku-date" id="mokkuDate" title="జ్ఞాపిక తేదీ (ఐచ్ఛికం)">
-                <button class="mokku-add-btn" onclick="addMokku()">＋ జోడించండి</button>
+                <label class="mokku-date-label"><span>జ్ఞాపిక తేదీ (ఐచ్ఛికం)</span><input type="date" class="mokku-date" id="mokkuDate"></label>
+                <button type="button" class="mokku-add-btn btn btn-primary" onclick="addMokku()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>జోడించండి</button>
             </div>
         </div>
         <div class="mokku-list" id="mokkuList"></div>
-    </div>
+    </section>
 
-    <!-- Backup/restore + cloud sign-in moved to the dedicated Account overlay
-         (#accountOverlay, below) — reached via the header's నా ఖాతా / Account
-         button, so it no longer requires scrolling past the calendar/mokkulu
-         content on this page to reach it. -->
-
-    <div class="track-empty" style="font-size:13px;opacity:0.5;line-height:1.7;">
-        📱 మీ ట్రాక్ సమాచారం ఈ పరికరంలోనే (ఈ ఫోన్/టాబ్‌లో) భద్రంగా దాచబడుతుంది.<br>
-        ఇంటర్నెట్‌కు పంపబడదు. (Saved privately on this device)
-    </div>
+    <p class="track-privacy" id="trackPrivacy"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-lock"/></svg><span>ఈ సమాచారం మీ ఫోన్‌లో భద్రంగా ఉంటుంది. Google తో సైన్ ఇన్ చేస్తే మీ ఖాతాలో కూడా భద్రపరుస్తాం.</span></p>
 </div>
 
 <!-- Shared japamala gradient defs (kept in an always-present 0-size svg so the
@@ -1149,16 +1250,21 @@
     </defs>
 </svg>
 
-<!-- ============ JAPAMALA PAGE (four views sharing one count) ============ -->
-<div class="japamala-page" id="japamalaPage" onclick="bumpJapa()">
-    <div class="jm-head">📿 జపమాల</div>
-    <div class="jm-modes">
-        <button class="jm-mode-btn" data-mode="flow" onclick="event.stopPropagation(); setJmMode('flow')">మాల · Flow</button>
-        <button class="jm-mode-btn" data-mode="strand" onclick="event.stopPropagation(); setJmMode('strand')">దండ · Pull</button>
-        <button class="jm-mode-btn" data-mode="full" onclick="event.stopPropagation(); setJmMode('full')">వలయం · Full</button>
-        <button class="jm-mode-btn" data-mode="rudraksha3d" onclick="event.stopPropagation(); setJmMode('rudraksha3d')">రుద్రాక్ష · 3D</button>
+<!-- ============ JAPAMALA PAGE (four views sharing one count) ============
+     The whole page counts a bead on tap (onclick=bumpJapa), so every control
+     inside stops propagation. ⓘ clicks are also stopped by help.js (capture). -->
+<div class="japamala-page" id="japamalaPage" role="main" onclick="bumpJapa()" tabindex="-1" aria-labelledby="jmTitle">
+    <div class="jm-head">
+        <h2 class="jm-title" id="jmTitle">జపమాల</h2>
+        <button type="button" class="info-btn" data-info="japamala" aria-label="వివరణ: జపమాల" onclick="event.stopPropagation()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info"/></svg></button>
     </div>
-    <div class="jm-count-top"><span id="jmCount">0</span><span class="jm-of"> / 108</span></div>
+    <div class="jm-modes" role="group" aria-label="మాల రూపం">
+        <button type="button" class="jm-mode-btn" data-mode="flow" onclick="event.stopPropagation(); setJmMode('flow')">మాల</button>
+        <button type="button" class="jm-mode-btn" data-mode="strand" onclick="event.stopPropagation(); setJmMode('strand')">దండ</button>
+        <button type="button" class="jm-mode-btn" data-mode="full" onclick="event.stopPropagation(); setJmMode('full')">వలయం</button>
+        <button type="button" class="jm-mode-btn" data-mode="rudraksha3d" onclick="event.stopPropagation(); setJmMode('rudraksha3d')">రుద్రాక్ష</button>
+    </div>
+    <div class="jm-count-top" aria-live="polite"><span id="jmCount">0</span><span class="jm-of"> / 108</span></div>
     <div class="jm-rounds" id="jmRounds"></div>
 
     <!-- LOOK 1: vertical scrolling strand (pull one bead at a time) -->
@@ -1196,87 +1302,100 @@
         <canvas id="jmRudrakshaCanvas" class="jm-rudraksha-canvas" width="720" height="760"
                 role="button" tabindex="0" aria-label="తిరిగే త్రిమితీయ ఐదు ముఖాల రుద్రాక్ష జపమాల. లెక్కించడానికి నొక్కండి"></canvas>
         <div class="jm-rudraksha-fallback" id="jmRudrakshaFallback" hidden>
-            <span aria-hidden="true">📿</span>
-            <strong>3D graphics are unavailable</strong>
-            <small>The COUNT button still works, or choose one of another mala view.</small>
+            <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mala"/></svg>
+            <strong>ఈ ఫోన్‌లో 3D రూపం అందుబాటులో లేదు</strong>
+            <small>"జపం" బటన్ యథావిధిగా పని చేస్తుంది. లేదా పైన మరో మాల రూపం ఎంచుకోండి.</small>
         </div>
-        <div class="jm-rudraksha-hint">5-mukhi Rudraksha · Drag to rotate · Tap to count</div>
+        <div class="jm-rudraksha-hint">ఐదు ముఖాల రుద్రాక్ష · తిప్పడానికి లాగండి · లెక్కకు నొక్కండి</div>
     </div>
 
     <div class="jm-controls">
-        <button class="jm-btn-reset" onclick="event.stopPropagation(); resetJapamala()" title="రీసెట్" aria-label="Reset">↻</button>
-        <button class="jm-btn-count" onclick="event.stopPropagation(); bumpJapa()">COUNT</button>
+        <button type="button" class="jm-btn-reset" onclick="event.stopPropagation(); resetJapamala()" aria-label="జపమాల లెక్క 0కి తిరిగి సెట్ చేయండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg></button>
+        <button type="button" class="jm-btn-count" onclick="event.stopPropagation(); bumpJapa()"><span class="jm-btn-count-label">జపం</span><small>లెక్కించు</small></button>
+        <span class="jm-controls-spacer" aria-hidden="true"></span>
     </div>
-    <div class="jm-hint">📿 ఎక్కడైనా నొక్కండి · Space · ఒక్కో పూస లాగండి</div>
+    <p class="jm-hint">స్క్రీన్ మీద ఎక్కడ నొక్కినా ఒక పూస లెక్కకు వస్తుంది</p>
 </div>
 
-<!-- ============ FEEDBACK MODAL ============ -->
-<div class="feedback-overlay" id="feedbackOverlay">
-    <div class="feedback-box">
+<!-- ============ FEEDBACK / REPORT A PROBLEM ============
+     The type chips drive the (visually hidden) #fbType select that app.js reads. -->
+<div class="feedback-overlay" id="feedbackOverlay" onclick="if(event.target===this)closeFeedback()">
+    <div class="feedback-box" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
         <div id="fbForm">
             <div class="fb-head">
-                <h2>💬 మీ అభిప్రాయం</h2>
-                <button class="search-close-btn" onclick="closeFeedback()" title="మూసివేయి"><svg class="icon-inline"><use href="/icons.svg#icon-close"/></svg></button>
+                <span class="sheet-head-icon" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-message"/></svg></span>
+                <h2 id="fbTitle">మాకు తెలియజేయండి</h2>
+                <button type="button" class="sheet-close" onclick="closeFeedback()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
             </div>
-            <p class="fb-sub">మీ సూచనలు మాకు చాలా విలువైనవి 🙏 (🎤 నొక్కి మాట్లాడవచ్చు)</p>
+            <p class="fb-sub">సమస్య, అక్షర తప్పు, లేదా కొత్త ఆలోచన — మేము ప్రతి సందేశం చదువుతాం. మైక్ నొక్కి మాట్లాడి కూడా రాయవచ్చు.</p>
 
-            <label class="fb-label">ఏమి చెప్పాలనుకుంటున్నారు?</label>
-            <select class="fb-input" id="fbType">
-                <option value="correction">📖 స్తోత్రంలో తప్పు / దిద్దుబాటు</option>
-                <option value="problem">⚠️ సమస్య / పని చేయలేదు</option>
-                <option value="suggestion" selected>💡 సూచన / కొత్త కోరిక</option>
-                <option value="other">🙏 ఇతరం</option>
-            </select>
+            <fieldset class="fb-types">
+                <legend class="fb-label">దేని గురించి?</legend>
+                <div class="fb-type-chips" role="radiogroup" aria-label="సందేశం రకం">
+                    <button type="button" class="fb-type-chip" data-fb-type="correction" role="radio" aria-checked="false"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-book"/></svg><span>స్తోత్రంలో తప్పు</span></button>
+                    <button type="button" class="fb-type-chip" data-fb-type="problem" role="radio" aria-checked="false"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-warning"/></svg><span>సమస్య</span></button>
+                    <button type="button" class="fb-type-chip" data-fb-type="suggestion" role="radio" aria-checked="true"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-sparkle"/></svg><span>సూచన</span></button>
+                    <button type="button" class="fb-type-chip" data-fb-type="other" role="radio" aria-checked="false"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-message"/></svg><span>ఇతరం</span></button>
+                </div>
+                <select class="fb-input visually-hidden" id="fbType" tabindex="-1" aria-hidden="true">
+                    <option value="correction">స్తోత్రంలో తప్పు / దిద్దుబాటు</option>
+                    <option value="problem">సమస్య / పని చేయలేదు</option>
+                    <option value="suggestion" selected>సూచన / కొత్త కోరిక</option>
+                    <option value="other">ఇతరం</option>
+                </select>
+            </fieldset>
 
-            <label class="fb-label">పేరు <span class="req">*</span></label>
+            <label class="fb-label" for="fbName">పేరు <span class="req" aria-hidden="true">*</span></label>
             <div class="fb-field">
-                <input type="text" class="fb-input" id="fbName" placeholder="మీ పేరు" autocomplete="name">
-                <button class="mic-mini" onclick="listenInto('fbName', this, false)" title="మాట్లాడండి">🎤</button>
+                <input type="text" class="fb-input" id="fbName" placeholder="మీ పేరు" autocomplete="name" maxlength="200" required>
+                <button type="button" class="mic-mini" onclick="listenInto('fbName', this, false)" aria-label="పేరు మాట్లాడి చెప్పండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
             </div>
 
-            <label class="fb-label">ఫోన్ లేదా ఇమెయిల్ <span class="fb-opt">(ఐచ్ఛికం — బదులు చెప్పాలంటే మాత్రమే)</span></label>
+            <label class="fb-label" for="fbNumber">ఫోన్ లేదా ఇమెయిల్ <span class="fb-opt">(ఐచ్ఛికం — జవాబు కావాలంటే మాత్రమే)</span></label>
             <div class="fb-field">
-                <input type="text" class="fb-input" id="fbNumber" placeholder="ఫోన్ నంబర్ లేదా ఇమెయిల్" autocomplete="tel">
-                <button class="mic-mini" onclick="listenInto('fbNumber', this, false)" title="మాట్లాడండి">🎤</button>
+                <input type="text" class="fb-input" id="fbNumber" placeholder="ఫోన్ నంబర్ లేదా ఇమెయిల్" autocomplete="tel" maxlength="200">
+                <button type="button" class="mic-mini" onclick="listenInto('fbNumber', this, false)" aria-label="నంబర్ మాట్లాడి చెప్పండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
             </div>
 
-            <label class="fb-label">అభిప్రాయం / సందేశం <span class="req">*</span></label>
+            <label class="fb-label" for="fbMessage">మీ సందేశం <span class="req" aria-hidden="true">*</span></label>
             <div class="fb-field area">
-                <textarea class="fb-textarea" id="fbMessage" placeholder="మీ అభిప్రాయం ఇక్కడ రాయండి లేదా చెప్పండి…"></textarea>
-                <button class="mic-mini" onclick="listenInto('fbMessage', this, true)" title="మాట్లాడండి">🎤</button>
+                <textarea class="fb-textarea" id="fbMessage" placeholder="ఇక్కడ రాయండి లేదా మైక్ నొక్కి చెప్పండి…" maxlength="5000" required></textarea>
+                <button type="button" class="mic-mini" onclick="listenInto('fbMessage', this, true)" aria-label="సందేశం మాట్లాడి చెప్పండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
             </div>
 
-            <div class="fb-error" id="fbError"></div>
-            <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true"
-                   style="position:absolute;left:-9999px;width:0;height:0;opacity:0;">
-            <button class="mokku-add-btn fb-submit" onclick="submitFeedback()">పంపండి →</button>
-            <div class="fb-privacy">🔒 మీరు రాసినది, మీ పేరు, మరియు (ఇచ్చినట్లయితే) సంప్రదింపు వివరాలు మాత్రమే పంపబడతాయి. ఏ స్తోత్రం చూస్తున్నారో అనే సమాచారం కూడా జోడించబడుతుంది — తప్పు ఎక్కడ ఉందో తెలుసుకోవడానికి.</div>
+            <div class="fb-error" id="fbError" role="alert"></div>
+            <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <button type="button" class="btn btn-primary btn-block fb-submit" onclick="submitFeedback()">పంపండి <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-arrow-right"/></svg></button>
+            <p class="fb-privacy"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-lock"/></svg><span>మీరు రాసినది, మీ పేరు, (ఇస్తే) సంప్రదింపు వివరాలు మాత్రమే పంపుతాం. తప్పు ఎక్కడ ఉందో తెలియడానికి మీరు చూస్తున్న స్తోత్రం పేరు కూడా జతవుతుంది.</span></p>
         </div>
 
         <div id="fbThanks" class="fb-thanks" style="display:none;">
-            <div class="big">🙏</div>
+            <div class="fb-thanks-mark" aria-hidden="true"><svg class="icon-inline"><use href="/icons.svg#icon-check"/></svg></div>
             <h3>ధన్యవాదాలు!</h3>
-            <p>మీ అభిప్రాయం స్వీకరించబడింది.</p>
+            <p>మీ సందేశం మాకు చేరింది. మా జవాబు "నా సందేశాలు" లో చూడవచ్చు.</p>
+            <button type="button" class="btn btn-primary" onclick="closeFeedback()">సరే</button>
         </div>
     </div>
 </div>
 
 <!-- ============ DAY DETAIL BOTTOM SHEET ============ -->
 <div class="day-sheet-overlay" id="daySheetOverlay" onclick="if(event.target===this)closeDay()">
-    <div class="day-sheet">
-        <div class="sheet-handle"></div>
-        <div class="sheet-date" id="sheetDate"></div>
+    <div class="day-sheet" role="dialog" aria-modal="true" aria-labelledby="sheetDate">
+        <div class="sheet-handle" aria-hidden="true"></div>
+        <div class="day-sheet-head">
+            <div class="sheet-date" id="sheetDate"></div>
+            <button type="button" class="sheet-close" onclick="closeDay()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
+        </div>
         <div id="sheetBody"></div>
     </div>
 </div>
 
-<button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+<button type="button" class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:scrollMotion()})" aria-label="పైకి వెళ్ళండి / Back to top"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-up"/></svg></button>
 
-<div class="footer">
-    <button type="button" class="footer-feedback" onclick="openFeedback()">మీ సూచనలు / Share feedback ↗</button>
-    <div class="divider"></div>
-    ॐ నమః శివాయ | ॐ నమో నారాయణాయ | ॐ శ్రీ మాత్రే నమః
-</div>
+<footer class="footer">
+    <button type="button" class="footer-feedback" onclick="openFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-message"/></svg>మీ సూచనలు / Share feedback</button>
+    <p class="footer-mantra">ॐ నమః శివాయ · ॐ నమో నారాయణాయ · ॐ శ్రీ మాత్రే నమః</p>
+</footer>
 
 <!-- Per-stotram data — each file registers onto window.STOTRAS_DATA.
      Add a new stotram = create data/stotras/<key>.js and add a <script> below. -->
@@ -1316,6 +1435,7 @@
 <script src="/data/stotras/aishwaryalakshmi108.js"></script>
 
 <script src="/data/content-audit.js"></script>
+<script src="/data/updates.js"></script>
 <script src="/assets/reader-navigation.js"></script>
 <script src="/assets/reader.js"></script>
 <script src="/assets/tracking.js"></script>
@@ -1333,5 +1453,9 @@
 <script src="/assets/weekday.js"></script>
 <script src="/assets/library.js"></script>
 <script src="/assets/experience.js"></script>
+<!-- New in the redesign: ⓘ help sheet, What's new, My messages -->
+<script src="/assets/help.js"></script>
+<script src="/assets/updates.js"></script>
+<script src="/assets/messages.js"></script>
 </body>
 </html>

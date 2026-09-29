@@ -81,16 +81,45 @@
   }
 
   /* ---------- the "ఈ రోజు" section on the home page ---------- */
+  // Keys go into an inline onclick, so only plain ids are allowed (built-ins
+  // and Firestore auto-ids always are).
+  const SAFE_KEY = /^[A-Za-z0-9_-]+$/;
+
   function keysForToday() {
     const day = MAP[todayIdx()] || { deities: [], stotras: [] };
     const want = new Set(day.deities || []);
     const pinned = new Set(day.stotras || []);
     return Object.keys(stotramConfig).filter((k) => {
       const cfg = stotramConfig[k];
-      if (!cfg || cfg.hidden) return false;
+      if (!cfg || cfg.hidden || !SAFE_KEY.test(k)) return false;
       return pinned.has(k) || want.has(deityOf(k));
     });
   }
+
+  function icon(name) {
+    return '<svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-' + name + '"/></svg>';
+  }
+
+  // Deity emoji: app.js's shared lookup (admin icon → library card → theme).
+  function emojiFor(k) {
+    const cfg = stotramConfig[k] || {};
+    const found = typeof window.stotramIcon === 'function' ? window.stotramIcon(k) : cfg.__icon;
+    return String(found || '🕉️');
+  }
+
+  function tileHtml(k) {
+    const cfg = stotramConfig[k];
+    const theme = String(cfg.theme || '').replace(/[^\w-]/g, '');
+    return '<button type="button" class="today-tile" onclick="openReader(\'' + k + '\')">' +
+      '<span class="today-ico medallion' + (theme ? ' ' + theme : '') + '" aria-hidden="true">' + escapeHtml(emojiFor(k)) + '</span>' +
+      '<span class="today-title">' + escapeHtml(String(cfg.title || k)) + '</span>' +
+      icon('chevron-right') +
+      '</button>';
+  }
+
+  // The last markup written, so repeated renders (Firestore map, cloud
+  // stotras, the minute timer) don't rebuild an unchanged section.
+  let rendered = { el: null, html: '' };
 
   function renderToday() {
     const home = document.getElementById('homePage');
@@ -110,20 +139,18 @@
     }
 
     const i = todayIdx();
-    sec.innerHTML =
-      '<div class="today-head"><span class="today-day">🌅 ఈ రోజు — ' + DAY_TE[i] + '</span>' +
-      '<span class="today-note">' + DAY_NOTE[i] + '</span></div>' +
+    const html =
+      '<div class="today-head">' +
+        '<span class="today-icon" aria-hidden="true">' + icon('sun') + '</span>' +
+        '<h2 class="today-day">ఈ రోజు — ' + DAY_TE[i] + '</h2>' +
+        '<span class="today-note">' + DAY_NOTE[i] + '</span>' +
+        '<button type="button" class="info-btn" data-info="today" aria-label="వివరణ: ఈ రోజు స్తోత్రాలు">' + icon('info') + '</button>' +
+      '</div>' +
       '<p class="weekday-guidance">ఈ రోజు సూచనలు మాత్రమే. మీ సంప్రదాయం ప్రకారం ఏ రోజైనా చదవవచ్చు.</p>' +
-      '<div class="today-strip">' +
-      keys.slice(0, 3).map((k) => {
-        const cfg = stotramConfig[k];
-        const icon = cfg.__icon || '🕉️';
-        return '<button class="today-tile" onclick="openReader(\'' + k + '\')">' +
-          '<span class="today-ico">' + icon + '</span>' +
-          '<span class="today-title">' + escapeHtml(cfg.title || k) + '</span>' +
-          '</button>';
-      }).join('') +
-      '</div>';
+      '<div class="today-strip">' + keys.slice(0, 3).map(tileHtml).join('') + '</div>';
+    if (rendered.el === sec && rendered.html === html) return;
+    sec.innerHTML = html;
+    rendered = { el: sec, html };
   }
 
   // admin.js calls this after cloud stotras load, so newly added ones can

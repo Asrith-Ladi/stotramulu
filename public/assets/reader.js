@@ -2,7 +2,8 @@
 function stotramCategory(type) {
     const cfg = stotramConfig[type] || {};
     if (cfg.__cat) return cfg.__cat;
-    const card = Array.from(document.querySelectorAll('.card[onclick]')).find(el => el.getAttribute('onclick').includes("openReader('" + type + "')"));
+    // Built-ins take their category from the library section their card sits in.
+    const card = /^[\w-]+$/.test(type) ? document.querySelector('a.card[data-stotram="' + type + '"]') : null;
     const sec = card && card.closest('.cards-section[data-cat]');
     if (sec && sec.dataset.cat) return sec.dataset.cat;
     return /108$/.test(type) ? 'ashtottara' : 'stotras';       // last resort
@@ -51,8 +52,10 @@ function numberedReaderRows(data, type) {
     });
 }
 
+// Verse size comes from CSS (--reader-font-size), so rows carry no inline font-size.
+// Text is escaped: stotras added in the admin panel arrive from the cloud.
 function readerRowsHtml(rows) {
-    return rows.map(row => `<div class="reader-verse-row"><div class="slokam-text" style="font-size:${currentFontSize}px">${row.text}</div>${row.number ? `<span class="reader-verse-number">${row.number}</span>` : ''}</div>`).join('');
+    return rows.map(row => `<div class="reader-verse-row"><div class="slokam-text">${escapeHtml(row.text)}</div>${row.number ? `<span class="reader-verse-number">${escapeHtml(row.number)}</span>` : ''}</div>`).join('');
 }
 
 
@@ -72,25 +75,31 @@ function renderSlokams(data, type) {
     const rows = numberedReaderRows(data, type);
     data.forEach((item, idx) => {
         const meaning = meaningSet[idx];
+        // Same shape as before the redesign: the label, a line break, the meaning.
         const meaningHtml = meaning
-            ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${meaning}</div>`
+            ? `<div class="slokam-meaning"><span class="meaning-label">అర్థం</span><br>${escapeHtml(meaning)}</div>`
             : '';
         const b = document.createElement('div');
         b.className = 'slokam-block' + (read.has(idx) ? ' read' : '');
         b.dataset.idx = idx;
         b.id = 'verse-' + idx;
         b.tabIndex = -1;
-        const heading = /^\d/.test(String(item.number)) ? '' : `<span class="slokam-number">${item.number}</span>`;
+        const heading = /^\d/.test(String(item.number)) ? '' : `<span class="slokam-number">${escapeHtml(item.number)}</span>`;
         b.innerHTML = `${heading}${readerRowsHtml(rows[idx])}${meaningHtml}`;
         const mark = document.createElement('button');
+        mark.type = 'button';
         mark.className = 'verse-read-button';
-        mark.textContent = read.has(idx) ? 'చదివాను ✓' : 'చదివినట్లు గుర్తించు';
+        mark.textContent = readMarkLabel(read.has(idx));
         mark.setAttribute('aria-pressed', String(read.has(idx)));
         mark.onclick = () => toggleSlokamRead(idx, b);
         b.appendChild(mark);
         c.appendChild(b);
     });
     return true;
+}
+// No ✓ glyph in the text: CSS draws the circle / check icon from aria-pressed.
+function readMarkLabel(isRead) {
+    return isRead ? 'చదివాను' : 'చదివినట్లు గుర్తించు';
 }
 
 
@@ -121,7 +130,7 @@ function toggleSlokamRead(idx, el) {
         const button = el.querySelector('.verse-read-button');
         if (button) {
             button.setAttribute('aria-pressed', String(at < 0));
-            button.textContent = at < 0 ? 'చదివాను ✓' : 'చదివినట్లు గుర్తించు';
+            button.textContent = readMarkLabel(at < 0);
         }
     }
     gaEvent('slokam_mark_read', { stotram: currentType, on: at < 0 });
@@ -143,7 +152,7 @@ async function resetReading() {
 function changeFontSize(d) {
     currentFontSize = Math.max(18, Math.min(48, currentFontSize + d));
     document.getElementById('fontSizeDisplay').textContent = currentFontSize;
-    document.querySelectorAll('.slokam-text, .slokam-meaning').forEach(e => e.style.fontSize = currentFontSize + 'px');
+    // Verses and meanings size themselves from this variable (reader.css).
     document.documentElement.style.setProperty('--reader-font-size', currentFontSize + 'px');
     try { localStorage.setItem('readerFontSize', String(currentFontSize)); } catch (e) {}
     document.querySelectorAll('[onclick="changeFontSize(-2)"]').forEach(b => b.disabled = currentFontSize <= 18);
@@ -351,27 +360,27 @@ function nextSearchMatch() {
     if (!readerMatches.length) return;
     if (!readerScrolledOnce) {
         // First nav after a fresh search: scroll to current (match[0]) without advancing.
-        readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        readerMatches[readerMatchIdx].scrollIntoView({ behavior: scrollMotion(), block: 'center' });
         readerScrolledOnce = true;
         return;
     }
     readerMatches[readerMatchIdx].classList.remove('current');
     readerMatchIdx = (readerMatchIdx + 1) % readerMatches.length;
     readerMatches[readerMatchIdx].classList.add('current');
-    readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    readerMatches[readerMatchIdx].scrollIntoView({ behavior: scrollMotion(), block: 'center' });
     updateMatchCount();
 }
 function prevSearchMatch() {
     if (!readerMatches.length) return;
     if (!readerScrolledOnce) {
-        readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        readerMatches[readerMatchIdx].scrollIntoView({ behavior: scrollMotion(), block: 'center' });
         readerScrolledOnce = true;
         return;
     }
     readerMatches[readerMatchIdx].classList.remove('current');
     readerMatchIdx = (readerMatchIdx - 1 + readerMatches.length) % readerMatches.length;
     readerMatches[readerMatchIdx].classList.add('current');
-    readerMatches[readerMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    readerMatches[readerMatchIdx].scrollIntoView({ behavior: scrollMotion(), block: 'center' });
     updateMatchCount();
 }
 // Debounced wrapper called from oninput — search runs once typing pauses.
@@ -428,7 +437,7 @@ function startReaderVoice() {
     rec.onerror = (e) => {
         btn && btn.classList.remove('listening');
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed')
-            siteAlert('🎤 మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
+            siteAlert('మైక్ అనుమతి ఇవ్వండి, లేదా టైప్ చేయండి.');
     };
     try { rec.start(); btn && btn.classList.add('listening'); } catch (e) { /* already running */ }
 }

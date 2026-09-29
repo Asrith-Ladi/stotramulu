@@ -1,0 +1,19 @@
+/* ============================================================
+   Stylesheet entry for index.html. Vite inlines these @imports into one
+   bundle in this exact order. behavior.css must stay LAST.
+============================================================ */
+@import "@fontsource-variable/noto-sans-telugu";
+@import "@fontsource-variable/noto-serif-telugu";
+
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";
+@import "./layout.css";
+@import "./home.css";
+@import "./library.css";
+@import "./reader.css";
+@import "./practice.css";
+@import "./japamala.css";
+@import "./japamala-3d.css";
+@import "./overlays.css";
+@import "./behavior.css";

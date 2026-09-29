@@ -1,0 +1,118 @@
+/* ============================================================
+   Base: reset, typography, focus, icons, utilities.
+   No layout here, and no overflow on html/body. Scroll-lock works by
+   JS setting body.style.overflow inline, and that only reaches the
+   viewport while html stays overflow:visible. Sticky headers need it too.
+============================================================ */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Keeps anchor jumps and keyboard focus clear of the sticky header, the
+       reader's sticky tools (0 elsewhere) and the phone tab bar. */
+    scroll-padding-top: calc(var(--header-h) + var(--reader-tools-h, 0px) + 16px);
+    scroll-padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
+    background: var(--c-bg);
+}
+@media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    line-height: var(--lh);
+    color: var(--c-text);
+    background-color: var(--c-bg);
+    /* faint kolam-dot paper texture */
+    background-image: radial-gradient(circle at 1px 1px, rgb(13 59 58 / .045) 1px, transparent 0);
+    background-size: 22px 22px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    line-height: var(--lh-tight);
+    color: var(--c-text);
+    text-wrap: balance;
+}
+p, figure, blockquote, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; }
+small { font-size: var(--fs-xs); }
+b, strong { font-weight: 650; }
+
+a { color: var(--c-link); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--c-primary-hover); }
+
+button, input, select, textarea { font: inherit; color: inherit; letter-spacing: inherit; }
+button { cursor: pointer; }
+button:disabled, button[aria-disabled="true"] { opacity: .45; cursor: default; }
+input, select, textarea { min-width: 0; }
+input::placeholder, textarea::placeholder { color: var(--ink-3); opacity: 1; }
+fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+legend { padding: 0; }
+summary { cursor: pointer; }
+
+button, a, input, select, summary, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+}
+a, button, select, summary, [role="button"], .japamala-page, .jm-stage {
+    touch-action: manipulation;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+}
+:where(input, select, textarea):focus-visible { outline-offset: 1px; }
+/* Non-interactive focus targets (sheet titles, pages) receive focus so screen
+   readers land in the right place; they don't need a visible ring. */
+:where(h1, h2, h3, .home-page, .reader-page, .track-page, .japamala-page)[tabindex="-1"]:focus { outline: none; }
+
+::selection { background: var(--zari-200); color: var(--ink); }
+
+mark { background: var(--zari-200); color: inherit; border-radius: 3px; padding: 0 1px; }
+
+/* Icons from /icons.svg: <svg class="icon-inline"><use href="/icons.svg#icon-x"/></svg> */
+.icon-inline, .icon {
+    display: inline-block;
+    width: 1.15em;
+    height: 1.15em;
+    vertical-align: -0.2em;
+    flex: none;
+    fill: none;
+    color: currentColor;
+    pointer-events: none;
+}
+.icon { width: 24px; height: 24px; vertical-align: middle; }
+.nav-icon { display: block; width: 24px; height: 24px; flex: none; fill: none; color: currentColor; pointer-events: none; }
+
+/* Utilities */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0 0 0 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+.eyebrow {
+    display: block;
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--c-accent-text);
+}
+.muted { color: var(--c-text-muted); }

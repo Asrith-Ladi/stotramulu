@@ -1,0 +1,573 @@
+{
+  "summary": "I read all 7 files in full and checked every lookup against index.html. Nothing was edited. Every getElementById target exists in index.html except 4. #jmFullCount and #jmFlowCount are missing, but the JS checks `if (fc)` first, so nothing crashes. #todaySection and #cloudToast are created at runtime. site-config.js has no DOM code; it only sets window.ADMIN_UID and window.FIREBASE_CONFIG.\n\nThings the new CSS and markup must keep, or the site breaks:\n\n(1) A global rule `[hidden]{display:none !important}`. Today it only lives in design-system.css:23, which is being deleted. japamala-3d.js:252-259 toggles `hidden` on #jmRudrakshaCanvas and #jmRudrakshaFallback. japamala-3d.css:49 (not being deleted) gives the canvas `display:block`, and that beats the browser's default hidden rule. Without the global rule, a phone with no WebGL shows a blank canvas on top of the fallback message.\n\n(2) Default hidden states, because the JS only adds or removes classes. `.back-btn` must start as display:none. JS writes an inline `display:block` on it (tracking.js:46, japamala.js:59), so don't rely on inline-flex for its layout. `.track-page` and `.japamala-page` start hidden and show with `.active`. `.search-overlay` (this includes #accountOverlay) and `.day-sheet-overlay` start hidden and show with `.active`. `.cloud-toast` shows with `.show`.\n\n(3) `.home-page` must be styled as a flex column. JS sets inline display:none on it (tracking.js:43, japamala.js:55), and goHome in app.js sets inline display:flex to bring it back.\n\n(4) `.jm-stage` must be visible by default. setJmMode (japamala.js:81) switches views by writing inline `style.display` as '' or 'none', so '' falls back to whatever the stylesheet says.\n\n(5) Month swipe geometry. tracking.js:112-117 and :131 work out the month as scrollLeft ÷ clientWidth. So `.month-strip` must be a horizontal flex scroller (overflow-x:auto, scroll-snap x mandatory), with no gap and no side padding. Each `.month-card` must be `flex:0 0 100%`.\n\n(6) Japamala SVG rules:\n- Never put a CSS `transform` on `.jm-bead` or `.jm-flowbead`. JS moves them every frame through the SVG transform attribute (japamala.js:152, :274), and a CSS transform would override it and pile every bead in one spot.\n- No transitions on them either.\n- `.jm-fbead` needs `transform-box:fill-box; transform-origin:center` so the `.pop` animation grows the bead in place.\n- `.jm-thread` and `.jm-tassel-thread` have no stroke attributes, so the thread only shows if CSS gives it a stroke (and `fill:none` for the tassel).\n- The animations for `.celebrate`, `.pop` and `.jm-confetti` must be defined in CSS. The JS only sets delay and duration on confetti; it never sets the animation name.\n- The hidden 0-size `svg.jm-defs` holding the gradients gWood1-3, gMarker, gGuru, gGuruTop, gGold and gFocus must never be display:none.\n\n(7) Every `.cards-section` must stay a direct child of #homePage. weekday.js:108-109 runs `home.insertBefore(sec, home.querySelector('.cards-section'))`. If the sections move into a wrapper, that line throws and stops the rest of the weekday script, so the Firestore weekday map never loads. admin.js:166 also appends new category sections straight to #homePage, and experience.js only tags direct children of #homePage with data-panel (panel=\"home\" for #todaySection).\n\n(8) Built-in cards must keep `.card[data-stotram]` containing an `h3`, `.card-sub` and `.card-desc`. admin.js:145-152 writes admin edits into those elements.\n\n(9) This matters for the new \"i\" info button and the updates panel. #japamalaPage has `onclick=\"bumpJapa()\"` (index.html:1152), so any tap inside the page counts a bead. A window keydown handler (japamala.js:481-488) also turns Space into a count while the page is open. Any new button inside #japamalaPage must call `event.stopPropagation()`, and even then Space counts a bead instead of pressing the button. Better to put the button outside the page, or handle keyboard for it.\n\n(10) Scroll lock is done with inline `body.style.overflow` ('hidden' or ''), so the new CSS must not force overflow on body.\n\n(11) Bug that already exists: tracking.js:216 `bumpJapa(i, delta)` is overwritten by japamala.js:306 `bumpJapa()`, which loads later (index.html:1320 vs 1323). So the ＋ and − buttons on day-sheet japa rows (tracking.js:170, :172) actually add 1 to the japamala total. Both buttons add, and the row's own count never changes. japamala.js:335 shows the same name clash was avoided for resetJapa but missed for bumpJapa. Suggested fix: rename tracking's version, e.g. bumpDayJapa.\n\n(12) Small escaping gaps:\n- The japa name `j.name` from prompt() is put into HTML without escaping (tracking.js:163).\n- In the add-chip onclick (tracking.js:179), only single quotes are escaped, so a title with `\"` or `&` breaks it.\n- `cfg.__icon` is not escaped (weekday.js:122, admin.js:184).\n\n(13) If the Firebase SDK fails to load, cloud.js stops at :15-18 and #cloudAuthBox stays empty. Putting a default message inside it in the HTML is safe, because the script replaces the box's contents when it runs.\n\nOutside the 7 files, these depend on classes that app.js owns: siteConfirm (`.sc-overlay` / `.sc-box` / `.sc-msg` / `.sc-actions` / `.sc-btn.primary` / `.sc-btn.danger`, shown with `.show`), and showDueReminders (#reminderBanner with `.show` and `.rb-close`). library.js reuses `.today-strip` / `.today-tile` for favourites, where the tile is an `<a>` with plain text instead of a button with two spans, so `.today-tile` has to work for both.",
+  "items": [
+    {
+      "file": "public/assets/tracking.js",
+      "line": "11",
+      "kind": "other",
+      "detail": "saveTrack() calls window.__cloudSync() if set (registered by cloud.js:40)."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "20-24",
+      "kind": "dom-query",
+      "detail": "setTrack(): checks #trackPage.classList.contains('active'). If true, calls buildMonths/renderMonths/renderMokkulu/showDueReminders. Then calls renderHomePradakshina() and renderCount() (from japamala.js), which need #homePradakshinaCount and #jmCount."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "41-55",
+      "kind": "class-toggle",
+      "detail": "openTrack() (inline onclick at index.html:592): calls Japamala3D.hide(); sets #homePage.style.display='none'; removes .active from #readerPage; adds .active to #trackPage; sets #backBtn.style.display='block'; removes .active from #japamalaPage; calls stopReaderPositionTracking(), buildMonths/renderMonths/renderMokkulu/showDueReminders; then window.scrollTo smooth."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "43,46",
+      "kind": "style-write",
+      "detail": "Inline display writes: #homePage display:none; #backBtn display:block. CSS must make .back-btn display:none by default (styles.css:140 does today) and keep .home-page as a flex column (goHome sets display:flex)."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "58-66",
+      "kind": "class-toggle",
+      "detail": "openAccount() (index.html:548) adds .active to #accountOverlay (class .search-overlay) and sets body.style.overflow='hidden'. closeAccountOverlay() (index.html:1065; also Escape via app.js:290) removes .active and sets body.style.overflow=''."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "88-108",
+      "kind": "generated-markup",
+      "detail": "renderMonths() writes #monthStrip.innerHTML: 7 blocks of <div class=\"month-card\"><div class=\"cal-grid\">. Each grid has 7 x <div class=\"cal-weekday\">ఆది..శని</div>, then leading <div class=\"cal-day empty\"></div> fillers, then <div class=\"cal-day [future] [today] [has-data]\" onclick=\"openDay('YYYY-MM-DD')\">N<span class=\"dot\"></span></div>. There is no onclick on future days, and the .dot span appears only when has-data. cal-grid must be a 7-column grid."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "111-118",
+      "kind": "style-write",
+      "detail": "Sets strip.scrollLeft = monthIdx*strip.clientWidth and assigns strip.onscroll, which works out idx = round(scrollLeft/clientWidth). Needs .month-strip {display:flex; overflow-x:auto; scroll-snap-type:x mandatory; no gap; no side padding} and .month-card {flex:0 0 100%; scroll-snap-align}."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "120-125",
+      "kind": "attribute-toggle",
+      "detail": "updateMonthView(): sets #monthLabel textContent (e.g. 'సెప్టెంబర్ 2026'); sets the .disabled property on #prevMonthBtn and #nextMonthBtn (both .month-arrow) at the ends. Needs :disabled styling."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "126-133",
+      "kind": "style-write",
+      "detail": "shiftMonth(dir) (index.html:1103/1105) calls #monthStrip.scrollTo({left, behavior: 'instant' if prefers-reduced-motion, else 'smooth'})."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "138-153",
+      "kind": "class-toggle",
+      "detail": "openDay() sets #sheetDate textContent, renders #sheetBody, adds .active to #daySheetOverlay and sets body.style.overflow='hidden'. closeDay() (index.html:1264 backdrop click; Escape via app.js) returns early unless .active, then removes .active, sets overflow='' and re-renders the months. The existing CSS slides .day-sheet up via .day-sheet-overlay.active .day-sheet {transform:translateY(0)}."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "156-175",
+      "kind": "generated-markup",
+      "detail": "Japa rows: <div class=\"counter-card\"><div class=\"counter-head\"><span class=\"counter-name\">📖 {name}</span><div class=\"counter-actions\"><button class=\"counter-reset\" onclick=\"resetJapa(i)\" title=... aria-label=\"Reset\">↻</button><span class=\"counter-del\" onclick=\"removeJapa(i)\" title=\"తీసివేయి\">🗑️</span></div></div><div class=\"counter-row\"><button class=\"count-btn\" onclick=\"bumpJapa(i,-1)\">−</button><div class=\"count-center\"><div class=\"count-display\">N</div>{target}</div><button class=\"count-btn\" onclick=\"bumpJapa(i,1)\">＋</button></div></div>. The target is <div class=\"count-target [done]\" onclick=\"editTarget(i)\">, with '✅ ' and '— పూర్తయింది' added when done; otherwise the text reads 'లక్ష్యం పెట్టండి'. The {name} is not escaped. .counter-del is a <span>, not a button (it cannot be reached by keyboard)."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "170,172,216",
+      "kind": "other",
+      "detail": "BUG: these onclicks call bumpJapa(i, ±1), but japamala.js:306 redefines the global bumpJapa() and loads later (index.html:1323 vs 1320). Both ＋ and − therefore add 1 to track.japamala.total and play the click sound, while the japa row's count never changes. Rename tracking's version during the redesign."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "178-180",
+      "kind": "generated-markup",
+      "detail": "Chips: <span class=\"add-chip\" onclick=\"addJapa('title')\">＋ {title}</span> for the first 6 items of buildSearchIndex(). Only ' is escaped; the title is not HTML-escaped."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "183-198",
+      "kind": "generated-markup",
+      "detail": "#sheetBody.innerHTML contains: a pradakshina .counter-card (counter-name '🕉️ ప్రదక్షిణలు', a .counter-reset ↻ calling resetDayPradakshina(), .count-btn − and ＋ calling bumpPradakshina(±1), .count-display, and <div class=\"count-target\">Pradakshina</div>); then <div class=\"track-card-title\" style=\"margin-top:20px;\">📿 పారాయణం / జపం</div>; then the japa rows, or <div class=\"track-empty\">…👇</div> if there are none; then <div class=\"chip-row\">{chips}<span class=\"add-chip\" onclick=\"addJapaCustom()\">＋ వేరే…</span></div>. Note the inline style margin-top:20px."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "213,227",
+      "kind": "other",
+      "detail": "Uses the browser's native prompt() for a custom japa name and for editing a target. These are unstyled browser dialogs, unlike siteConfirm; replace them with an in-app dialog in the redesign."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "233-245",
+      "kind": "dom-query",
+      "detail": "addMokku() (index.html:1118) reads #mokkuText and #mokkuDate values, focuses #mokkuText if empty, and clears both after adding."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "246-275",
+      "kind": "generated-markup",
+      "detail": "#mokkuList.innerHTML: the empty state is <div class=\"track-empty\">…🙏</div>. Each item: <div class=\"mokku-item [done]\"><div class=\"mokku-check\" onclick=\"toggleMokku('id')\">✔ or empty</div><div class=\"mokku-body\"><div class=\"mokku-text\">{escaped}</div><div class=\"mokku-meta\"><span class=\"mokku-badge [due]\">🔔 {d month}[ • ఈరోజు!]</span></div></div><span class=\"mokku-del\" onclick=\"deleteMokku('id')\" title=\"తొలగించు\">🗑️</span></div>. The check and delete controls are divs/spans, not buttons."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "308-330",
+      "kind": "dom-query",
+      "detail": "initHomePradakshina() (called from app.js:524) sets #homeDatePicker.value if it is empty; renderHomePradakshina() sets #homePradakshinaCount textContent. onHomeDateChange (index.html:601) and bumpHomePradakshina (index.html:606/611) re-render the count."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "333-360",
+      "kind": "dom-query",
+      "detail": "initStotramCounter() (called from app.js:80) sets #stotramDatePicker.value to today and #stotramCounterLabel textContent to '{title} — పారాయణం'. renderStotramCounter() sets #stotramParayanaCount. Inline handlers: onStotramDateChange (1014), bumpStotramParayana (1019/1024)."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "363-403",
+      "kind": "other",
+      "detail": "The reset functions (resetHomePradakshina index.html:602, resetStotramParayana 1015, resetDayPradakshina, resetJapa) await siteConfirm(msg, {okLabel:'రీసెట్ / Reset', danger:true}). siteConfirm is defined in app.js:220 and builds .sc-overlay > .sc-box[role=dialog] > .sc-msg + .sc-actions > .sc-btn[data-no] + .sc-btn.danger/.primary[data-yes], shown with .sc-overlay.show. The message contains \\n newlines, so .sc-msg needs white-space:pre-line."
+    },
+    {
+      "file": "public/assets/tracking.js",
+      "line": "53",
+      "kind": "other",
+      "detail": "Calls showDueReminders() from app.js:275. It writes #reminderBanner.innerHTML as <span>🔔</span><span>…<b>text</b>…</span><span class=\"rb-close\" onclick=\"this.parentElement.classList.remove('show')\">✕</span> and toggles #reminderBanner.show."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "49-71",
+      "kind": "class-toggle",
+      "detail": "openJapamala() (index.html:591): removes .active from #searchOverlay and #daySheetOverlay; sets body.style.overflow=''; sets #homePage display:none; removes .active from #readerPage and #trackPage; adds .active to #japamalaPage; sets #backBtn display:block; builds all three SVG looks; calls setJmMode(saved) and renderCount(); then scrolls smoothly to the top."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "74-91",
+      "kind": "style-write",
+      "detail": "setJmMode(mode) (index.html:1155-1158; the stored mode lives in localStorage 'jm_mode_v2'): sets inline style.display to '' on the chosen stage and 'none' on the others among #jmStageStrand, #jmStageFull, #jmStageFlow and #jmStageRudraksha3d, so the .jm-stage stylesheet display must be the visible value. Toggles .active on every .jm-mode-btn where data-mode equals the mode. Calls Japamala3D.hide() for the non-3D looks and Japamala3D.show(total) for the 3D look."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "99-136",
+      "kind": "generated-markup",
+      "detail": "buildJapamala(): adds 108 SVG <g class=\"jm-bead\"> into #jmBeads. Each holds <circle r fill=\"url(#gMarker|gWood1-3)\" stroke=rgba(30,15,5,.35)> plus a highlight <ellipse>. #jmGuru.innerHTML draws the guru bead: circles filled url(#gGuru)/url(#gGuruTop), <path class=\"jm-tassel-cap\" fill=url(#gGuruTop)>, 7 x <path class=\"jm-tassel-thread\"> with no stroke or fill attributes (CSS must give stroke + fill:none), and a knot circle #b8860b."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "139-156",
+      "kind": "style-write",
+      "detail": "renderStrand(), run every animation frame: sets style.display 'none' or '' on each .jm-bead (culling beads outside the view), sets the SVG attributes transform='translate() scale() rotate()' and opacity, and toggles .cur on the bead at the focus. Do NOT set a CSS transform or transition on .jm-bead."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "158-165",
+      "kind": "dom-query",
+      "detail": "renderCount(): sets #jmCount textContent (1-108) and #jmRounds textContent to 'పూర్తయిన మాలలు: N' or '' (reserve min-height so the layout does not jump)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "168-205",
+      "kind": "generated-markup",
+      "detail": "buildFull(): adds 108 <circle class=\"jm-fbead\" cx cy r fill data-base=\"url(#…)\"> into #jmFullBeads, and fills #jmFullGuru.innerHTML with the same guru/tassel markup (.jm-tassel-cap, .jm-tassel-thread)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "207-223",
+      "kind": "class-toggle",
+      "detail": "renderFull(pop): sets the fill attribute to url(#gGold) or data-base; toggles .cur on the current bead. For the pop animation it removes .pop, forces a reflow, then adds .pop again. It needs .jm-fbead {transform-box:fill-box; transform-origin:center} plus a pop @keyframes. It also writes #jmFullCount if present (it is NOT in index.html)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "227-259",
+      "kind": "generated-markup",
+      "detail": "buildFlow(): adds 108 <g class=\"jm-flowbead\"> (bead 0 also gets class 'start') into #jmFlowBeads, each with a circle filled url(#gGold|gMarker|gWood*) and a highlight ellipse. #jmFlowGuru.innerHTML gets the guru/tassel markup."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "261-283",
+      "kind": "style-write",
+      "detail": "renderFlow(), run every frame: sets the transform attribute on each .jm-flowbead and toggles .cur on the current bead. No CSS transform or transition on .jm-flowbead. It also writes #jmFlowCount if present (it is NOT in index.html)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "306-333",
+      "kind": "other",
+      "detail": "Global bumpJapa() is called from the #japamalaPage onclick (index.html:1152, the whole page), the COUNT button (1207), japamala-3d.js:285/298 and the Space key handler. It plays audio, vibrates, and every 108 counts runs jmCelebrate(). It also overrides tracking.js's bumpJapa(i,delta) (see the bug item)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "337-352",
+      "kind": "other",
+      "detail": "resetJapamala() (index.html:1206) awaits siteConfirm, resets all views and calls Japamala3D.reset(0)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "354-359",
+      "kind": "class-toggle",
+      "detail": "jmCelebrate(): removes .celebrate, forces a reflow and re-adds it on #jmSvgFull, #jmSvgFlow, #jmRudrakshaCanvas or #jmSvg (strand), depending on the mode. Needs .jm-svg.celebrate keyframes (currently styles.css:922) and .jm-rudraksha-canvas.celebrate (japamala-3d.css:60, which stays)."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "362-374",
+      "kind": "generated-markup",
+      "detail": "jmConfetti(): appends 60 x <div class=\"jm-confetti\"> to body. It sets style.left (vw), style.background (#ffdf9e, #d9b25a, #b5341f, #f6ead2, #e8c25c), style.animationDelay and style.animationDuration, and removes each piece after 3200ms. CSS must supply position:fixed, top below 0, size, z-index, pointer-events:none, and animation: <fall-keyframes> linear forwards. The JS never sets animation-name."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "405-406",
+      "kind": "other",
+      "detail": "Window listeners for pointerdown, touchstart and keydown (passive) unlock audio on the first tap. They do not touch the DOM."
+    },
+    {
+      "file": "public/assets/japamala.js",
+      "line": "481-488",
+      "kind": "dom-query",
+      "detail": "Window keydown: Space calls preventDefault() and then bumpJapa() whenever #japamalaPage has .active, even when a button inside the page has focus. Keep this in mind for any new info (i) or updates control on this page."
+    },
+    {
+      "file": "index.html (japamala contract)",
+      "line": "1152",
+      "kind": "other",
+      "detail": "#japamalaPage onclick=\"bumpJapa()\": any tap anywhere inside the page counts a bead. Existing inner buttons use event.stopPropagation() (1155-1158, 1206-1207), and so must any new 'i' or info button placed inside."
+    },
+    {
+      "file": "public/assets/japamala-3d.js",
+      "line": "250-260",
+      "kind": "attribute-toggle",
+      "detail": "showFallback() and hideFallback() toggle the `hidden` attribute on #jmRudrakshaCanvas and #jmRudrakshaFallback. The new CSS MUST include [hidden]{display:none !important}, because japamala-3d.css:49 sets .jm-rudraksha-canvas {display:block}, which overrides the browser default. Fallback markup (index.html:1197-1201): span 📿, strong, small."
+    },
+    {
+      "file": "public/assets/japamala-3d.js",
+      "line": "262-300",
+      "kind": "other",
+      "detail": "Pointer listeners on the canvas (pointerdown/move/up/cancel/click all call stopPropagation; they use setPointerCapture). Dragging rotates; a tap or the Enter key calls window.bumpJapa(). The canvas needs tabindex=0 (already in HTML) and touch-friendly sizing."
+    },
+    {
+      "file": "public/assets/japamala-3d.js",
+      "line": "302-305,355-370",
+      "kind": "attribute-toggle",
+      "detail": "ensureReady() gets #jmRudrakshaCanvas and a WebGL context, and sets canvas.dataset.jm3dBound='1' (data-jm3d-bound). It listens for webglcontextlost (then calls showFallback) and webglcontextrestored, plus window resize."
+    },
+    {
+      "file": "public/assets/japamala-3d.js",
+      "line": "387-401",
+      "kind": "attribute-toggle",
+      "detail": "resizeCanvas() sets the canvas.width and canvas.height attributes from getBoundingClientRect() times devicePixelRatio (capped at 1.5). If the rect is 0x0 nothing renders, so the CSS must give the canvas a real size (for example width:100% plus an aspect-ratio) whenever its stage is shown."
+    },
+    {
+      "file": "public/assets/japamala-3d.js",
+      "line": "486",
+      "kind": "other",
+      "detail": "Exposes window.Japamala3D = {show, hide, advance, reset}. Used by japamala.js, by tracking.js openTrack, and by app.js goHome/openReader."
+    },
+    {
+      "file": "public/assets/weekday.js",
+      "line": "95-110",
+      "kind": "generated-markup",
+      "detail": "renderToday(): needs #homePage. It creates <div id=\"todaySection\" class=\"today-section\"> and inserts it with home.insertBefore(sec, home.querySelector('.cards-section')). The first .cards-section MUST be a direct child of #homePage, otherwise this throws NotFoundError and stops the script, so loadWeekdayMap and the date-refresh listeners never run. If no stotras match today, the section is removed. experience.js then tags it data-panel=\"home\"."
+    },
+    {
+      "file": "public/assets/weekday.js",
+      "line": "113-126",
+      "kind": "generated-markup",
+      "detail": "#todaySection.innerHTML: <div class=\"today-head\"><span class=\"today-day\">🌅 ఈ రోజు — {weekday}</span><span class=\"today-note\">{note}</span></div><p class=\"weekday-guidance\">…</p><div class=\"today-strip\">, then up to 3 x <button class=\"today-tile\" onclick=\"openReader('key')\"><span class=\"today-ico\">{__icon or 🕉️}</span><span class=\"today-title\">{escaped title}</span></button></div>. Built-in stotras have no __icon, so they always show 🕉️. __icon is not escaped."
+    },
+    {
+      "file": "public/assets/weekday.js",
+      "line": "131,139-142",
+      "kind": "other",
+      "detail": "Exposes window.__renderToday (called by admin.js:108). Re-renders on visibilitychange and on a 60s interval when the date changes. Loads the Firestore map config/weekday 400ms after load."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "15-18",
+      "kind": "other",
+      "detail": "If the Firebase SDK did not load, the script returns early: #cloudAuthBox stays empty, and window.__cloudSync, stotramSignIn and __cloudFeedback are never defined. Put a default message inside #cloudAuthBox in the HTML; the script replaces the box's contents when it does run."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "40,43",
+      "kind": "other",
+      "detail": "Sets window.__cloudSync = schedulePush when signed in and null when signed out."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "117-129",
+      "kind": "generated-markup",
+      "detail": "updateAuthUI() writes #cloudAuthBox.innerHTML. Signed in: <div class=\"cloud-signed\">✓ <b>{escaped name}</b><div class=\"cloud-sub\">మీ లెక్కలు అన్ని ఫోన్‌లలో సురక్షితం (saved online)</div></div><button class=\"track-btn\" onclick=\"stotramSignOut()\">సైన్ అవుట్ / Sign out</button>. Signed out: <button class=\"track-btn primary\" onclick=\"stotramSignIn()\">🔐 Google తో సైన్ ఇన్ చేయండి</button>."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "130-137",
+      "kind": "generated-markup",
+      "detail": "toast(msg): creates <div id=\"cloudToast\" class=\"cloud-toast\"> on body once, sets its textContent, adds .show, and removes it after 2200ms. Messages are '☁️ సురక్షితం / Synced' and '⚠️ సింక్ కాలేదు'. CSS needs a fixed bottom-centre toast hidden by default, with an opacity/translate transition on .show. Use a z-index above the sheets and overlays (the old one was 900) and allow for the bottom safe area."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "31",
+      "kind": "other",
+      "detail": "On sign-in error it calls siteAlert() (app.js:266), which uses the same .sc-overlay dialog."
+    },
+    {
+      "file": "public/assets/cloud.js",
+      "line": "139-140,146,173",
+      "kind": "other",
+      "detail": "Exposes window.stotramSignIn, window.stotramSignOut and window.__cloudFeedback (used by app.js flushFeedback). Calls flushFeedback 1500ms after load."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "66",
+      "kind": "dom-query",
+      "detail": "Removes every .card.cloud-card before re-rendering cloud stotras."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "144-153",
+      "kind": "dom-query",
+      "detail": "patchCardText(): looks up .card[data-stotram=\"key\"] and writes textContent into its h3, .card-sub and .card-desc. The redesigned built-in cards must keep data-stotram and these three elements."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "155-169",
+      "kind": "generated-markup",
+      "detail": "gridForCategory(): finds .cards-section[data-cat=slug]. If missing, it creates <div class=\"cards-section\" data-cat=\"slug\"><div class=\"section-divider\"><h2 class=\"section-title\">{escaped label}</h2><div class=\"section-sub\"></div></div><div class=\"cards-grid\"></div></div> and appends it directly to #homePage. The section-sub is empty for cloud categories. Returns .cards-grid."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "171-191",
+      "kind": "generated-markup",
+      "detail": "renderCard(): <a class=\"card cloud-card {themeKey}\" href=\"?stotram=key\" data-stotram=\"key\"><div class=\"card-bg\"></div><svg class=\"card-deity-svg\" style=\"color:{hex}\"><use href=\"#svg-{deity}\"/></svg><div class=\"card-content\"><div class=\"card-icon-wrap\"><span class=\"deity-icon\">{icon}</span></div><h3>{title}</h3><div class=\"card-sub\">…</div><div class=\"card-desc\">…</div><span class=\"card-action\" aria-hidden=\"true\">చదవండి <svg class=\"icon-inline\"><use href=\"/icons.svg#icon-arrow-right\"/></svg></span></div></a>. themeKey is one of vishnu|lalitha|shiva|venkat|ganesha|hanuman|lakshmi|saibaba|ayyappa|durga|govinda|bilva|harati (built-in cards also use chalisa|manidweepa). The deity SVG colour is an inline style, so the CSS should use currentColor. cfg.theme becomes '{theme}-theme', which app.js puts on #readerTitleSection."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "105-108",
+      "kind": "other",
+      "detail": "Reassigns the global searchIndex, dispatches document 'stotras-updated' (library.js:145 and reader-navigation.js:358/379 listen for it), and calls window.__renderToday."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "196-204",
+      "kind": "generated-markup",
+      "detail": "#adminLinkBox.innerHTML is <a class=\"track-btn admin-dash-link\" href=\"/admin.html\">⚙️ నిర్వాహక డాష్‌బోర్డ్ / Admin dashboard</a> for the admin UID, and '' for everyone else."
+    },
+    {
+      "file": "public/assets/admin.js",
+      "line": "24-37",
+      "kind": "other",
+      "detail": "THEMES map: svg symbol ids #svg-vishnu, lalitha, shiva, venkat, ganesha, hanuman, lakshmi, saibaba, ayyappa, durga, krishna, bilva and diya must stay in the index.html sprite (lines 34-533). Accent colours are inline hex values."
+    },
+    {
+      "file": "public/assets/site-config.js",
+      "line": "12-20",
+      "kind": "other",
+      "detail": "No DOM code. Sets window.ADMIN_UID and window.FIREBASE_CONFIG. Must load before cloud.js and admin.js (index.html:1326)."
+    },
+    {
+      "file": "index.html (defs contract)",
+      "line": "1138-1149",
+      "kind": "other",
+      "detail": "All three SVG looks use fill=url(#gWood1|gWood2|gWood3|gMarker|gGuru|gGuruTop|gGold), and the focus ellipses use url(#gFocus). These live in the 0-size svg.jm-defs, which must never be display:none, or the gradients stop working."
+    }
+  ],
+  "classesReferenced": [
+    "active",
+    "cal-weekday",
+    "cal-day",
+    "empty",
+    "future",
+    "today",
+    "has-data",
+    "dot",
+    "month-card",
+    "cal-grid",
+    "month-strip",
+    "month-arrow",
+    "month-label",
+    "counter-card",
+    "counter-head",
+    "counter-name",
+    "counter-actions",
+    "counter-reset",
+    "counter-del",
+    "counter-row",
+    "count-btn",
+    "count-center",
+    "count-display",
+    "count-target",
+    "done",
+    "add-chip",
+    "chip-row",
+    "track-card-title",
+    "track-empty",
+    "mokku-item",
+    "mokku-check",
+    "mokku-body",
+    "mokku-text",
+    "mokku-meta",
+    "mokku-badge",
+    "due",
+    "mokku-del",
+    "search-overlay",
+    "day-sheet-overlay",
+    "track-page",
+    "japamala-page",
+    "back-btn",
+    "home-page",
+    "reader-page",
+    "jm-mode-btn",
+    "jm-stage",
+    "jm-bead",
+    "jm-tassel-thread",
+    "jm-tassel-cap",
+    "cur",
+    "jm-fbead",
+    "pop",
+    "jm-flowbead",
+    "start",
+    "celebrate",
+    "jm-svg",
+    "jm-rudraksha-canvas",
+    "jm-confetti",
+    "today-section",
+    "today-head",
+    "today-day",
+    "today-note",
+    "weekday-guidance",
+    "today-strip",
+    "today-tile",
+    "today-ico",
+    "today-title",
+    "cards-section",
+    "cloud-signed",
+    "cloud-sub",
+    "track-btn",
+    "primary",
+    "cloud-toast",
+    "show",
+    "card",
+    "cloud-card",
+    "vishnu",
+    "lalitha",
+    "shiva",
+    "venkat",
+    "ganesha",
+    "hanuman",
+    "lakshmi",
+    "saibaba",
+    "ayyappa",
+    "durga",
+    "govinda",
+    "bilva",
+    "harati",
+    "card-bg",
+    "card-deity-svg",
+    "card-content",
+    "card-icon-wrap",
+    "deity-icon",
+    "card-sub",
+    "card-desc",
+    "card-action",
+    "icon-inline",
+    "section-divider",
+    "section-title",
+    "section-sub",
+    "cards-grid",
+    "admin-dash-link",
+    "sc-overlay",
+    "sc-box",
+    "sc-msg",
+    "sc-actions",
+    "sc-btn",
+    "danger",
+    "reminder-banner",
+    "rb-close"
+  ],
+  "idsReferenced": [
+    "homePage",
+    "readerPage",
+    "trackPage",
+    "japamalaPage",
+    "backBtn",
+    "accountOverlay",
+    "searchOverlay",
+    "daySheetOverlay",
+    "sheetDate",
+    "sheetBody",
+    "monthStrip",
+    "monthLabel",
+    "prevMonthBtn",
+    "nextMonthBtn",
+    "mokkuText",
+    "mokkuDate",
+    "mokkuList",
+    "reminderBanner",
+    "homeDatePicker",
+    "homePradakshinaCount",
+    "stotramDatePicker",
+    "stotramCounterLabel",
+    "stotramParayanaCount",
+    "jmStageStrand",
+    "jmStageFull",
+    "jmStageFlow",
+    "jmStageRudraksha3d",
+    "jmSvg",
+    "jmSvgFull",
+    "jmSvgFlow",
+    "jmBeads",
+    "jmGuru",
+    "jmFullBeads",
+    "jmFullGuru",
+    "jmFlowBeads",
+    "jmFlowGuru",
+    "jmCount",
+    "jmRounds",
+    "jmFullCount (optional, absent from index.html)",
+    "jmFlowCount (optional, absent from index.html)",
+    "jmRudrakshaCanvas",
+    "jmRudrakshaFallback",
+    "todaySection (created by weekday.js)",
+    "cloudAuthBox",
+    "adminLinkBox",
+    "cloudToast (created by cloud.js)",
+    "gWood1",
+    "gWood2",
+    "gWood3",
+    "gMarker",
+    "gGuru",
+    "gGuruTop",
+    "gGold",
+    "gFocus",
+    "svg-vishnu",
+    "svg-lalitha",
+    "svg-shiva",
+    "svg-venkat",
+    "svg-ganesha",
+    "svg-hanuman",
+    "svg-lakshmi",
+    "svg-saibaba",
+    "svg-ayyappa",
+    "svg-durga",
+    "svg-krishna",
+    "svg-bilva",
+    "svg-diya",
+    "/icons.svg#icon-arrow-right"
+  ],
+  "uiEmojiChrome": [
+    "✅ — tracking.js:159 .count-target.done prefix (target reached)",
+    "📖 — tracking.js:163 .counter-name prefix on each japa row",
+    "↻ — tracking.js:165,187 .counter-reset buttons (reset to 0)",
+    "🗑️ — tracking.js:166 .counter-del (remove japa row); tracking.js:272 .mokku-del (delete vow)",
+    "− (U+2212) — tracking.js:170,190 .count-btn decrement",
+    "＋ (U+FF0B fullwidth plus) — tracking.js:172,192 .count-btn increment; tracking.js:179,197 .add-chip prefix",
+    "🕉️ — tracking.js:186 pradakshina .counter-name; weekday.js:120 .today-ico fallback; admin.js:184 .deity-icon fallback",
+    "📿 — tracking.js:195 .track-card-title 'పారాయణం / జపం'",
+    "👇 — tracking.js:196 .track-empty day-sheet empty state",
+    "🙏 — tracking.js:249 .track-empty mokkulu empty state; admin.js THEMES shiva icon",
+    "🔔 — tracking.js:264 .mokku-badge reminder date (also app.js showDueReminders banner)",
+    "• — tracking.js:264 .mokku-badge.due separator before 'ఈరోజు!'",
+    "✔ — tracking.js:267 .mokku-check when done",
+    "… — tracking.js:197 '＋ వేరే…' custom chip; admin.js:175 truncated desc",
+    "🌅 — weekday.js:114 .today-day heading",
+    "✓ — cloud.js:124 .cloud-signed signed-in marker",
+    "🔐 — cloud.js:127 Google sign-in .track-btn.primary",
+    "☁️ — cloud.js:57 toast 'సురక్షితం / Synced'",
+    "⚠️ — cloud.js:60 toast 'సింక్ కాలేదు'",
+    "⚙️ — admin.js:201 .admin-dash-link",
+    "Deity icons in admin.js:24-36 THEMES (cloud-card .deity-icon and weekday .today-ico via __icon): 🔱 vishnu, 🪷 lalitha, 🙏 shiva, ⛰️ venkat, 🐘 ganesha, 🦍 hanuman, 💎 lakshmi, 🌟 saibaba, 🏔️ ayyappa, 🔥 durga, 🦚 govinda, 🍃 bilva, 🪔 harati",
+    "SVG arrow (not emoji) — admin.js:188 .card-action uses /icons.svg#icon-arrow-right after 'చదవండి'",
+    "japamala.js / japamala-3d.js / site-config.js generate no emoji chrome (japamala uses Telugu text 'పూర్తయిన మాలలు: N'; the static HTML has 📿 in the fallback and hint, and ↻ / COUNT buttons)"
+  ]
+}

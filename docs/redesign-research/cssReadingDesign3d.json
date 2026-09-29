@@ -1,0 +1,300 @@
+{
+  "summary": "I read all three files: reading.css (525 lines), design-system.css (278) and japamala-3d.css (115). I checked every hook against public/assets/*.js and index.html. The link order in index.html:18-21 is styles.css, reading.css, japamala-3d.css, design-system.css, so design-system.css wins ties.\n\nKEY FINDINGS\n1. Global `[hidden]{display:none !important}` (design-system.css:23) carries a lot of behavior. JS sets `.hidden` on elements whose own class sets a display value: .meaning-toggle is flex, .reader-toggle-row and .reader-section-navigation are grid, .rs-nav is inline-flex, the canvas is block. Without `!important` those elements would never hide.\n2. View routing is CSS-only. experience.js writes `data-panel` on every direct child of #homePage (by class) and `data-view` on #homePage. design-system.css:213-216 then hides the non-matching panels. Any new direct child (for example a \"What's new / Updates\" section) gets data-panel=\"home\" unless it has one of these classes: .cards-section, .library-navigation, .favorites-section, .home-primary-actions, .practice-details.\n3. Sticky header and horizontal overflow: design-system.css:13-14 (`html{overflow-x:clip}`, `body{overflow:visible}`) replaces the old overflow-x:hidden on html/body (styles.css:19,732), which breaks position:sticky. JS scroll-lock sets `body.style.overflow='hidden'` inline, so re-test scroll-lock under whatever root overflow the new CSS uses.\n4. The WebGL 3D canvas needs a CSS-fixed size (width:100% plus aspect-ratio 18/19). JS sets the drawing buffer to the canvas's on-screen size × up to 1.5. Without a fixed CSS size the canvas grows on every render and the projection gets distorted. It also has no render loop: it draws on show, advance, drag and resize only. If the stage is 0-sized when show() fires (for example because of an entrance animation), it stays blank until the user touches it.\n5. The canvas is transparent (alpha:true, clearColor 0). So the stage background and the CSS ::before gold thread are the only \"string\" and backdrop in the 3D view.\n\nDEAD CSS (safe to drop)\n- .reading-position-bar, #readerProgressTitle, #readerProgressText and the progress pseudo-elements (reading.css:214-259, design-system.css:195/198). No markup or JS creates them.\n- .home-actions-toggle and .library-selector (reading.css:276-280).\n- .jm-full-count and .jm-full-of (design-system.css:259-260). #jmFullCount and #jmFlowCount do not exist in the markup.\n- In design-system.css:241-269: .jm-heading, .jm-title, .jm-num, .jm-count-num, .jm-total, .jm-sub, .admin-box, .admin-overlay, .cloud-status, .fb-type-btn, .counter-target.\n- japamala-3d.css:103 grid-column is inert because .jm-modes is flex (design-system.css:257).\n- The grid layout for .header-content (reading.css:95, 157-159) is overridden by display:flex (design-system.css:31).\n- body.grandham is static markup (index.html:23). No JS toggles or reads it, so those rules can be flattened.\n\nMARKUP HOOKS FOR THE index.html RESTRUCTURE (checked in JS)\n- experience.js:47 calls `document.querySelector('.primary-link').addEventListener` with no null guard. If that element is removed, route setup aborts, data-view is never set, and every home panel shows at once.\n- experience.js:62 needs .skip-link.\n- reader-navigation.js:308/356 needs .home-primary-actions and .practice-details as direct children of #homePage. If they are missing, `append(null)` inserts the text \"null\".\n- reader-navigation.js:167 needs .welcome-section.\n- The .jm-defs SVG (index.html:1138) must never be display:none, or the bead gradients stop working. Do not add a global rule such as `[aria-hidden=true]{display:none}` or `svg[aria-hidden]{display:none}`.\n\nCROSS-FILE (styles.css) BEHAVIORAL RULES FOUND WHILE CHECKING (for the styles.css pass)\n- .back-btn{display:none} at :140. This is the first-load hidden state; JS later sets display inline.\n- .home-page{display:flex;flex-direction:column} at :152-155. JS sets only inline display:flex, so flex-direction must come from CSS.\n- .reader-page and .reader-page.active at :339/343.\n- .track-page and .japamala-page display:none, shown by .active (:826, :851).\n- .search-overlay fixed, z-index 500, display:none (:753).\n- .origin-block and .origin-block.visible (:590/604).\n- body.show-meanings .slokam-meaning (:549/580).\n- .meaning-toggle.on .toggle-switch (:464-473).\n- .slokam-text{white-space:pre-line} (:672). Verse line breaks depend on it.\n- .jm-stage (:885).\n- .jm-fbead{transform-box:fill-box;transform-origin:center}, .jm-fbead.pop and jmPop (:905-908).\n- .jm-svg.celebrate and jmGlow (:922-923).\n- .jm-confetti fixed, z-index 700, with jmFall (:946).\n- .scroll-top-btn.visible (:694).\n- Fixed sizing for .reader-deity-bg (:351-354). JS injects an SVG at width/height 100% into it.\n- Overlay z-index ladder: search/account 500, feedback 550, day-sheet 600, confetti 700, 850/860, cloud-toast 900, sc-overlay 950, skip-link 1000. The header is 40 and pages are 1.",
+  "mustPreserve": [
+    {
+      "file": "styles/design-system.css",
+      "line": "23",
+      "selector": "[hidden]",
+      "declarations": "display: none !important;",
+      "why": "JS sets .hidden on elements whose class sets a display value. Without !important they stay visible: #meaningToggle (.meaning-toggle is display:flex, styles.css:438; reader-navigation.js:184), #meaningToggleRow (grid; rn.js:189), #readerSectionNav (grid; rn.js:249), the .cards-section category filter (rn.js:320), .rs-nav (inline-flex, styles.css:509; reader.js:346), #readerLinkFallback (library.js:110/113, app.js:44), #jmRudrakshaCanvas (display:block; japamala-3d.js:252/258) and #jmRudrakshaFallback (japamala-3d.js:253/259)."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "213-216",
+      "selector": "#homePage[data-view=\"home|library|saved|practice\"] > [data-panel]:not([data-panel=\"<same>\"])",
+      "declarations": "display: none !important;",
+      "why": "This is the whole Home/Library/Saved/Practice view system. experience.js:10-20 sets data-panel on each direct child of #homePage by class (.cards-section and .library-navigation are library, .favorites-section is saved, .home-primary-actions and .practice-details are practice, everything else is home) and data-view from the URL hash. A MutationObserver (experience.js:60) re-tags children injected later: #todaySection, #recentReadingSection, #favoritesSection, nav#library. Without this rule every panel shows at once. New sections added for the redesign (for example Updates) default to the home panel."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "217-218",
+      "selector": "#homePage[data-view]:not([data-view=\"home\"]); #homePage[data-view=\"saved\"] .favorites-section",
+      "declarations": "padding-top: 28px; min-height: 260px;",
+      "why": "Low priority. Spacing on non-home views, so the Saved view is not an empty strip when there are no favorites."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "13, 132",
+      "selector": "html",
+      "declarations": "scroll-padding-top: 156px (145px at max-width 700px); overflow-x: clip;",
+      "why": "scroll-padding keeps hash/anchor targets, focus scrolling and scrollIntoView (jumpToVerse, reader-navigation.js:77; search matches, reader.js:354-374) from landing under the sticky header. It must match the new header height. overflow-x:clip stops horizontal scrolling without making html a scroll container, which would break the sticky header."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "14",
+      "selector": "body",
+      "declarations": "overflow: visible;",
+      "why": "Overrides styles.css:19/732 overflow-x:hidden on body, which breaks position:sticky on .header. Overlays scroll-lock by setting body.style.overflow='hidden' inline (app.js:142,359; tracking.js:60,145) and clearing it (app.js:92,149,363; tracking.js:65,150). Keep the base visible and re-test that scroll-lock still stops the background scrolling."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "29",
+      "selector": ".header",
+      "declarations": "position: sticky; top: 0; z-index: 40;",
+      "why": "The sticky app header holds #backBtn and the main nav. Its z-index must stay above page content (pages are z-index 1 in styles.css) and below every overlay: search/account 500 (styles.css:753), feedback 550 (:1386), day-sheet 600 (:1094), confetti 700 (:946), 850/860 (:1293/:1301), cloud toast 900 (:1283), site-confirm .sc-overlay 950 (:1329). This overrides styles.css:97 z-index:100."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "27-28",
+      "selector": ".skip-link; .skip-link:focus",
+      "declarations": "position: fixed; top: -120px; left: 16px; z-index: 1000;  :focus { top: 12px; }",
+      "why": "Keyboard skip link: off-screen until focused, and above everything. experience.js:62-66 intercepts the click and focuses the active page (#readerPage, #trackPage, #japamalaPage or #homePage). Hidden in print at :185."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "32",
+      "selector": ".header-slot-left:has(.back-btn[style*=\"none\"]), .header-slot-left:has(.back-btn:not([style]))",
+      "declarations": "display: none;",
+      "why": "Collapses the back-button slot on Home. It keys on the inline style JS writes on #backBtn: display 'block' on openReader (app.js:51), openTrack (tracking.js:46) and openJapamala (japamala.js:59); display 'none' in goHome (app.js:101). On first load there is no style attribute yet, and the base .back-btn{display:none} (styles.css:140) must keep the button hidden. Never give .back-btn a display value with !important."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "45-47",
+      "selector": ".home-page; .home-page > *; .home-page > section, .home-page > nav, .home-page > div",
+      "declarations": "flex-shrink: 0 (children); scroll-margin-top: 160px (children)",
+      "why": "JS sets #homePage inline display:'flex' (app.js:96) or 'none' (app.js:47, tracking.js:43, japamala.js:55). The new CSS must supply flex-direction:column (today it comes from styles.css:153) or the panels lay out side by side, and must not use !important on #homePage's display. scroll-margin keeps a directly loaded #library / #practice / #favoritesSection clear of the header."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "44",
+      "selector": ".site-navigation a[aria-current]",
+      "declarations": "color + border-color (active tab indicator)",
+      "why": "experience.js:21-23 sets aria-current=\"page\" on the active [data-home-target] link. This is the only visual cue for the current view, so a visible active state must remain."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "83, 233",
+      "selector": ".category-filters button[aria-pressed=\"true\"]",
+      "declarations": "distinct background/color/border",
+      "why": "Shows the selected library category. reader-navigation.js:321 sets aria-pressed on the filter buttons it creates (rn.js:324-335)."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "18",
+      "selector": ".icon-inline",
+      "declarations": "display: inline-block; width: 1em; height: 1em; vertical-align: -0.15em; fill: none; color: currentColor; flex: none;",
+      "why": "These SVGs have no width/height attributes and would fall back to the 300x150 default, breaking every card and dialog. Used by 30+ <svg class=\"icon-inline\"><use href=\"/icons.svg#...\"> in index.html (card-action arrows, close buttons) and by cloud cards built in admin.js:187. The sprite symbols are stroke-only (fill none, stroke currentColor)."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "125",
+      "selector": ".card-deity-svg",
+      "declarations": "display: none;",
+      "why": "26 cards in index.html and every cloud card (admin.js:182) contain an unsized <svg class=\"card-deity-svg\">. styles.css:288 positions it absolutely today. If both rules go, each card gets a 300x150 SVG. Either keep it hidden or give it an explicit size and position."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "22",
+      "selector": ".bg-pattern, .bg-mesh, .particles",
+      "declarations": "display: none;",
+      "why": "Markup at index.html:26-28. app.js:24-35 still injects 35 animated .particle divs (skipped only under reduced motion), and styles.css:24-72 makes these layers fixed full-screen. Keep them hidden or restyle them deliberately. reading.css:64 also hides .particles under reduced motion."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "24-26 (+ reading.css:4)",
+      "selector": "button, a, input, select, summary; a, button; button, select, [role=\"button\"], .library-navigation a",
+      "declarations": "-webkit-tap-highlight-color: transparent; touch-action: manipulation;",
+      "why": "Stops double-tap zoom and the tap delay when counter buttons are tapped quickly: COUNT, the ± counters, bumpJapa. This matters for older mobile users. .japamala-page (onclick=bumpJapa, index.html:1152) and .jm-stage should also get touch-action: manipulation in the redesign."
+    },
+    {
+      "file": "styles/design-system.css + reading.css",
+      "line": "design-system.css:26; reading.css:5; reading.css:325-328",
+      "selector": ":where(a,button,input,select,summary):focus-visible; :focus-visible; .card:focus-visible",
+      "declarations": "outline: 3px solid ...; outline-offset: 4px;",
+      "why": "Visible keyboard focus. The cards are <a> elements, and reader-navigation.js:360-373 adds role=button and tabindex=0 to the .meaning-toggle div. Slokam blocks are focused by script (rn.js:78; tabIndex -1 at reader.js:82)."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "2, 40, 88",
+      "selector": ":root; .slokam-meaning; .reader-verse-number",
+      "declarations": "--reader-font-size: 24px; font-size: var(--reader-font-size); (verse number also line-height: 2; font-variant-numeric: tabular-nums)",
+      "why": "JS sets --reader-font-size on documentElement (reader.js:147) and calls changeFontSize(0) on every openReader (app.js:78). The range is 18-48px (reader.js:144). .slokam-text and .slokam-meaning also get inline font-size (reader.js:55,146), but the verse number follows the text size only through this variable. line-height 2 matches .slokam-text (styles.css:672) so the numbers line up with the text."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "39, 85-87",
+      "selector": ".slokam-text, .slokam-meaning; .reader-verse-row; .reader-verse-row .slokam-text",
+      "declarations": "overflow-wrap: anywhere; word-break: normal;  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; column-gap: 12px;  min-width: 0;",
+      "why": "reader.js:55 renders each line as .reader-verse-row > .slokam-text + .reader-verse-number. minmax(0,1fr), min-width:0 and overflow-wrap stop long Telugu words from causing horizontal scroll at 48px, and keep the number column on the right. Also keep white-space:pre-line from styles.css:672."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "38",
+      "selector": ".slokam-block",
+      "declarations": "scroll-margin-top: 110px;",
+      "why": "Lands jump targets clear of the sticky header: jumpToVerse (block:'start', reader-navigation.js:71-79), resumeReading, the section buttons (rn.js:259) and recent reading (rn.js:130). This stacks with html scroll-padding-top. Re-tune both to the new header height. The IntersectionObserver in rn.js:95-109 (rootMargin -12% top) also assumes the header covers less than about 12% of the viewport."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "6",
+      "selector": "button:disabled",
+      "declarations": "opacity: .45; cursor: default;",
+      "why": "The only cue that a control is at its limit: font ± disabled at 18/48 (reader.js:149-150), month prev/next (tracking.js:123-124), search prev/next (reader.js:346)."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "266, 432, 512",
+      "selector": ".reader-section-navigation[hidden]; .reader-toggle-row[hidden]; .reader-search .rs-nav[hidden]",
+      "declarations": "display: none; display: none; display: none !important;",
+      "why": "Local hidden overrides for elements whose class sets grid or inline-flex. JS: rn.js:249 (section nav shown only if the stotram has sections), rn.js:189 (meaning row hidden when there are no meanings), reader.js:346 (↑↓ shown only when there are search matches). Redundant with the global [hidden] rule but must not be lost."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "42, 78; design-system.css:194, 254",
+      "selector": ".verse-read-button[aria-pressed=\"true\"]; .reader-library-actions button[aria-pressed=\"true\"]",
+      "declarations": "distinct background/border/color when pressed",
+      "why": "State cues. The per-verse 'read' button sets aria-pressed at reader.js:88/123. The favorite button (#favoriteButton) sets it at library.js:50."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "192, 209, 253",
+      "selector": "body.grandham .slokam-block.read (+ :hover)",
+      "declarations": "distinct background/border for read verses",
+      "why": "The .read class is set at reader.js:79 and toggled at reader.js:120. It is the visual marker that lets a reader find their place after an interruption. styles.css:1664-1971 adds more .read decoration."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "23-35",
+      "selector": ".source-status-badge.verified|.partial|.review|.pending|.override (+ body.grandham variants)",
+      "declarations": "per-status color/background",
+      "why": "reader-navigation.js:281 sets className 'source-status-badge ' + statusKey. The five keys are verified, partial, review, pending and override. The badge color is the status signal inside #sourceDetails summary."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "474-482",
+      "selector": ".meaning-review-status.reference|.pending|.verified (+ body.grandham variants)",
+      "declarations": "per-status color/background",
+      "why": "reader-navigation.js:216 sets 'meaning-review-status ' + status. JS also has a 'partial' label (rn.js:211) with no CSS rule; this is an existing gap the new CSS can fill."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "80",
+      "selector": "#readerLinkStatus:empty",
+      "declarations": "display: none;",
+      "why": "Hides the empty status line. It is role=status aria-live (index.html:1005), written by library.js:61,111,117 and cleared by app.js:43. Caution: a live region that goes from display:none to shown can be missed by screen readers. Consider collapsing it with min-height:0 instead of display:none."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "248-249, 261, 271-273",
+      "selector": "body.grandham .cal-day.empty; .cal-day.future; .cal-day.today; .cal-day:not(.empty):not(.future):hover",
+      "declarations": "empty: background transparent, border 0; future: opacity .55; today: distinct border/color",
+      "why": "Classes from tracking.js:95-101. Empty cells are leading padding and must look empty. Future days have no onclick, so the dimmed look is the only signal that they cannot be tapped. Today must stand out."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "245",
+      "selector": "body.grandham :is(.track-page,.japamala-page,.feedback-box,.day-sheet,.sc-box,.counter-card) button:is(.primary,.active,.jm-btn-count)",
+      "declarations": "dark background/color, distinct from other buttons",
+      "why": "Line 243 flattens every button in these containers to the same look. This rule restores the distinct state: .jm-mode-btn.active is the selected mala view (japamala.js:83-84), and .sc-btn.primary is the confirm button (app.js:232). If both lines are replaced, keep a visible active/primary state."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "50-51, 147, 151",
+      "selector": ".welcome-copy; .welcome-section (at max-width 700px); .hero-art (at max-width 700px)",
+      "declarations": "position: relative; z-index: 1;  position: relative; overflow: hidden;  position: absolute; right: -62px; bottom: -10px; width: 250px; opacity: .16; pointer-events: none;",
+      "why": "On mobile the decorative lamp SVG sits over the hero text. pointer-events:none and the z-index on .welcome-copy keep it from blocking taps on .primary-link (which experience.js:47 routes to Library). position:relative on the section keeps the absolute art inside it."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "60-61",
+      "selector": ".diya-flame; @keyframes lampBreath",
+      "declarations": "transform-origin: 220px 183px; animation: lampBreath 5s ease-in-out infinite;",
+      "why": "The origin is in SVG user units (viewBox 0 0 440 380, index.html:569-575) and relies on the default transform-box (view-box). A global 'transform-box: fill-box' on SVG children would make the flame scale from the wrong point."
+    },
+    {
+      "file": "styles/design-system.css",
+      "line": "241 (with japamala-3d.css:11-13)",
+      "selector": "body.grandham :is(... .jm-stage) / .jm-stage-rudraksha3d background",
+      "declarations": "background: #fff9ec (overrides the dark radial gradient because specificity 0,2,1 beats 0,1,0)",
+      "why": "The WebGL canvas is transparent (alpha:true, clearColor 0,0,0,0 at japamala-3d.js:307-345). The 3D view's backdrop is this stage background, so it must contrast with the dark brown rudraksha beads."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "2-16, 107-110",
+      "selector": ".jm-stage-rudraksha3d",
+      "declarations": "position: relative; width: min(100%, 390px); min-height: 414px (370px at max-width 430px); margin-inline: auto; overflow: hidden; isolation: isolate; touch-action: pan-y;",
+      "why": "Containing block and stacking context for the absolutely positioned aura, hint and fallback. touch-action pan-y lets the page scroll vertically while horizontal drags reach the canvas pointer handlers (yaw, japamala-3d.js:264-290). japamala.js:81 toggles this stage's inline display between '' and 'none', so the CSS default display must be visible (block), with no !important."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "18-30",
+      "selector": ".jm-stage-rudraksha3d::before",
+      "declarations": "content: ''; position: absolute; z-index: 0; top: 18px; bottom: 34px; left: 50%; width: 2px; transform: translateX(-50%); gold linear-gradient background;",
+      "why": "This is the only thread in the 3D mala. WebGL draws only the 11 beads (japamala-3d.js:413-428), and the thread shows through the transparent canvas behind them."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "46-54",
+      "selector": ".jm-rudraksha-canvas",
+      "declarations": "position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 18 / 19; cursor: grab; -webkit-tap-highlight-color: transparent;",
+      "why": "resizeCanvas (japamala-3d.js:387-401) sets the drawing buffer to the canvas's on-screen size × min(dpr, 1.5), and the projection aspect comes from canvas.width/height (:410). The markup is 720x760 (index.html:1195). Without a CSS-fixed width and aspect-ratio, the canvas grows on every render and the beads distort. It must also have a non-zero size when show() runs its first frame (japamala-3d.js:446-453). There is no continuous loop, so a canvas that is 0-sized at that moment (for example during an entrance animation) stays blank until the user taps, drags or resizes."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "60-69",
+      "selector": ".jm-rudraksha-canvas.celebrate; @keyframes jmRudrakshaCelebrate",
+      "declarations": "animation: jmRudrakshaCelebrate 900ms ease;  42% { transform: scale(1.025); filter: drop-shadow(0 0 22px rgba(255,210,111,.64)); }",
+      "why": "On mala completion jmCelebrate (japamala.js:354-357) removes .celebrate, forces a reflow, then adds it again on #jmRudrakshaCanvas. The class name and keyframe must exist."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "32-44, 71-80",
+      "selector": ".jm-rudraksha-aura; .jm-rudraksha-hint",
+      "declarations": "aura: position: absolute; z-index: 0; left/top 50%; transform: translate(-50%,-53%); pointer-events: none;  hint: position: absolute; z-index: 2; inset: auto 12px 12px; pointer-events: none;",
+      "why": "Decorative layers above or around the canvas. pointer-events:none makes a drag that starts on the hint (z-index 2, above the canvas) still rotate or tap the canvas instead of falling through to .japamala-page's onclick."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "82-96",
+      "selector": ".jm-rudraksha-fallback; .jm-rudraksha-fallback:not([hidden])",
+      "declarations": "position: absolute; z-index: 3; inset: 0; opaque background;  :not([hidden]) { display: grid; justify-items: center; gap: 10px; }",
+      "why": "Shown when WebGL is unavailable or the context is lost (japamala-3d.js:250-254, 314-316, 357-364), and hidden again on success (:256-260, 378). It must cover the stage above the canvas and respect [hidden]."
+    },
+    {
+      "file": "styles/japamala-3d.css",
+      "line": "75, 88",
+      "selector": ".jm-rudraksha-hint; .jm-rudraksha-fallback",
+      "declarations": "color: var(--gold-light)",
+      "why": "--gold-light is defined in styles.css:3, which is being deleted. Define it in the new token set or replace it. The grandham overrides are at design-system.css:277-278."
+    },
+    {
+      "file": "styles/design-system.css + reading.css + japamala-3d.css",
+      "line": "design-system.css:180-183; reading.css:62-65; reading.css:356-363; japamala-3d.css:113-115",
+      "selector": "@media (prefers-reduced-motion: reduce)",
+      "declarations": "*, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .card:hover, .primary-link:hover { transform: none; } .particles { display: none; } .jm-rudraksha-aura { filter: none; } (reading.css:356 has a .01ms-duration variant that design-system.css overrides because it loads later)",
+      "why": "Motion-sensitive users. This overrides html{scroll-behavior:smooth} (styles.css:731). JS checks the same media query for particles (app.js:25), jump scroll (rn.js:76), the month strip (tracking.js:131) and the 3D advance animation (japamala-3d.js:465). No JS waits on animationend or transitionend, so turning animations off is safe."
+    },
+    {
+      "file": "styles/design-system.css + reading.css",
+      "line": "design-system.css:184-187; reading.css:66-69, 82, 90, 183, 211, 259, 271, 496-498",
+      "selector": "@media print",
+      "declarations": "display:none !important on .header, .footer, .skip-link, .library-navigation, .reader-navigation, .verse-read-button, .reader-library-actions, .reader-tool-panel, .practice-details, .home-primary-actions, .recent-reading-section, .reader-section-navigation, .reader-options, .reader-tool-panel-compact, .reader-after-content; body { background: white } .source-details { color:#000; background:#fff } .reader-verse-number { color:#000 }",
+      "why": "Printing a stotram should output only the verse text in black on white, with no chrome or controls. styles.css:1555 also forces the slokam text to black."
+    },
+    {
+      "file": "styles/reading.css",
+      "line": "3",
+      "selector": "button, input, select",
+      "declarations": "font: inherit;",
+      "why": "Without this, form controls use the UA system font, so Telugu labels on buttons, selects and inputs render in a different face and size from the body text."
+    }
+  ],
+  "keyframesUsed": [
+    "jmRudrakshaCelebrate (japamala-3d.css:64): JS-dependent. japamala.js:354-357 removes, reflows and re-adds .celebrate on #jmRudrakshaCanvas at mala completion.",
+    "lampBreath (design-system.css:61): markup-dependent. The .diya-flame class sits on the hero SVG path (index.html:575) with transform-origin 220px 183px in SVG user units. Infinite; no JS.",
+    "panelReveal (reading.css:341): CSS-only. Applied by .home-primary-actions:not([hidden]) (reading.css:331) and .reader-options-content (reading.css:425, plays when the <details> opens). No JS dependency.",
+    "cardReveal (reading.css:345): CSS-only. Applied by .cards-grid:not([hidden]) .card with stagger delays (reading.css:333-339). Replays whenever a panel goes from display:none to visible through data-view or the category filter. No JS dependency.",
+    "Cross-file, in styles.css (to be rewritten there): jmGlow (styles.css:923; .jm-svg.celebrate added by japamala.js:357), jmPop (styles.css:908; .jm-fbead.pop added by japamala.js:219; needs transform-box:fill-box and transform-origin:center at :905), jmFall (.jm-confetti created by japamala.js:366, styles.css:946-947, fixed, z-index 700, fill-mode forwards), jmFocusPulse (.jm-focus markup ellipses), fadeInUp (.reader-page.active, styles.css:343), meaningSlide (.origin-block.visible, styles.css:604)."
+  ],
+  "visualOnlyNotes": "These can be redesigned freely without breaking behavior:\n- All colors, gradients, shadows, border-radius, backdrop-filter and typography in the three files.\n- The --ui-* tokens (design-system.css:2-12). No JS reads any CSS variable; the only JS-set variable is --reader-font-size.\n- The whole body.grandham palette (design-system.css:117-122, 190-209, 219-278). body.grandham is static in index.html:23 and never toggled or read by JS, so it can be flattened.\n- Grid and column counts for .cards-grid, .card-content, .home-primary-actions, .recent-reading-list, .reader-tool-panel .controls, .today-strip and .today-tile.\n- Header grid vs flex layout (reading.css:95-96, 157-159 are already overridden by design-system.css:31-37).\n- .library-navigation, .library-intro, .category-filters and .filter-count layout; the .card hover lift and .card-action pill.\n- .welcome-section hero styling; .primary-link look (but keep the class, which experience.js:47 needs).\n- details/summary decoration (.practice-details, .reader-options, .origin-details, .source-details [open] borders). The summaries use display:flex, which already removes the native disclosure marker, so older users need an explicit chevron.\n- .source-review-meta, .meaning-review-summary and .reader-empty-state panels; .reader-option-group headings; .footer and .footer-feedback.\n- Mobile font-size and padding tweaks at the 1000/900/700/600/430/390/380px breakpoints.\n- The 48px min-height tap targets on buttons, links and summaries are guidance for older users rather than a functional hook; keep that size or larger in the new system.\n\nDead CSS, safe to drop:\n- .reading-position-bar, its progress pseudo-elements, #readerProgressTitle and #readerProgressText (reading.css:214-259, design-system.css:195/198).\n- .home-actions-toggle and .library-selector (reading.css:276-280).\n- .jm-full-count and .jm-full-of (design-system.css:259-260).\n- Unused classes listed in design-system.css:241-269 (.jm-heading, .jm-title, .jm-num, .jm-count-num, .jm-total, .jm-sub, .admin-box, .admin-overlay, .cloud-status, .fb-type-btn, .counter-target).\n- .cloud-auth scroll-margin (nothing scrolls to it).\n- japamala-3d.css:103 grid-column (inert because .jm-modes is flex).\n- .card-bg (only hidden).\n- The body.grandham .track-empty opacity:1 !important override exists only to beat the inline opacity at index.html:1129; it is cosmetic."
+}

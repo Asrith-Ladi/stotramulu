@@ -1,0 +1,976 @@
+/* ============================================================
+   Reader (#readerPage.reader-page). Owner: CSS-3.
+   Contract: docs/redesign-research/contract.md §3 Reader, §4.7-4.8, §7 Reader.
+
+   House rules this file keeps:
+   - behavior.css owns display / position / z-index / overflow / transform /
+     animation on its selectors. Here: .reader-page gets only padding-bottom and
+     custom properties, .reader-deity-bg only opacity, .slokam-text never a
+     font-size (it follows --reader-font-size), .verse-read-button keeps its
+     native display, and the toggle knob's position and translate stay in
+     behavior.css.
+   - #readerTitleSection's className is replaced by JS on every open, so it is
+     styled through the base class and ids, with ornaments on ::before/::after.
+   - Colours come from tokens. Raw hex appears only inside SVG data URIs.
+   - Every base state is the final visible state, so the reduced-motion switch
+     never hides anything.
+   - Nothing here may be wider than the phone: verses stay readable at 48px on
+     a 320px screen (tools/review-devotional.cjs checks 320, 390 and 768).
+============================================================ */
+
+/* ---------- Page ---------- */
+/* Height of the sticky tool panel: a 68px bar plus 2 x 8px panel padding.
+   It sits on html (not .reader-page) so the page's scroll-padding (base.css)
+   can add it: verse jumps and keyboard focus then land clear of the panel.
+   The media queries at the end keep it in step with the two-row layouts and
+   drop it to 0 wherever the panel scrolls away instead of sticking. */
+html[data-screen="reader"] { --reader-tools-h: 84px; }
+.reader-page {
+    /* The reader ends in collapsible blocks; leave a calm gap before the footer. */
+    padding-bottom: var(--sp-9);
+
+    /* Icon art used by the pseudo-elements below. Mask icons are black on
+       transparent and take their colour from background-color: currentColor. */
+    --reader-icon-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.9' stroke-linejoin='round'%3E%3Cpath d='m12 3.3 2.65 5.5 6 .87-4.35 4.2 1.03 6-5.33-2.86-5.33 2.86 1.03-6-4.35-4.2 6-.87z'/%3E%3C/svg%3E");
+    --reader-icon-star-filled: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000' stroke='%23000' stroke-width='1.9' stroke-linejoin='round'%3E%3Cpath d='m12 3.3 2.65 5.5 6 .87-4.35 4.2 1.03 6-5.33-2.86-5.33 2.86 1.03-6-4.35-4.2 6-.87z'/%3E%3C/svg%3E");
+    --reader-icon-circle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3C/svg%3E");
+    --reader-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Cpath d='m8.3 12.3 2.6 2.6 4.9-5.3'/%3E%3C/svg%3E");
+    --reader-icon-external: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 4h6v6M20 4l-9 9'/%3E%3Cpath d='M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5'/%3E%3C/svg%3E");
+    /* Full-colour art (zari / peacock hexes inside the SVG only). */
+    --reader-img-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2317615d' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    --reader-img-book: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238a6720' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 6.6C10.2 5.2 7.7 4.5 3.5 4.5v14c4.2 0 6.7.7 8.5 2 1.8-1.3 4.3-2 8.5-2v-14c-4.2 0-6.7.7-8.5 2.1z'/%3E%3Cpath d='M12 6.6v13.9'/%3E%3C/svg%3E");
+    /* Zari title ornament: fading gold lines, dots, diamonds and a lotus. */
+    --reader-img-ornament: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 24'%3E%3Cdefs%3E%3ClinearGradient id='a' gradientUnits='userSpaceOnUse' x1='6' y1='0' x2='50' y2='0'%3E%3Cstop offset='0' stop-color='%23c39a3d' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23c39a3d'/%3E%3C/linearGradient%3E%3ClinearGradient id='b' gradientUnits='userSpaceOnUse' x1='154' y1='0' x2='110' y2='0'%3E%3Cstop offset='0' stop-color='%23c39a3d' stop-opacity='0'/%3E%3Cstop offset='1' stop-color='%23c39a3d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg fill='none' stroke-width='1.2' stroke-linecap='round'%3E%3Cpath d='M6 12H50' stroke='url(%23a)'/%3E%3Cpath d='M110 12h44' stroke='url(%23b)'/%3E%3Cpath d='M70 21.2h20' stroke='%23c39a3d'/%3E%3C/g%3E%3Cg fill='%23c39a3d'%3E%3Ccircle cx='54' cy='12' r='1.5'/%3E%3Ccircle cx='106' cy='12' r='1.5'/%3E%3C/g%3E%3Cg fill='%23eedcaa' stroke='%23c39a3d' stroke-width='1' stroke-linejoin='round'%3E%3Cpath d='M58 12l4-4 4 4-4 4z'/%3E%3Cpath d='M94 12l4-4 4 4-4 4z'/%3E%3Cpath d='M78.4 19.8c-5-.3-8.6-3.2-10-7.4 4.2-.4 7.6 1.4 9.6 4.6z'/%3E%3Cpath d='M81.6 19.8c5-.3 8.6-3.2 10-7.4-4.2-.4-7.6 1.4-9.6 4.6z'/%3E%3Cpath fill='%23e2c67c' d='M80 3c3.4 3.6 4.8 6.8 4.8 9.6 0 3.2-2 5.6-4.8 7-2.8-1.4-4.8-3.8-4.8-7 0-2.8 1.4-6 4.8-9.6z'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Fixed deity art (JS injects a full-colour SVG). behavior.css sizes and places it. */
+.reader-deity-bg { opacity: .06; }
+
+/* The deity art is a positioned layer (z-index 0) and the first child of the page,
+   so it paints above every unpositioned block after it. Making the reader's own
+   blocks positioned (with no z-index) paints them above the art, in page order.
+   Verse blocks are already positioned by behavior.css; the tool panel is sticky. */
+.reader-title-section,
+.reader-options,
+.reader-empty-state,
+.reader-report,
+.origin-details,
+.source-details { position: relative; }
+
+/* ---------- Title ---------- */
+.reader-title-section {
+    padding: var(--sp-3) var(--sp-2) var(--sp-4);
+    text-align: center;
+}
+.reader-title-section::before {
+    content: "";
+    display: block;
+    width: 160px;
+    max-width: 70%;
+    height: 24px;
+    margin: 0 auto var(--sp-3);
+    background: var(--reader-img-ornament) center / contain no-repeat;
+}
+/* A thin accent in the stotram's own deity colour (from the "-theme" class). */
+.reader-title-section::after {
+    content: "";
+    display: block;
+    width: 56px;
+    height: 3px;
+    margin: var(--sp-4) auto 0;
+    border-radius: var(--r-pill);
+    background: var(--deity, var(--zari-500));
+}
+#readerTitle {
+    font-family: var(--font-serif);
+    font-size: clamp(24px, 6vw, 34px);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+#readerSubtitle {
+    margin-top: var(--sp-1);
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: var(--ink-3);
+}
+#readerSubtitle:empty { display: none; }
+
+/* ---------- Sticky tool panel ----------
+   The panel sticks right under the header. Its own ivory backdrop (fading out
+   at the bottom) masks verses that scroll beneath the floating bar. */
+.reader-tool-panel {
+    position: sticky;
+    top: var(--header-h);
+    z-index: calc(var(--z-page) + 1);   /* local to the page: above verses, below the header */
+    margin: 0 0 var(--sp-1);
+    padding-block: var(--sp-2);
+    background: linear-gradient(to bottom, var(--c-bg) calc(100% - var(--sp-2)), transparent);
+}
+.reader-tool-panel .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-2);
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: calc(var(--r-sm) + var(--sp-2));   /* concentric with the 12px groups inside */
+    box-shadow: var(--shadow-sm);
+}
+
+/* Text size: a sand group holding two 44px buttons around the current size. */
+.font-control {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: none;
+    padding: 3px;
+    border-radius: var(--r-sm);
+    background: var(--c-surface-sunken);
+}
+.font-label {
+    padding: 0 var(--sp-2);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ink-2);
+    white-space: nowrap;
+}
+.font-btn {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: calc(var(--r-sm) - 3px);
+    background: var(--c-surface);
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    line-height: 1;
+    box-shadow: var(--shadow-xs);
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out),
+                box-shadow var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+/* Small అ, big అ: the glyph size hints what each button does. */
+.font-control .font-btn:first-of-type { font-size: var(--fs-sm); }
+.font-control .font-btn:last-of-type { font-size: var(--fs-lg); }
+.font-btn:active { transform: scale(.94); }
+/* At 18px / 48px the limit button goes flat as well as faded (base.css). */
+.font-btn:disabled { background: transparent; box-shadow: none; transform: none; }
+.font-size-display {
+    min-width: 34px;
+    text-align: center;
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    line-height: 1.3;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+}
+
+/* In-text search: a sand field that turns white with a ring while focused.
+   The input has no intrinsic width, so at rest the field is exactly as wide as
+   the bar allows. While there is text, the clear button takes the mic's place
+   and the magnifier steps aside, so the typed word keeps its room. */
+.reader-search {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1 1 120px;
+    padding: 3px 3px 3px var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--c-surface-sunken);
+    color: var(--ink-3);
+    transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+.reader-search:focus-within {
+    background: var(--white);
+    box-shadow: inset 0 0 0 1.5px var(--peacock-600), 0 0 0 3px var(--peacock-100);
+}
+.rs-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 6px;
+    color: var(--ink-3);
+}
+.rs-input {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: var(--fs-md);   /* 16px or more stops iOS zooming on focus */
+    line-height: 1.3;
+    text-overflow: ellipsis;
+}
+/* A typed word never collapses to a sliver: where the bar is too narrow for the
+   match count and arrows, the field wraps onto its own row instead. */
+.rs-input:not(:placeholder-shown) { min-width: 64px; }
+.rs-input:focus,
+.rs-input:focus-visible { outline: none; }   /* the field's :focus-within ring replaces it */
+.rs-input:not(:placeholder-shown) ~ .rs-mic { display: none; }
+.reader-search:has(.rs-input:not(:placeholder-shown)) .rs-icon { display: none; }
+.rs-count {
+    flex: none;
+    padding: 0 var(--sp-1);
+    font-size: var(--fs-xs);
+    font-weight: 650;
+    line-height: 1.3;
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.rs-count:empty { display: none; }
+/* 40px circles drawn inside a 44px hit area (transparent 2px border).
+   .rs-clear's display is written inline by JS ('' or 'none'); this is its shown value. */
+.rs-mic, .rs-nav, .rs-clear {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 50%;
+    background-clip: padding-box;
+    background-color: transparent;
+    color: var(--peacock-700);
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.rs-mic { background-color: var(--c-surface); }   /* voice search is the easy path: give it a visible disc */
+.rs-mic .icon-inline, .rs-nav .icon-inline, .rs-clear .icon-inline { width: 22px; height: 22px; }
+.rs-mic:active, .rs-nav:not(:disabled):active, .rs-clear:active { transform: scale(.92); }
+.reader-tools-info { flex: none; margin-inline: 2px var(--sp-1); }
+
+/* ---------- details blocks: options, origin, sources ---------- */
+.reader-options,
+.origin-details,
+.source-details {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-sm);
+}
+.reader-options { margin: var(--sp-2) 0 var(--sp-5); }
+
+.reader-options > summary,
+.origin-details > summary,
+.source-details > summary {
+    display: grid;
+    align-content: center;
+    align-items: center;
+    column-gap: var(--sp-3);
+    row-gap: var(--sp-1);
+    min-height: 56px;
+    padding: var(--sp-2) var(--sp-3) var(--sp-2) var(--sp-4);
+    border-radius: calc(var(--r-lg) - 1px);
+    list-style: none;
+    color: var(--ink);
+    transition: background-color var(--dur-2) var(--ease-out);
+}
+/* Title with the short summary line under it; one row for origin; status badge under the title for sources. */
+.reader-options > summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "icon title chev" "icon sub chev";
+    row-gap: 0;
+}
+.origin-details > summary {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "icon title chev";
+}
+.source-details > summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "title chev" "sub chev";
+    padding-top: var(--sp-3);
+    padding-bottom: var(--sp-3);
+}
+.reader-options > summary::-webkit-details-marker,
+.origin-details > summary::-webkit-details-marker,
+.source-details > summary::-webkit-details-marker { display: none; }
+
+.reader-options[open] > summary,
+.origin-details[open] > summary,
+.source-details[open] > summary {
+    border-bottom: 1px solid var(--c-border);
+    border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0;
+}
+
+.reader-options > summary .summary-icon,
+.origin-details > summary .summary-icon {
+    grid-area: icon;
+    width: 40px;
+    height: 40px;
+    padding: 9px;
+    border-radius: var(--r-sm);
+    background: var(--peacock-50);
+    color: var(--peacock-700);
+    transition: background-color var(--dur-2) var(--ease-out);
+}
+.reader-options > summary .summary-title,
+.origin-details > summary .summary-title,
+.source-details > summary .summary-title {
+    grid-area: title;
+    min-width: 0;
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ink);
+}
+#readerOptionsSummary {
+    grid-area: sub;
+    min-width: 0;
+    overflow: hidden;
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ink-3);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.reader-options > summary .summary-chevron,
+.origin-details > summary .summary-chevron,
+.source-details > summary .summary-chevron {
+    grid-area: chev;
+    width: 36px;
+    height: 36px;
+    padding: 7px;
+    border-radius: 50%;
+    background: var(--c-surface-sunken);
+    color: var(--peacock-700);
+    transition: transform var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out);
+}
+.reader-options[open] > summary .summary-chevron,
+.origin-details[open] > summary .summary-chevron,
+.source-details[open] > summary .summary-chevron { transform: rotate(180deg); }
+
+/* A short fade and lift as a block opens. */
+.reader-options[open] > .reader-options-content,
+.origin-details[open] .origin-text,
+.source-details[open] > .source-help,
+.source-details[open] > #sourceContent { animation: reader-reveal var(--dur-2) var(--ease-out); }
+
+/* ---------- Options content ---------- */
+.reader-option-group { padding: var(--sp-4) var(--sp-5); }
+.reader-option-group + .reader-option-group { border-top: 1px solid var(--c-border); }
+/* JS hides #meaningToggleRow but not its group, so the row carries its own
+   padding and separator. When it is hidden, no empty band or double line is left. */
+.reader-option-meanings { padding: 0; }
+.reader-option-meanings + .reader-option-group { border-top: 0; }
+.reader-option-meanings > .reader-toggle-row {
+    padding: var(--sp-3) var(--sp-5);
+    border-bottom: 1px solid var(--c-border);
+}
+
+.reader-toggle-row { display: flex; align-items: center; gap: var(--sp-3); }
+/* The whole row toggles (a div with onclick; reader-navigation.js adds
+   role=button, tabindex and aria-pressed). */
+.meaning-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-4);
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    margin-inline-start: calc(-1 * var(--sp-3));
+    padding: var(--sp-1) var(--sp-3);
+    border-radius: var(--r-sm);
+    transition: background-color var(--dur-2) var(--ease-out);
+}
+.meaning-toggle label {
+    cursor: inherit;
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ink);
+}
+/* 52 x 30 track. The ink-3 hairline keeps the "off" track at 3:1 against paper.
+   behavior.css places the knob (top/left 3px) and slides it 22px when .on. */
+.toggle-switch {
+    width: 52px;
+    height: 30px;
+    border-radius: var(--r-pill);
+    background: var(--line-2);
+    box-shadow: inset 0 0 0 1.5px var(--ink-3);
+    transition: background-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+.toggle-switch::after {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--white);
+    box-shadow: var(--shadow-sm);
+}
+/* On/off marks inside the track, beside the knob ("O" when off, "I" when on),
+   so the state never depends on colour alone. */
+.toggle-switch::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 8px;
+    width: 10px;
+    height: 10px;
+    margin-top: -5px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px var(--ink-3);
+}
+.meaning-toggle.on .toggle-switch {
+    background: var(--peacock-700);
+    box-shadow: inset 0 0 0 1.5px var(--peacock-700);
+}
+.meaning-toggle.on .toggle-switch::before {
+    right: auto;
+    left: 12px;
+    width: 2px;
+    height: 12px;
+    margin-top: -6px;
+    border-radius: 1px;
+    background: var(--white);
+    box-shadow: none;
+}
+
+.reader-option-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    margin-bottom: var(--sp-3);
+}
+.reader-option-head > label,
+.reader-option-title {
+    font-size: var(--fs-md);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ink);
+}
+
+/* Jump to a verse: the select looks like a form field, next to "continue reading". */
+.reader-jump-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+#verseJump {
+    flex: 1 1 160px;
+    min-width: 0;
+    min-height: var(--tap);
+    padding: 0 44px 0 14px;
+    border: 1.5px solid var(--c-border-strong);
+    border-radius: 14px;
+    background: var(--white) var(--reader-img-chevron) right 12px center / 20px no-repeat;
+    color: var(--ink);
+    font-size: var(--fs-md);   /* 16px or more stops iOS zooming on focus */
+    font-weight: 600;
+    line-height: 1.3;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+}
+#verseJump:focus {
+    border-color: var(--peacock-600);
+    box-shadow: 0 0 0 3px var(--peacock-100);
+}
+.reader-jump-row .resume-btn { flex: 1 1 200px; }
+
+/* Section shortcuts (JS: span.reader-section-label + plain buttons), drawn like
+   components.css .chip because the generated buttons carry no class. */
+.reader-section-navigation {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-2);
+    margin-top: var(--sp-4);
+}
+.reader-section-label {
+    flex: 1 1 100%;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--ink-2);
+}
+.reader-section-navigation button {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 44px;
+    padding: var(--sp-1) var(--sp-4);
+    border-radius: var(--r-pill);
+    border: 1.5px solid var(--c-border-strong);
+    background: var(--c-surface);
+    color: var(--c-text-soft);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: start;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.reader-section-navigation button:active { transform: scale(.97); }
+
+/* Save and share */
+.reader-action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sp-3);
+}
+/* Each button starts at its own label width, so a long label moves to its own
+   row (full width) instead of squeezing into two lines beside the others. */
+.reader-action-row > .btn { flex: 1 1 auto; padding-block: var(--sp-2); }
+
+/* Favourite: a star drawn from aria-pressed (no glyph in the text), outline or filled. */
+#favoriteButton::before {
+    content: "";
+    flex: none;
+    width: 20px;
+    height: 20px;
+    background-color: currentColor;
+    -webkit-mask: var(--reader-icon-star) center / contain no-repeat;
+    mask: var(--reader-icon-star) center / contain no-repeat;
+}
+#favoriteButton[aria-pressed="true"] {
+    background: var(--zari-100);
+    border-color: var(--zari-300);
+    color: var(--zari-800);
+}
+#favoriteButton[aria-pressed="true"]::before {
+    background-color: var(--zari-700);
+    -webkit-mask-image: var(--reader-icon-star-filled);
+    mask-image: var(--reader-icon-star-filled);
+    animation: reader-icon-pop var(--dur-3) var(--ease-out);
+}
+
+/* role=status line after save / copy (hidden while empty by behavior.css) */
+#readerLinkStatus {
+    margin-top: var(--sp-3);
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: var(--r-sm);
+    background: var(--peacock-50);
+    color: var(--peacock-900);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.5;
+}
+#readerLinkFallback { margin-top: var(--sp-3); }
+
+/* Parayana counter: flat content inside the options surface. */
+.reader-practice .stotram-counter-card {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+/* JS writes the stotram's title into the name, so it can run to two lines. The
+   ⓘ stays beside it on the first row; the date and reset follow at the right. */
+.reader-practice .counter-name {
+    flex: 0 1 auto;
+    max-width: calc(100% - 46px);
+    margin-right: 0;
+}
+.reader-practice .counter-actions { margin-left: auto; }
+
+/* ---------- Verses ---------- */
+.slokam-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--sp-3);
+}
+/* A paper leaf per verse. */
+.slokam-block {
+    min-width: 0;
+    padding: 22px 18px 16px;
+    text-align: center;
+    background: var(--paper-leaf);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-xs);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+/* Heading label for non-numbered parts (ధ్యానం, ఫలశ్రుతి …), set between zari hairlines. */
+.slokam-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+    font-family: var(--font-ui);
+    font-size: 14.5px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--zari-700);
+}
+.slokam-number::before,
+.slokam-number::after {
+    content: "";
+    flex: 0 1 28px;
+    height: 1px;
+    background: var(--zari-300);
+}
+/* Size comes from --reader-font-size in behavior.css. Never set font-size here. */
+.slokam-text {
+    font-family: var(--font-serif);
+    font-weight: 500;
+    line-height: var(--lh-reading);
+    color: var(--reading-ink);
+    text-wrap: pretty;
+}
+.reader-verse-row + .reader-verse-row { margin-top: var(--sp-1); }
+/* The verse numeral at the row end: small zari, growing with the text size. */
+.reader-verse-number {
+    max-width: 4.5em;   /* a long label ("81-183 & …") wraps instead of starving the verse */
+    font-family: var(--font-ui);
+    font-size: max(var(--fs-xs), calc(var(--reader-font-size) * .5));
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--zari-700);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    overflow-wrap: anywhere;
+}
+.slokam-meaning {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-3);
+    border-top: 1px dashed var(--line-2);
+    font-family: var(--font-ui);
+    font-size: max(var(--fs-sm), calc(var(--reader-font-size) * .68));
+    line-height: 1.75;
+    color: var(--ink-2);
+    text-align: start;
+}
+.meaning-label {
+    display: block;
+    margin-bottom: var(--sp-1);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--zari-700);
+}
+/* reader.js still puts a <br> after the label; the block label already breaks
+   the line, so the <br> would leave an empty line. */
+.meaning-label + br { display: none; }
+
+/* Mark as read: an empty circle, which becomes a checked circle on a filled pill.
+   It keeps its native inline-block display (behavior.css owns display here, for
+   print), and buttons centre their content vertically without help. */
+.verse-read-button {
+    max-width: 100%;
+    min-height: 44px;
+    margin-top: var(--sp-4);
+    padding: var(--sp-1) var(--sp-4) var(--sp-1) 14px;
+    border: 1.5px solid var(--c-border-strong);
+    border-radius: var(--r-pill);
+    background: var(--c-surface);
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.verse-read-button::before {
+    content: "";
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-inline-end: var(--sp-2);
+    vertical-align: -.33em;
+    background-color: currentColor;
+    -webkit-mask: var(--reader-icon-circle) center / contain no-repeat;
+    mask: var(--reader-icon-circle) center / contain no-repeat;
+}
+.verse-read-button:active { transform: scale(.97); }
+.verse-read-button[aria-pressed="true"] {
+    background: var(--peacock-800);
+    border-color: var(--peacock-800);
+    color: var(--white);
+}
+.verse-read-button[aria-pressed="true"]::before {
+    -webkit-mask-image: var(--reader-icon-check);
+    mask-image: var(--reader-icon-check);
+    animation: reader-icon-pop var(--dur-3) var(--ease-out);
+}
+
+/* A read verse: teal tint, teal edge, and a 4px bar on the left edge. The button's
+   text and check icon also say "read", so colour is never the only signal. */
+.slokam-block.read {
+    background: var(--peacock-50);
+    border-color: var(--peacock-200);
+}
+.slokam-block.read::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: var(--sp-4);
+    bottom: var(--sp-4);
+    width: 4px;
+    border-radius: var(--r-pill);
+    background: var(--peacock-600);
+}
+
+/* Search matches. Box-shadow instead of padding, so marks never reflow the verse while typing. */
+.slokam-text mark,
+.slokam-meaning mark {
+    padding: 0;
+    border-radius: 4px;
+    background: var(--zari-200);
+    color: inherit;
+    box-shadow: 0 0 0 2px var(--zari-200);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+/* The current match is teal with white text and a zari ring: colour and shape both differ. */
+.slokam-text mark.current,
+.slokam-meaning mark.current {
+    background: var(--peacock-800);
+    color: var(--white);
+    box-shadow: 0 0 0 2px var(--peacock-800), 0 0 0 4px var(--zari-300);
+}
+
+.reader-empty-state {
+    display: grid;
+    justify-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-7) var(--sp-5);
+    text-align: center;
+    background: var(--c-surface);
+    border: 1px dashed var(--line-2);
+    border-radius: var(--r-lg);
+    color: var(--ink-2);
+    font-size: var(--fs-md);
+    line-height: var(--lh);
+}
+.reader-empty-state::before {
+    content: "";
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--zari-100) var(--reader-img-book) center / 30px no-repeat;
+    box-shadow: inset 0 0 0 1.5px var(--zari-300);
+}
+
+/* ---------- After the verses ---------- */
+.reader-report {
+    margin-top: var(--sp-7);
+    text-align: center;
+}
+.reader-report-btn {
+    max-width: 100%;
+    padding-block: var(--sp-2);
+    text-wrap: balance;   /* two even lines on phones */
+}
+.origin-details,
+.source-details { margin-top: var(--sp-3); }
+.reader-report + .origin-details,
+.reader-report + .source-details { margin-top: var(--sp-5); }
+
+.origin-block { padding: var(--sp-4) var(--sp-5) var(--sp-5); }
+.origin-text {
+    font-size: var(--fs-md);
+    line-height: 1.85;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+}
+.origin-text > * + * { margin-top: var(--sp-3); }
+
+.source-help {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    padding: var(--sp-4) var(--sp-5) 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--ink-2);
+}
+#sourceContent {
+    padding: var(--sp-3) var(--sp-5) var(--sp-5);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+}
+#sourceContent p { margin: 0 0 var(--sp-2); }
+/* Source links open in a new tab: 44px-tall rows, the external-link mark after the last word. */
+#sourceContent a {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    padding-block: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--c-link);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+#sourceContent a::after {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-inline-start: 6px;
+    vertical-align: -2px;
+    background-color: currentColor;
+    -webkit-mask: var(--reader-icon-external) center / contain no-repeat;
+    mask: var(--reader-icon-external) center / contain no-repeat;
+}
+#sourceContent .source-review-meta {
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--ink-3);
+}
+.meaning-review-summary {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--c-border);
+}
+.meaning-review-summary h4 {
+    margin-bottom: var(--sp-1);
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--ink);
+}
+#sourceContent .meaning-coverage { color: var(--ink-2); }
+
+/* Status pills. JS puts a shape glyph (✓ ◐ ◇ △) in the text, so colour is never
+   alone. A 14px radius (not a full pill) keeps a two-line badge tidy on phones. */
+.source-status-badge,
+.meaning-review-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    max-width: 100%;
+    padding: 3px 11px;
+    border-radius: 14px;
+    background: var(--sand);
+    color: var(--ink-2);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1.45;
+}
+.source-details > summary .source-status-badge {
+    grid-area: sub;
+    justify-self: start;
+}
+.source-status-badge:empty { display: none; }
+#sourceContent .meaning-review-status { margin: var(--sp-1) 0 var(--sp-2); }
+.source-status-badge.verified,
+.meaning-review-status.verified { background: var(--leaf-100); color: var(--leaf-700); }
+.source-status-badge.partial,
+.meaning-review-status.partial { background: var(--zari-100); color: var(--zari-800); }
+.source-status-badge.review { background: var(--kumkum-100); color: var(--kumkum-800); }
+.source-status-badge.pending,
+.meaning-review-status.pending { background: var(--sand); color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+.source-status-badge.override,
+.meaning-review-status.reference { background: var(--peacock-50); color: var(--peacock-800); box-shadow: inset 0 0 0 1px var(--peacock-200); }
+
+/* ---------- Hover (real pointers only, so it never sticks on touch) ---------- */
+@media (hover: hover) {
+    .font-btn:not(:disabled):hover { background: var(--peacock-50); color: var(--peacock-900); }
+    .rs-mic:hover, .rs-nav:not(:disabled):hover, .rs-clear:hover { background-color: var(--peacock-50); }
+
+    .reader-options > summary:hover,
+    .origin-details > summary:hover,
+    .source-details > summary:hover { background: var(--peacock-50); }
+    .reader-options > summary:hover .summary-icon,
+    .origin-details > summary:hover .summary-icon,
+    .reader-options > summary:hover .summary-chevron,
+    .origin-details > summary:hover .summary-chevron,
+    .source-details > summary:hover .summary-chevron { background: var(--c-surface); }
+
+    .meaning-toggle:hover { background: var(--peacock-50); }
+    #verseJump:hover { border-color: var(--peacock-300); }
+    .reader-section-navigation button:hover { border-color: var(--peacock-300); background: var(--peacock-50); color: var(--peacock-900); }
+    #favoriteButton[aria-pressed="true"]:hover { background: var(--zari-200); border-color: var(--zari-500); color: var(--zari-800); }
+    .verse-read-button:hover { border-color: var(--peacock-300); background: var(--peacock-50); color: var(--peacock-900); }
+    .verse-read-button[aria-pressed="true"]:hover { border-color: var(--peacock-700); background: var(--peacock-700); color: var(--white); }
+    #sourceContent a:hover { color: var(--c-primary-hover); }
+}
+
+/* ---------- Responsive ----------
+   Phone tool bar, measured in Chromium with the bundled Telugu fonts:
+   - Under 360px it is two rows: [text size + label ... ⓘ] over a full-width search.
+   - 360-519px is one row, so the "అక్షరాలు" label steps aside for the search field
+     (with it, a 440px phone would leave the input 50px wide). It returns at 520px.
+   - 360-389px also drops the magnifier; the placeholder and mic still say "search".
+   - While matches are shown on a phone, the count and ↑↓ need a row of their own. */
+@media (min-width: 360px) and (max-width: 519.98px) {
+    .font-label { display: none; }
+}
+@media (min-width: 360px) and (max-width: 389.98px) {
+    .rs-icon { display: none; }
+}
+@media (max-width: 599.98px) {
+    .reader-tool-panel .controls:has(.rs-nav:not([hidden])) .reader-tools-info { order: 1; margin-left: auto; }
+    .reader-tool-panel .controls:has(.rs-nav:not([hidden])) .reader-search { order: 2; flex-basis: 100%; }
+}
+@media (max-width: 599.98px) and (min-height: 520.02px) {
+    html[data-screen="reader"]:has(.reader-search .rs-nav:not([hidden])) { --reader-tools-h: 142px; }
+}
+/* Small phones: bigger verse sizes win back side padding for the text,
+   from 18px at the default 24px down to 10px at the 48px maximum. */
+@media (max-width: 399.98px) {
+    .slokam-block { padding-inline: clamp(10px, calc(34px - var(--reader-font-size) / 2), 18px); }
+}
+/* Very narrow phones (and zoomed-in text): size controls and ⓘ on the first row, search below. */
+@media (max-width: 359.98px) {
+    html[data-screen="reader"] { --reader-tools-h: 142px; }
+    .reader-tool-panel .reader-tools-info { order: 1; margin-left: auto; }
+    .reader-tool-panel .reader-search { order: 2; flex-basis: 100%; }
+
+    .reader-option-group:not(.reader-option-meanings),
+    .reader-option-meanings > .reader-toggle-row { padding-inline: var(--sp-4); }
+    .reader-options > summary,
+    .origin-details > summary,
+    .source-details > summary { padding-left: var(--sp-3); }
+    .reader-practice .counter-row { gap: var(--sp-3); }   /* 64 + 96 + 64 still fits in 320px */
+    .origin-block, .source-help, #sourceContent { padding-inline: var(--sp-4); }
+    .slokam-block { padding-inline: clamp(8px, calc(30px - var(--reader-font-size) / 2), 14px); }
+}
+@media (min-width: 600px) {
+    .slokam-container { gap: var(--sp-4); }
+    .slokam-block { padding: 26px 26px 20px; }
+}
+@media (min-width: 1024px) {
+    .reader-title-section { padding-top: var(--sp-5); }
+    .slokam-block { padding: 30px 34px 22px; }
+}
+/* Short phones (most phones are under 700px tall once the browser bars show)
+   and very narrow ones: header + panel + tab bar would take a third of the
+   reading space, so the panel scrolls away with the page. While search
+   results are being stepped through it stays, so ↑↓ never scroll out of reach.
+   Browsers without :has() drop these two rules and keep the sticky panel. */
+@media (max-height: 700px), (max-width: 359.98px) {
+    html[data-screen="reader"]:not(:has(.reader-search .rs-nav:not([hidden]))) { --reader-tools-h: 0px; }
+    .reader-page:not(:has(.reader-search .rs-nav:not([hidden]))) .reader-tool-panel { position: relative; top: auto; }
+}
+/* Landscape phones: always scrolls away. */
+@media (max-height: 520px) {
+    html[data-screen="reader"] { --reader-tools-h: 0px; }
+    .reader-tool-panel { position: relative; top: auto; }   /* the sticky offset would push a relative box down */
+}
+
+/* ---------- Motion (keyframes go from hidden to the visible base state) ---------- */
+@keyframes reader-reveal {
+    from { opacity: 0; transform: translateY(-4px); }
+}
+@keyframes reader-icon-pop {
+    from { opacity: .4; transform: scale(.55); }
+}
+
+/* ---------- Print: behavior.css strips the chrome; tighten the verse layout ---------- */
+@media print {
+    .reader-title-section::before,
+    .reader-title-section::after { content: none; }
+    #readerTitle { color: var(--ink); }
+    .slokam-container { gap: var(--sp-2); }
+    .slokam-block { padding: var(--sp-3) var(--sp-2); }
+    .slokam-block.read::before { content: none; }
+}

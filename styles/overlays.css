@@ -1,0 +1,989 @@
+/* ============================================================
+   Overlays (CSS-1): search, the four .sheet overlays (account hub,
+   what's new, my messages, ⓘ info), feedback, the day-sheet container,
+   the in-app confirm / prompt dialog and the cloud toast.
+   Markup: contract §3 "Overlays", §4.6, 4.10, 4.14, 4.15, 4.16; look: §7.
+
+   Rules of this file:
+   - behavior.css owns position / inset / z-index / display / overflow of
+     every overlay, the .day-sheet placement (fixed, bottom, margin, height
+     cap, scrolling), the .sc-overlay fade, .sc-box width, .sc-msg
+     white-space, the .cloud-toast placement / transform / fade and the
+     .listening mic state. This file adds visuals and inner layout only.
+   - .day-sheet-overlay never gets transform, filter, backdrop-filter,
+     contain or will-change (the fixed .day-sheet lives inside it).
+   - Entrances animate FROM a hidden state TO the visible base state, with
+     no fill-mode. The reduced-motion switch in behavior.css turns them off
+     and everything is simply there.
+============================================================ */
+
+/* ---------- Backdrops ---------- */
+.search-overlay,
+.sheet-overlay,
+.feedback-overlay,
+.day-sheet-overlay,
+.sc-overlay {
+    background: rgb(8 29 28 / .55);
+}
+/* The backdrop fades in (opacity only) each time display switches on. */
+.search-overlay,
+.sheet-overlay,
+.feedback-overlay,
+.day-sheet-overlay {
+    animation: overlay-fade var(--dur-2) var(--ease-out);
+}
+
+@keyframes overlay-fade { from { opacity: 0; } }
+@keyframes sheet-up { from { opacity: 0; transform: translateY(28px); } }
+@keyframes search-drop { from { opacity: 0; transform: translateY(-12px); } }
+@keyframes dialog-pop { from { opacity: 0; transform: scale(.96); } }
+@keyframes mark-pop { from { opacity: 0; transform: scale(.6); } }
+
+/* ============================================================
+   Sheet system: .sheet-overlay > .sheet (.sheet-grab, .sheet-head, content)
+   Bottom sheet on phones; a centred card from 768px.
+============================================================ */
+.sheet-overlay {
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0 var(--safe-right) 0 var(--safe-left);
+}
+
+.sheet {
+    width: 100%;
+    max-width: 560px;
+    max-height: 92vh;
+    max-height: 92dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 18px calc(24px + var(--safe-bottom));
+    border-radius: 26px 26px 0 0;
+    background: var(--paper);
+    box-shadow: var(--shadow-lg);
+    color: var(--ink);
+    animation: sheet-up var(--dur-3) var(--ease-out);
+}
+
+/* The grab handle (also used by the day sheet as .sheet-handle) */
+.sheet-grab,
+.sheet-handle {
+    width: 44px;
+    height: 5px;
+    margin: 0 auto var(--sp-3);
+    border-radius: 3px;
+    background: var(--line-2);
+}
+
+.sheet-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-2);
+}
+.sheet-head h2 {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--fs-xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+    overflow-wrap: anywhere;
+}
+
+/* Optional round icon before the title */
+.sheet-head-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--peacock-50);
+    color: var(--peacock-700);
+    box-shadow: inset 0 0 0 1.5px var(--peacock-200);
+}
+.sheet-head-icon .icon-inline { width: 22px; height: 22px; }
+.updates-sheet .sheet-head-icon {
+    background: var(--zari-100);
+    color: var(--zari-700);
+    box-shadow: inset 0 0 0 1.5px var(--zari-300);
+}
+
+/* Close: a 44px sand circle (sheets, feedback, day sheet, search row) */
+.sheet-close {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin-left: auto;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--sand);
+    color: var(--ink-2);
+    transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.sheet-close .icon-inline { width: 22px; height: 22px; }
+.sheet-close:hover { background: var(--sand-2); color: var(--ink); }
+.sheet-close:active { transform: scale(.93); }
+
+.sheet-sub {
+    margin: 0 0 var(--sp-3);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--ink-3);
+}
+
+@media (min-width: 768px) {
+    .sheet-overlay {
+        align-items: center;
+        padding: var(--sp-6) max(var(--sp-6), var(--safe-right)) var(--sp-6) max(var(--sp-6), var(--safe-left));
+    }
+    .sheet {
+        max-height: calc(100vh - 48px);
+        max-height: calc(100dvh - 48px);
+        padding: var(--sp-5) var(--sp-6) var(--sp-6);
+        border-radius: 24px;
+    }
+    .sheet-grab { display: none; }
+}
+
+/* ============================================================
+   Search (#searchOverlay): input row, hint, results (§4.6)
+============================================================ */
+.search-overlay {
+    padding: max(var(--sp-3), env(safe-area-inset-top, 0px)) max(var(--gutter), var(--safe-right))
+             calc(var(--sp-8) + var(--safe-bottom)) max(var(--gutter), var(--safe-left));
+}
+.search-box {
+    max-width: 640px;
+    margin: 0 auto;
+    animation: search-drop var(--dur-3) var(--ease-out);
+}
+@media (min-width: 768px) {
+    .search-overlay { padding-top: 12vh; }
+}
+
+.search-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-1);
+    min-height: 60px;
+    padding: var(--sp-1) var(--sp-2) var(--sp-1) var(--sp-4);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    background: var(--paper);
+    box-shadow: var(--shadow-lg);
+    transition: box-shadow var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+}
+.search-input-wrap:focus-within {
+    border-color: var(--zari-500);
+    box-shadow: 0 0 0 3px var(--zari-500), var(--shadow-lg);
+}
+.search-lead {
+    width: 24px;
+    height: 24px;
+    color: var(--ink-3);
+    transition: color var(--dur-2) var(--ease-out);
+}
+.search-input-wrap:focus-within .search-lead { color: var(--peacock-700); }
+
+.search-input {
+    flex: 1 1 auto;
+    min-width: 0;
+    height: 52px;
+    padding: 0 var(--sp-2);
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: var(--fs-lg);
+    line-height: 1.4;
+}
+/* The whole row shows the focus ring (:focus-within above) */
+.search-input:focus,
+.search-input:focus-visible { outline: none; }
+
+.mic-btn {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--peacock-100);
+    border-radius: 50%;
+    background: var(--peacock-50);
+    color: var(--peacock-800);
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.mic-btn .icon-inline { width: 22px; height: 22px; }
+.mic-btn:hover { background: var(--peacock-100); }
+.mic-btn:active { transform: scale(.93); }
+.search-input-wrap .sheet-close { margin-left: 0; }
+
+/* The hint sits on the dark backdrop. The backdrop alone is too light over
+   the ivory page for AA, so the hint carries its own deeper tint. */
+.search-hint {
+    display: table;
+    max-width: 100%;
+    margin: var(--sp-3) auto 0;
+    padding: 6px var(--sp-4);
+    border-radius: var(--r);
+    background: rgb(8 45 44 / .78);
+    color: var(--ivory);
+    font-size: var(--fs-sm);
+    line-height: 1.55;
+    text-align: center;
+}
+.search-hint:empty { display: none; }
+
+.search-results {
+    display: grid;
+    gap: var(--sp-2);
+    margin-top: var(--sp-3);
+}
+.search-results:empty { display: none; }
+
+.search-result {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 14px 10px 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    text-align: left;
+    transition: border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.search-result:hover { border-color: var(--zari-300); background: var(--white); }
+.search-result:active { transform: scale(.99); }
+.search-result > .icon-inline {        /* trailing chevron */
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+}
+.sr-text {
+    display: grid;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 1px;
+}
+.sr-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.sr-sub {
+    font-size: var(--fs-xs);
+    line-height: 1.45;
+    color: var(--ink-3);
+    overflow-wrap: anywhere;
+}
+
+.search-empty {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-4) 18px;
+    border-radius: var(--r);
+    background: var(--paper);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink-2);
+    font-size: var(--fs-md);
+    line-height: 1.5;
+}
+.search-empty .icon-inline { width: 24px; height: 24px; color: var(--ink-3); }
+
+/* ============================================================
+   Account & help hub (#accountOverlay .account-sheet)
+============================================================ */
+.account-signin {
+    margin-top: var(--sp-2);
+    padding: var(--sp-4);
+    border: 1px solid var(--peacock-100);
+    border-radius: var(--r-lg);
+    background: var(--peacock-50);
+}
+.account-signin-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+.account-signin-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--peacock-700);
+    box-shadow: inset 0 0 0 1.5px var(--peacock-200);
+}
+.account-signin-icon .icon-inline { width: 22px; height: 22px; }
+.account-signin-head h3 {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--fs-lg);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.account-note {
+    margin-top: var(--sp-2);
+    font-size: var(--fs-sm);
+    line-height: 1.65;
+    color: var(--ink-2);
+}
+.account-note b { color: var(--ink); }
+
+/* Cloud sign-in box (cloud.js fills it; §4.10) */
+.cloud-auth {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-top: var(--sp-4);
+}
+.cloud-auth > * { min-width: 0; }
+.cloud-loading {
+    display: grid;
+    place-items: center;
+    flex: 1 1 100%;
+    min-height: 56px;
+    padding: var(--sp-2) var(--sp-4);
+    border: 1.5px dashed var(--peacock-200);
+    border-radius: 14px;
+    background: rgb(255 255 255 / .6);
+    color: var(--ink-3);
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+    text-align: center;
+}
+.cloud-signed {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex: 1 1 200px;
+}
+.cloud-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--peacock-700), var(--peacock-900));
+    box-shadow: inset 0 0 0 2px rgb(226 198 124 / .5);
+    color: var(--zari-200);
+    font-family: var(--font-serif);
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    line-height: 1;
+}
+.cloud-who {
+    display: grid;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 2px;
+}
+.cloud-who b {
+    font-size: var(--fs-md);
+    line-height: 1.4;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.cloud-who small {
+    line-height: 1.5;
+    color: var(--ink-2);
+}
+.cloud-signout {
+    flex: none;
+    min-height: 44px;           /* .btn-sm is 40px; tap targets here are 44px+ */
+    margin-left: auto;
+}
+.admin-dash-link { margin-top: var(--sp-3); }
+
+/* Help menu: a grouped list of 64px rows */
+.account-menu {
+    margin-top: var(--sp-4);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--paper);
+}
+.account-row,
+.account-advanced > summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    min-height: 64px;
+    padding: 10px 14px;
+    color: var(--ink);
+    font-family: var(--font-ui);
+    text-align: left;
+    transition: background-color var(--dur-2) var(--ease-out);
+}
+.account-row {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.account-row + .account-row { border-top: 1px solid var(--line); }
+.account-row:hover,
+.account-advanced > summary:hover { background: var(--peacock-50); }
+.account-row:active,
+.account-advanced > summary:active { background: var(--peacock-100); }
+/* The menu clips its corners, so the focus ring is drawn inside the row */
+.account-row:focus-visible,
+.account-advanced > summary:focus-visible { outline-offset: -3px; }
+
+.account-row-icon {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 42px;
+    height: 42px;
+    border-radius: var(--r-sm);
+    background: var(--peacock-50);
+    color: var(--peacock-800);
+    box-shadow: inset 0 0 0 1px var(--peacock-100);
+}
+.account-row-icon .icon-inline { width: 22px; height: 22px; }
+.account-row-icon-muted {
+    background: var(--sand);
+    color: var(--ink-2);
+    box-shadow: inset 0 0 0 1px var(--line);
+}
+.account-row-copy {
+    display: grid;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 1px;
+}
+.account-row-copy b {
+    font-size: 16.5px;
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--ink);
+}
+.account-row-copy small {
+    font-size: var(--fs-xs);
+    line-height: 1.45;
+    color: var(--ink-3);
+}
+/* Unread count: a kumkum pill with the number in it */
+.account-row-badge {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 var(--sp-2);
+    border-radius: var(--r-pill);
+    background: var(--kumkum-700);
+    color: var(--white);
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.account-row-chev,
+.account-advanced .summary-chevron {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+}
+
+/* Backup file: a collapsible card below the menu */
+details.account-advanced {
+    margin-top: var(--sp-3);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--paper);
+}
+.account-advanced > summary {
+    border-radius: calc(var(--r-lg) - 1px);
+    list-style: none;
+}
+.account-advanced > summary::-webkit-details-marker { display: none; }
+.account-advanced[open] > summary {
+    border-bottom: 1px solid var(--line);
+    border-radius: calc(var(--r-lg) - 1px) calc(var(--r-lg) - 1px) 0 0;
+}
+.account-advanced .summary-chevron { transition: transform var(--dur-2) var(--ease-out); }
+.account-advanced[open] .summary-chevron { transform: rotate(180deg); }
+.account-advanced-body { padding: var(--sp-4) 14px; }
+.account-advanced-body .account-note { margin-top: var(--sp-3); }
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.btn-row > * { flex: 1 1 180px; }
+
+.account-version {
+    margin-top: var(--sp-5);
+    font-size: var(--fs-xs);
+    line-height: 1.5;
+    color: var(--ink-3);
+    text-align: center;
+}
+
+/* ============================================================
+   What's new list (§4.14)
+============================================================ */
+.updates-list { margin-top: var(--sp-1); }
+.update-item {
+    padding: var(--sp-4) 2px;
+    border-bottom: 1px solid var(--line);
+}
+.update-item:first-child { padding-top: var(--sp-2); }
+.update-item:last-child { border-bottom: 0; }
+.update-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+.update-meta time {
+    font-size: var(--fs-xs);
+    line-height: 1.45;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+.update-title {
+    margin-top: var(--sp-2);
+    font-size: 18px;
+    line-height: 1.45;
+    color: var(--ink);
+}
+.update-body {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-sm);
+    line-height: 1.7;
+    color: var(--ink-2);
+}
+
+/* ============================================================
+   My messages (§4.15)
+============================================================ */
+.messages-list {
+    display: grid;
+    gap: var(--sp-3);
+    margin-top: var(--sp-1);
+}
+.message-item {
+    padding: 14px var(--sp-4);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--ivory);
+}
+.message-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sp-2);
+}
+.message-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--peacock-800);
+}
+.message-type .icon-inline { width: 18px; height: 18px; }
+.message-text {
+    margin-top: var(--sp-2);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+    white-space: pre-line;          /* keep the line breaks the reader typed */
+    overflow-wrap: anywhere;
+}
+.message-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: var(--sp-2);
+    font-size: var(--fs-xs);
+    line-height: 1.45;
+    color: var(--ink-3);
+}
+.message-meta .icon-inline { width: 16px; height: 16px; }
+.message-meta span { min-width: 0; overflow-wrap: anywhere; }
+/* Our reply: a peacock bubble with a 3px peacock bar on the left */
+.message-reply {
+    margin-top: var(--sp-3);
+    padding: var(--sp-3) 14px;
+    border-left: 3px solid var(--peacock-600);
+    border-radius: 4px var(--r-sm) var(--r-sm) 4px;
+    background: var(--peacock-50);
+}
+.message-reply b {
+    display: block;
+    font-size: var(--fs-sm);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--peacock-800);
+}
+.message-reply p {
+    margin-top: var(--sp-1);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--ink);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+.message-reply small {
+    display: block;
+    margin-top: 6px;
+    line-height: 1.45;
+    color: var(--ink-3);
+}
+.messages-sheet > .btn-block { margin-top: var(--sp-4); }
+
+/* ============================================================
+   ⓘ Info sheet (§4.16)
+============================================================ */
+.info-body {
+    font-size: 17.5px;
+    line-height: 1.8;
+    color: var(--ink);
+}
+.info-body p + p { margin-top: var(--sp-3); }
+.info-gloss {
+    margin-top: var(--sp-3);
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--ink-3);
+}
+.info-gloss:empty { display: none; }
+.info-done { margin-top: var(--sp-5); }
+
+/* ============================================================
+   Feedback (#feedbackOverlay > .feedback-box): a centred card
+============================================================ */
+.feedback-overlay {
+    padding: max(var(--sp-4), env(safe-area-inset-top, 0px)) max(var(--sp-3), var(--safe-right))
+             calc(var(--sp-6) + var(--safe-bottom)) max(var(--sp-3), var(--safe-left));
+}
+.feedback-box {
+    max-width: 560px;
+    margin: clamp(0px, 4vh, 56px) auto 0;
+    padding: 18px 18px 22px;
+    border-radius: var(--r-xl);
+    background: var(--paper);
+    box-shadow: var(--shadow-lg);
+    color: var(--ink);
+    animation: sheet-up var(--dur-3) var(--ease-out);
+}
+@media (min-width: 600px) {
+    .feedback-overlay { padding-inline: max(var(--sp-6), var(--safe-left)) max(var(--sp-6), var(--safe-right)); }
+    .feedback-box { padding: var(--sp-6) 28px 28px; }
+}
+
+.fb-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+}
+.fb-head h2 {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: var(--fs-xl);
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+.fb-sub {
+    margin-top: var(--sp-2);
+    font-size: var(--fs-sm);
+    line-height: 1.65;
+    color: var(--ink-2);
+}
+/* Very small phones: the decorative head icon gives its width to the title */
+@media (max-width: 359.98px) {
+    .fb-head .sheet-head-icon { display: none; }
+}
+
+.fb-types { margin-top: var(--sp-5); }
+.fb-label {
+    display: block;
+    margin: var(--sp-4) 0 var(--sp-2);
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.45;
+    color: var(--ink);
+}
+.fb-types > .fb-label {        /* the legend: no top gap, spacing as padding */
+    margin: 0;
+    padding: 0 0 var(--sp-2);
+}
+.req {
+    color: var(--kumkum-700);
+    font-weight: 700;
+}
+.fb-opt {
+    font-size: var(--fs-xs);
+    font-weight: 400;
+    color: var(--ink-3);
+}
+
+/* Message type: a 2-column grid of 56px radio chips */
+.fb-type-chips {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+.fb-type-chip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    min-height: 56px;
+    padding: var(--sp-2) 14px;
+    border: 1.5px solid var(--line-2);
+    border-radius: 14px;
+    background: var(--white);
+    color: var(--ink-2);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: left;
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.fb-type-chip .icon-inline { width: 22px; height: 22px; color: var(--peacock-700); }
+.fb-type-chip span { min-width: 0; overflow-wrap: anywhere; }
+.fb-type-chip:hover { border-color: var(--peacock-300); background: var(--peacock-50); color: var(--peacock-900); }
+.fb-type-chip:active { transform: scale(.97); }
+/* Checked: filled peacock with white text (fill, not just hue, changes) */
+.fb-type-chip[aria-checked="true"],
+.fb-type-chip[aria-checked="true"]:hover {
+    border-color: var(--peacock-800);
+    background: var(--peacock-800);
+    color: var(--white);
+    box-shadow: var(--shadow-primary);
+}
+.fb-type-chip[aria-checked="true"] .icon-inline { color: var(--zari-200); }
+
+/* Fields with a mic inside the right edge */
+.fb-field { position: relative; }
+.fb-field .fb-input,
+.fb-field .fb-textarea { padding-right: 56px; }
+.mic-mini {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--peacock-100);
+    border-radius: 50%;
+    background: var(--peacock-50);
+    color: var(--peacock-800);
+    transition: background-color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.mic-mini .icon-inline { width: 20px; height: 20px; }
+.mic-mini:hover { background: var(--peacock-100); }
+.mic-mini:active { transform: scale(.93); }
+.fb-field.area .mic-mini { top: 8px; right: 8px; }
+
+.fb-error {
+    margin-top: var(--sp-3);
+    padding: 10px 14px;
+    border-left: 3px solid var(--kumkum-700);
+    border-radius: 4px var(--r-sm) var(--r-sm) 4px;
+    background: var(--kumkum-100);
+    color: var(--kumkum-800);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.55;
+}
+.fb-error:empty { display: none; }
+.fb-submit {
+    min-height: 54px;
+    margin-top: var(--sp-5);
+}
+.fb-privacy {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--sp-2);
+    margin-top: 14px;
+    font-size: var(--fs-xs);
+    line-height: 1.6;
+    color: var(--ink-3);
+}
+.fb-privacy .icon-inline {
+    width: 16px;
+    height: 16px;
+    margin-top: 3px;
+    color: var(--peacock-700);
+}
+
+/* Thank-you view */
+.fb-thanks {
+    padding: var(--sp-6) var(--sp-2) var(--sp-4);
+    text-align: center;
+}
+.fb-thanks-mark {
+    display: grid;
+    place-items: center;
+    width: 72px;
+    height: 72px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: var(--leaf-100);
+    color: var(--leaf-700);
+    box-shadow: inset 0 0 0 2px rgb(47 107 69 / .25);
+    animation: mark-pop var(--dur-4) var(--ease-out);
+}
+.fb-thanks-mark .icon-inline { width: 36px; height: 36px; }
+.fb-thanks h3 {
+    margin-top: var(--sp-4);
+    font-size: var(--fs-xl);
+    color: var(--peacock-900);
+}
+.fb-thanks p {
+    max-width: 34ch;
+    margin: var(--sp-2) auto 0;
+    line-height: 1.65;
+    color: var(--ink-2);
+}
+.fb-thanks .btn { min-width: 160px; margin-top: var(--sp-5); }
+
+/* ============================================================
+   Day sheet container (#daySheetOverlay > .day-sheet). Placement is in
+   behavior.css; everything inside #sheetBody belongs to practice.css.
+============================================================ */
+.day-sheet {
+    max-width: 640px;
+    padding: 10px 18px calc(24px + var(--safe-bottom));
+    border-radius: 26px 26px 0 0;
+    background: var(--paper);
+    box-shadow: var(--shadow-lg);
+    color: var(--ink);
+    animation: sheet-up var(--dur-3) var(--ease-out);
+}
+@media (min-width: 600px) {
+    .day-sheet { padding-inline: var(--sp-6); }
+}
+.day-sheet-head {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    margin-bottom: var(--sp-3);
+}
+.sheet-date {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-family: var(--font-serif);
+    font-size: var(--fs-xl);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--peacock-900);
+}
+
+/* ============================================================
+   In-app confirm / prompt dialog (app.js siteConfirm, tracking.js sitePrompt)
+   The overlay's fade is in behavior.css and must stay under 180ms, so the
+   box pops in over 150ms.
+============================================================ */
+.sc-overlay { padding: var(--sp-4); }
+.sc-box {
+    padding: 22px 20px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--paper);
+    box-shadow: var(--shadow-lg);
+    color: var(--ink);
+    animation: dialog-pop 150ms var(--ease-out);
+}
+.sc-msg {
+    font-size: var(--fs-md);
+    line-height: 1.65;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.sc-box .field-input { margin-top: 14px; }
+.sc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: var(--sp-5);
+}
+.sc-btn { min-width: 104px; }
+/* Fallback look if a dialog button arrives without the shared .btn classes
+   (JS-1 adds btn btn-quiet / btn-primary / btn-danger). */
+.sc-btn:not(.btn) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap);
+    padding: 0 var(--sp-5);
+    border: 1.5px solid var(--c-border-strong);
+    border-radius: 14px;
+    background: var(--c-surface);
+    color: var(--peacock-800);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    line-height: 1.3;
+}
+.sc-btn.primary:not(.btn) {
+    border-color: var(--peacock-800);
+    background: var(--peacock-800);
+    color: var(--white);
+}
+.sc-btn.danger:not(.btn) {
+    border-color: var(--kumkum-700);
+    background: var(--kumkum-700);
+    color: var(--white);
+}
+.sc-btn[data-no]:not(.btn):hover { border-color: var(--peacock-300); background: var(--peacock-50); }
+
+/* ============================================================
+   Cloud toast (cloud.js): a peacock pill. Placement / fade: behavior.css
+============================================================ */
+.cloud-toast {
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    padding: 12px var(--sp-5);
+    border-radius: var(--r-pill);
+    background: var(--peacock-900);
+    box-shadow: 0 0 0 1px rgb(226 198 124 / .3), var(--shadow-lg);
+    color: var(--white);
+    font-family: var(--font-ui);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.45;
+    text-align: center;
+}
+
+/* ---------- Integration additions (Phase 3) ---------- */
+.search-result .sr-icon { width: 44px; height: 44px; font-size: 22px; }
+.messages-signin { margin-top: var(--sp-2); }
+.sc-prompt .sc-msg { margin-bottom: var(--sp-3); }
+.sc-input { font-size: var(--fs-lg); }

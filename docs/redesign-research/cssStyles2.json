@@ -1,0 +1,210 @@
+{
+  "summary": "I read all of /Users/LA40057633/Project/l/stotramulu/styles/styles.css from line 1000 to 1975. I checked every class selector against public/assets/*.js, src/*.js, index.html and admin.html, and I checked the cascade against reading.css and design-system.css, which load after styles.css (index.html:18-21).\n\nFive facts shape the rewrite:\n\n(1) The palm-leaf theme is always on. `<body class=\"grandham\">` is hard-coded at index.html:23 and no JS ever toggles it. So every `body.grandham` rule in this range is part of the live look, not an optional theme. Some of them have become the only live source of certain behaviour: the dark ink on verse text, the search highlights, and the read tick badge.\n\n(2) design-system.css:191 and reading.css:172 already set `display:none` on `.slokam-block::before/::after` and `.slokam-container::before/::after`. That means the leaf cord holes, binding cords, knots and tassels (styles.css:1726-1737, 1849-1885, 1889-1896) and the dark-theme tick on the block (1672-1678, 1931-1940) are never drawn. They can be dropped.\n\n(3) All the legacy `.mala-*` japamala rules in this range are dead. That covers 1003-1058 (`.mala-ring-center`, `.mala-stage` in strand/ring/celebrate modes, `.mala-bead` filled/active, `.mala-beads`, `.mala-center`, `.mala-count`, `.mala-of`, `.mala-tap-hint`, `.mala-rounds`, `.mala-controls`, and the `beadGlow` and `malaCelebrate` keyframes) plus the ring width at 1449-1450. Nothing in any JS or HTML references them; japamala.js adds `celebrate` only to `.jm-svg`. The live japamala visuals sit just before line 1000 and still need to be preserved, but they are outside this range: `.jm-fbead` with `transform-box:fill-box` and `transform-origin:center` (905), `.jm-fbead.pop` using `jmPop` (907-908), `.jm-bead.cur`, `.jm-fbead.cur` and `.jm-flowbead.cur` (900, 906, 916), `.jm-svg.celebrate` using `jmGlow` (922-923), and `.jm-confetti` (fixed, z-index 700, `jmFall`, 945-949).\n\n(4) The admin styles in this range are dead on the main site: `.admin-fab`, `.admin-overlay`, `.admin-box` and all `.ad-*` (1290-1325, 1364-1382, 1558-1591), plus `.wd-*` (1634-1650). admin.html links only styles/admin.css (admin.html:9), and admin-dashboard.js loads only on admin.html and uses `ad-wd-*` names. The only admin markup on index.html is a `.track-btn` link (admin.js:201). Also dead: `.header-pill .label` (1433), `.read-clear-btn` (1679), `.slokam-end-num` (1904-1918; reader.js renders `.reader-verse-number` instead), and `.mokku-target`. The rule `.slokam-block{cursor:pointer}` (1663) is overridden by reading.css:38 (`cursor:default`); the block itself is no longer clickable, and `.verse-read-button` does the toggling.\n\n(5) This range contains no `[hidden]`, `[aria-pressed]`, `[aria-expanded]`, `[data-view]`, `[data-panel]` or `[data-mode]` rules, no reduced-motion rule, and no custom properties set or read by JS. Those live in reading.css and design-system.css: the global reduced-motion kill-switches at reading.css:62 and design-system.css:180, `--reader-font-size` at reading.css:2/40/88, and the `data-view`/`data-panel` routing at design-system.css:213-216.\n\nOne more cascade trap: reader.js:55 and reader.js:146 write `style=\"font-size:Npx\"` inline on every `.slokam-text` and `.slokam-meaning`. Any new CSS font-size on those elements will lose unless it uses `!important`.\n\nZ-index order that must hold. Inside this range: `.feedback-overlay` 550 < `.day-sheet-overlay` 600 < `.cloud-toast` 900 < `.sc-overlay` 950. Dialogs are opened from inside the day sheet, the feedback form and cloud sign-in, so `.sc-overlay` must stay on top. For context, outside this range: `.header` sticky at 40 (design-system.css:29), `.scroll-top-btn` 200, `.search-overlay` 500, `.jm-confetti` 700, `.skip-link` 1000.\n\nKeyframes used by in-range rules but defined elsewhere: `fadeInUp` (styles.css:345), `micPulse` (styles.css:785), `shimmerText` (styles.css:127).",
+  "mustPreserve": [
+    {
+      "file": "styles/styles.css",
+      "line": "1094-1095",
+      "selector": ".day-sheet-overlay / .day-sheet-overlay.active",
+      "declarations": "position:fixed; inset:0; z-index:600; display:none; (backdrop) -> .active { display:block }",
+      "why": "tracking.js:144 opens the day sheet with classList.add('active') and tracking.js:148-149 checks and removes it. app.js:91 and japamala.js:52 also remove it when navigating. index.html:1264 closes the sheet only when event.target===overlay, so the overlay must be a full-screen hit target separate from the sheet. If the default is not hidden, the sheet is always on screen; if .active does not show it, it never opens."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1096-1104",
+      "selector": ".day-sheet / .day-sheet-overlay.active .day-sheet",
+      "declarations": "position:fixed; left:0; right:0; bottom:0; max-width:680px; margin:0 auto; max-height:88vh; overflow-y:auto; transform:translateY(100%); transition:transform .35s -> when active: transform:translateY(0)",
+      "why": "The sheet starts off-screen and must slide back in when active, or it stays invisible. JS locks page scrolling (document.body.style.overflow='hidden', tracking.js:145), so the sheet has to scroll by itself for long japa lists. It must not cover the whole overlay, or tapping the backdrop can no longer close it. Note that the display:none to block switch means the slide never actually animates today. If the redesign wants a real slide-up, use visibility/opacity instead of display; JS only checks classList.contains('active')."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1280-1287",
+      "selector": ".cloud-toast / .cloud-toast.show",
+      "declarations": "position:fixed; left:50%; bottom:30px; transform:translateX(-50%) translateY(20px); z-index:900; opacity:0; pointer-events:none; transition:opacity,transform .3s -> .show { opacity:1; transform:translateX(-50%) translateY(0) }",
+      "why": "cloud.js:131-136 creates #cloudToast on first use, adds .show, and removes it after 2.2s. Without opacity:0 by default the toast stays visible forever. Without pointer-events:none it blocks taps on whatever is underneath. translateX(-50%) must be present in both states to keep it centred."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1328-1342",
+      "selector": ".sc-overlay / .sc-overlay.show / .sc-box / .sc-overlay.show .sc-box",
+      "declarations": "position:fixed; inset:0; z-index:950; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity .18s -> .show { opacity:1 }; .sc-box max-width:420px (not full-bleed)",
+      "why": "siteConfirm and siteAlert (app.js:220-262) build the overlay and append it to body, add .show in requestAnimationFrame, then on close remove .show and call ov.remove() after 180ms. The fade therefore has to finish within 180ms. The backdrop closes only when e.target===ov (app.js:252), so .sc-box must not fill the overlay. z-index must stay above the day sheet (600), feedback overlay (550) and toast (900), because confirms are opened from inside the day sheet (tracking.js:366, 377), the feedback form (app.js listenInto calls siteAlert) and cloud sign-in (cloud.js:31). JS focuses [data-yes] immediately (app.js:259), so the overlay must never be display:none or visibility:hidden."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1343-1346",
+      "selector": ".sc-msg",
+      "declarations": "white-space:pre-line",
+      "why": "Dialog messages are escapeHtml'd plain strings with '\\n\\n' between the Telugu and English lines (app.js:327, japamala.js:340, tracking.js:366 and 377, cloud.js:31). Without pre-line both languages run together on one line."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1385-1390",
+      "selector": ".feedback-overlay / .feedback-overlay.active",
+      "declarations": "position:fixed; inset:0; z-index:550; display:none; overflow-y:auto; padding:70px 16px 40px -> .active { display:block; animation:fadeInUp .3s ease }",
+      "why": "app.js:357 opens the form and app.js:362 closes it. app.js:359 locks body scroll, so the overlay itself must scroll the form on small phones and when the keyboard is open. app.js:358 calls #fbName.focus() in the same tick as adding .active, so the overlay must become visible immediately; a delayed visibility transition would make focus() fail silently. The fadeInUp keyframes are defined at styles.css:345."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1413",
+      "selector": ".fb-input.invalid, .fb-textarea.invalid",
+      "declarations": "border-color:#e8675a; box-shadow:0 0 0 2px rgba(232,103,90,.25)",
+      "why": "app.js:413-414 adds .invalid to the required name and message fields when they are empty, and app.js:371, 389 and 402 clear it. Apart from the #fbError text, this is the only sign of which field is missing."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1424",
+      "selector": ".mic-mini.listening",
+      "declarations": "distinct background (red gradient) + color:#fff; animation:micPulse 1.2s infinite",
+      "why": "app.js:393 and reader.js:433 add .listening while speech recognition is running, and remove it on end or error. It is the only sign that the mic is recording. The micPulse keyframes are defined at styles.css:785."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1076-1078",
+      "selector": ".month-strip / .month-card",
+      "declarations": ".month-strip { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; NO gap, NO padding } .month-card { flex:0 0 100%; scroll-snap-align:center; padding:4px } (relies on global *{box-sizing:border-box} at styles.css:11)",
+      "why": "tracking.js:112 sets scrollLeft = monthIdx*strip.clientWidth, tracking.js:116 works out the month as round(scrollLeft/clientWidth), and tracking.js:131 scrolls with scrollTo using the same maths. Each card must be exactly one strip-width wide, with no gap, margin, strip padding or content-box sizing. Otherwise the month label and arrow states fall out of sync and swipes stop between months."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1079-1080",
+      "selector": ".cal-grid / .cal-weekday",
+      "declarations": ".cal-grid { display:grid; grid-template-columns:repeat(7,1fr) }",
+      "why": "tracking.js:94-106 outputs 7 .cal-weekday headers, then the leading .cal-day.empty cells, then the days, in one flat list. Only a 7-column auto-flow grid lines each date up under the right weekday."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1086-1091",
+      "selector": ".cal-day.empty / .cal-day.future / .cal-day.today / .cal-day.has-data / .cal-day .dot",
+      "declarations": ".empty { background:transparent; border:none; cursor:default } .future { opacity:.28; pointer-events:none } .today { distinct border/colour } .has-data { distinct background } .dot { 6px round marker }",
+      "why": "State classes added at tracking.js:99-105. Future days get no onclick and must look disabled. .has-data and .dot are the only sign that a day has pradakshina or japa logged. design-system.css:262-276 re-colours these for the paper theme (.future opacity .55), so keep all five states distinct."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1069-1070",
+      "selector": ".month-arrow:disabled / .month-arrow:hover:not(:disabled)",
+      "declarations": "opacity:.25; cursor:not-allowed",
+      "why": "tracking.js:124-125 disables the previous and next month buttons at the ends of the range. Users need to see that a button is disabled."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1136",
+      "selector": ".count-target.done",
+      "declarations": "color:#7fe0a0; opacity:.95; font-weight:600",
+      "why": "tracking.js:159 adds .done when a japa count reaches its target, which is the 'target reached' state."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1241, 1247, 1250",
+      "selector": ".mokku-item.done / .mokku-item.done .mokku-check / .mokku-item.done .mokku-text",
+      "declarations": ".done { opacity:.55 } .done .mokku-check { filled background } .done .mokku-text { text-decoration:line-through }",
+      "why": "tracking.js:266 renders completed vows (mokkulu) with .done, toggled by toggleMokku. A completed vow must look completed: filled check plus strike-through."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1253",
+      "selector": ".mokku-badge.due",
+      "declarations": "warning background/border/colour (rgba(200,80,40,.3) / #ffd9b0)",
+      "why": "tracking.js:263 marks reminders that are due today or overdue. This is the only emphasis for the '• ఈరోజు!' (today) reminder."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1614-1621, 1629",
+      "selector": ".today-strip / .today-tile",
+      "declarations": ".today-strip { display:flex; gap:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar hidden } .today-tile { flex:0 0 auto; max-width:190px; min-height:44px }",
+      "why": "Two strips use these classes: weekday.js:117 (today's stotram buttons) and library.js:81 (favourites strip of <a> links). Without a local horizontal scroll and non-shrinking tiles, the tiles push the page sideways on phones. min-height:44px is the tap-target size."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1780-1789",
+      "selector": "body.grandham .slokam-text mark, body.grandham .slokam-meaning mark / ...mark.current",
+      "declarations": "mark { background:rgba(190,130,45,.5); color:#2e1a08; box-shadow:none } mark.current { background:#8a3a12; color:#ffeccd; font-weight:700; box-shadow:0 0 10px rgba(138,58,18,.6) }",
+      "why": "Because grandham is always on (index.html:23), these are the live in-stotram search highlight styles. reader.js:293-316 wraps matches in <mark>, and reader.js:329 and 358-373 move .current and call scrollIntoView. The current match must look clearly different from the other matches, or next/previous navigation is useless."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1740-1744, 1830-1833",
+      "selector": "body.grandham .slokam-text",
+      "declarations": "font-family:'Noto Serif Telugu','Noto Sans Telugu',serif; color:#2b1608; font-weight:500; text-align:center (reading.css:173 switches to left at a breakpoint); text-shadow:0 0 1px rgba(43,22,8,.3)",
+      "why": "The base .slokam-text (styles.css:672) uses color:var(--cream) (#fdf5e6), and verses sit on a near-white paper card (design-system.css:190, #fffcf3). This rule is the only source of dark ink on verse text, so losing it leaves cream text on paper that cannot be read. Also keep the base .slokam-text white-space:pre-line (styles.css:672, outside this range): verses use \\n line breaks."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1751-1760, 1835",
+      "selector": "body.grandham .slokam-meaning / .meaning-label / .slokam-meaning::before",
+      "declarations": ".slokam-meaning { color:#3a2209; opacity:1; border-left-color:#8a6532 } .meaning-label { background:#8a6532->#6b431d; color:#f6e6c8 } .slokam-meaning::before { display:none }",
+      "why": "This is the ink for the meaning (అర్థం) text on paper; without it the base colours give cream on paper again. Whether meanings show at all is controlled by body.show-meanings (styles.css:580, outside this range; toggled at reader.js:155-170)."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1697-1698, 1714",
+      "selector": "body.grandham .slokam-block",
+      "declarations": "position:relative; z-index:1; transform:none; backdrop-filter:none",
+      "why": "This makes .slokam-block the positioning reference for the absolutely placed read tick (1958-1970). design-system.css:190 overrides only background, border, padding and radius, so position:relative comes from here."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1958-1970, 1974",
+      "selector": "body.grandham .slokam-block.read .slokam-text::after",
+      "declarations": "content:'✓'; position:absolute; top:12px; right:48px; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; ... (≤600px: right:38px; top:9px)",
+      "why": "reader.js:79 and reader.js:120 toggle .read on each verse. This is the visible tick on read verses, because the block's own ::before tick is hidden by design-system.css:191. The read state also shows through the block background (design-system.css:192/253) and .verse-read-button[aria-pressed] (reading.css:42). .slokam-text and .reader-verse-row must stay unpositioned, or the tick moves. A verse with several rows gets one ::after per .slokam-text, all stacked on the same spot."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1887",
+      "selector": "body.grandham .reader-page",
+      "declarations": "padding-bottom:150px",
+      "why": "This keeps the last verse and its .verse-read-button clear of the fixed .scroll-top-btn (bottom:30px, 52px tall; styles.css:675). A new fixed bottom bar or button (for example updates or bottom navigation) needs the same clearance plus the safe-area inset."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1552-1556",
+      "selector": "@media print: body / .slokam-text, .slokam-meaning",
+      "declarations": "body { background:#fff; color:#000 } .slokam-text, .slokam-meaning { color:#000 !important }",
+      "why": "This gives clean black-on-white stotram printouts over the themed inks. It works alongside design-system.css:184-187 (hides the header, footer and skip link) and reading.css:66-67 and 82-90 (hide navigation and read buttons)."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1481",
+      "selector": "html",
+      "declarations": "-webkit-text-size-adjust:100%",
+      "why": "This stops iOS Safari from resizing text on rotation, which would fight the user-chosen reader font size (reader.js:141-147 sets inline font-size and --reader-font-size)."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1489-1493",
+      "selector": ".home-page, .reader-page, .track-page, .japamala-page / .footer",
+      "declarations": "padding-left:max(16px, env(safe-area-inset-left)); padding-right:max(16px, env(safe-area-inset-right)); .footer padding-bottom:max(30px, calc(24px + env(safe-area-inset-bottom)))",
+      "why": "This is the notch and home-bar protection. Currently the viewport meta (index.html:5) has no viewport-fit=cover, so env() resolves to 0 and the rule just gives a 16px gutter. Any new fixed bottom UI must add viewport-fit=cover and env(safe-area-inset-bottom). At narrow widths, reading.css:54 and 515 override the reader padding."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1496-1500",
+      "selector": ":where(button, a, input, select, textarea):focus-visible",
+      "declarations": "outline:2px solid var(--gold-bright); outline-offset:2px",
+      "why": "This is the visible keyboard focus ring. Losing it is an accessibility regression, and the dialogs move focus programmatically (app.js:259, 358)."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1547",
+      "selector": "@media (max-width:380px) .jm-btn-count",
+      "declarations": "width:86px; height:86px",
+      "why": "This is the main japamala COUNT button (index.html:1207); on very small phones it stays a large tap target. Keep it at least 44px, ideally around 80px."
+    },
+    {
+      "file": "styles/styles.css",
+      "line": "1139-1170",
+      "selector": ".counter-date-picker (+ ::-webkit-calendar-picker-indicator)",
+      "declarations": "-webkit-appearance:none; appearance:none; min-width:150px; padding:8px 12px; ::-webkit-calendar-picker-indicator { cursor:pointer; filter:... }",
+      "why": "These style the native date inputs #homeDatePicker (index.html:601) and #stotramDatePicker (index.html:1014), whose onchange handlers drive the counters. With appearance:none, iOS Safari can collapse an empty date input to almost nothing, so keep a min-width and min-height. The indicator filter was tuned for a dark background; the paper theme sets color-scheme:light (design-system.css), so re-check that the picker icon is visible."
+    }
+  ],
+  "keyframesUsed": [
+    "beadGlow (styles.css:1030) - DEAD, used only by .mala-bead.active, which is not referenced anywhere; safe to drop",
+    "malaCelebrate (styles.css:1051) - DEAD, used only by .mala-stage.celebrate; japamala.js:357 adds 'celebrate' only to .jm-svg (jmGlow at 922-923, outside this range); safe to drop",
+    "fadeInUp (defined styles.css:345, outside range) - needed by .feedback-overlay.active (1390); JS-driven through the .active class (app.js:357)",
+    "micPulse (defined styles.css:785, outside range) - needed by .mic-mini.listening (1424); JS-driven through the .listening class (app.js:393, reader.js:433)",
+    "shimmerText (defined styles.css:127, outside range) - used by .today-day (1609), which weekday.js renders; decorative only",
+    "Outside this range but JS-dependent, for the lines 1-999 review: jmPop (908) via .jm-fbead.pop (japamala.js:219), jmGlow (923) via .jm-svg.celebrate (japamala.js:357), jmFall (949) via .jm-confetti (japamala.js:366)"
+  ],
+  "visualOnlyNotes": "These can be redesigned freely. All gold gradients, shadows, glows, blur and backdrop-filter; hover and press effects on .card, .today-tile, .count-btn, .month-arrow, .track-btn, .mokku-add-btn and .sc-btn; the spinning .counter-reset; and all font sizes and letter-spacing in the ≤1024, ≤900, ≤600 and ≤380 media blocks except the ≤380 .jm-btn-count size. Layout-only rules (.counter-row, .counter-head, .counter-actions, .fb-field flex, .btn-row, .cloud-auth, .mokku-form, .mokku-row2, .home-counter-section, .stotram-counter-card, .cards-grid set to one column at ≤600, .today-head) are cosmetic.\n\nOne pitfall: the gradient-text pattern (background:var(--gold-gradient) with background-clip:text and -webkit-text-fill-color:transparent, at 1008, 1044, 1073, 1106, 1131, 1198, 1398 and 1605) is all-or-nothing. Drop the background but keep fill:transparent and the text vanishes. design-system.css already patches several of these for the paper theme with -webkit-text-fill-color:currentColor.\n\nSeveral click targets are spans or divs with inline onclick rather than buttons, and they rely on cursor:pointer as their only affordance: .count-target (editTarget), .add-chip, .counter-del, .mokku-check, .mokku-del and .cal-day. They also cannot be reached by keyboard. The redesign could turn them into proper buttons or at least keep them looking tappable.\n\nSafe to delete (dead on index.html):\n- .mala-* (1003-1058, 1449-1450)\n- .admin-fab, .admin-overlay, .admin-box, .admin-head and all .ad-* (1290-1325, 1364-1382, 1558-1591)\n- .wd-* (1634-1650)\n- .header-pill .label (1433), .read-clear-btn (1679), .slokam-end-num (1904-1918), .mokku-target (1218)\n- the grandham cords, knots, tassels and cord holes (1726-1737, 1795-1796, 1849-1885, 1889-1896)\n- the dark-theme .slokam-block.read::before and ::after ticks and edge (1668, 1672-1678, 1931-1940)\n- .slokam-block{cursor:pointer} (1663)\n\n.fb-opt and .fb-privacy (1576-1577) are live in the feedback form but purely decorative.\n\nNon-CSS hooks to keep during the index.html restructure: the IDs daySheetOverlay, sheetDate, sheetBody, feedbackOverlay, fbForm, fbThanks (shown and hidden with inline style.display), fbName, fbNumber, fbMessage, fbType, fbError, fbWebsite (honeypot, inline-styled off-screen), monthStrip, monthLabel, prevMonthBtn, nextMonthBtn, mokkuList, mokkuText, mokkuDate, homeDatePicker, stotramDatePicker, cloudAuthBox, scrollTopBtn, slokamContainer, particles and backBtn. Two structural traps: weekday.js:108 does home.insertBefore(todaySection, first .cards-section), which throws unless the first .cards-section is a direct child of #homePage; and library.js:72 puts the favourites section immediately before .home-primary-actions."
+}
