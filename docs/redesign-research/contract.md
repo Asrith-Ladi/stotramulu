@@ -476,7 +476,7 @@ Each entry is `{ title, body (Telugu, 1–3 short sentences; an array of paragra
   - Account rows are 64px or taller, with a 42px rounded icon tile, a 16.5px/650 label and a 14px muted line.
   - The badge is a kumkum pill.
   - `details.account-advanced` summary rotates its chevron when open.
-- **Updates:** see §4.14. Messages: see §4.15. Reply bubble: peacock-50 with a 3px peacock-600 left bar.
+- **Updates:** see §4.14. Messages: see §4.15, superseded for the list rows and the new chat view by `docs/conversations-contract.md` (Phase 27): rows are `article.message-item[data-fbid] > button.message-open`, the chat view is `#messagesThread` with `.bubble.bubble-user` / `.bubble.bubble-team`, and attachments use the `.attach-*` / `.file-viewer` markup of that contract §5.
 - **Info sheet:** body 17.5px at line-height 1.8; gloss 15px ink-3.
 - **Feedback:**
   - A centred card, max 560px wide.

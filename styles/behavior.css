@@ -91,6 +91,10 @@
 .sc-box { width: min(420px, calc(100vw - 32px)); }
 .sc-msg { white-space: pre-line; }
 
+/* Attachment viewer (attachments.js appends one div.file-viewer to <body>). It opens
+   from any sheet or dialog, so it sits above all of them; nothing opens on top of it. */
+.file-viewer { position: fixed; inset: 0; z-index: var(--z-viewer); }
+
 /* Toast (cloud.js) and floating controls sit above the phone tab bar */
 .cloud-toast {
     position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 20px); z-index: var(--z-toast);

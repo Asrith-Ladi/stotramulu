@@ -7,7 +7,8 @@
 
    Tabs:
      స్తోత్రాలు   content list + add / edit / revert / delete + OCR
-     అభిప్రాయాలు  feedback triage: status, reply, filters, delete
+     అభిప్రాయాలు  feedback conversations: status, threaded replies with
+                 attachments, notify buttons, filters, delete
      కొత్తవి      "What's new" entries (Firestore `updates`)
      వార పూజ     the weekday → deity / stotram map (config/weekday)
      ఎగుమతి      JSON backup of everything the dashboard manages
@@ -659,15 +660,30 @@
   }
 
   /* ============================================================
-     Feedback triage
+     Feedback: every feedback doc is a conversation
+     (docs/conversations-contract.md §4). The parent doc is the reader's
+     first message (with its `files`); a legacy `reply` is the team's first
+     answer; everything after that lives in feedback/{id}/messages.
+     Attachments are feedback/{id}/files docs, read and written through
+     attachments.js (window.StotramFiles). Without that script the inbox
+     still works: replies go out as text and attachments are not shown.
   ============================================================ */
   const FB_PAGE = 50;
   const REPLY_MAX = 2000;
+  const THREAD_LIMIT = 200;      // messages read when a conversation opens (the newest ones; see loadThread)
+  const SEND_TIMEOUT = 15000;    // cap on the reply batch, as on the reader side
+  const READ_TIMEOUT = 20000;    // cap on each read / delete of a conversation's parts
+  const EMAIL_RE = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
+  const Files = () => (window.StotramFiles && typeof window.StotramFiles === 'object' ? window.StotramFiles : null);
   const fb = {
     rows: [], loaded: false, loading: false, error: '', last: null, more: false,
     filter: 'open', type: 'all', q: '',
-    drafts: new Map(),   // id → unsent reply text (survives re-renders)
-    open: new Set(),     // ids whose reply composer is open
+    drafts: new Map(),     // id → unsent reply text (survives re-renders)
+    open: new Set(),       // ids whose conversation is open
+    threads: new Map(),    // id → { state: 'loading' | 'ok' | 'error', msgs, error, clipped }
+    composers: new Map(),  // id → { el, picker }: the composer element moves into every re-render of its card
+    pending: new Map(),    // id → { mid, files, failed }: a sent reply whose files did not all upload
+    busy: new Set(),       // ids with a write in flight (a re-render keeps them locked)
   };
   const FB_TYPES = {
     correction: { icon: 'book', te: 'స్తోత్రంలో తప్పు', en: 'Correction' },
@@ -682,22 +698,66 @@
     closed: { icon: 'lock', te: 'మూసివేశాం', en: 'Closed' },
   };
   const STATUS_ORDER = ['new', 'in_progress', 'answered', 'closed'];
+  // test(status, row): "waiting" also needs to know who wrote last.
   const FB_FILTERS = {
     open: { te: 'తెరిచినవి', en: 'Open', test: (s) => s === 'new' || s === 'in_progress' },
+    waiting: { te: 'మీ జవాబు కోసం', en: 'Waiting', test: (s, r) => s !== 'closed' && lastFrom(r) === 'user' },
     answered: { te: 'జవాబిచ్చినవి', en: 'Answered', test: (s) => s === 'answered' },
     closed: { te: 'మూసినవి', en: 'Closed', test: (s) => s === 'closed' },
     all: { te: 'అన్నీ', en: 'All', test: () => true },
+  };
+  const NOTIFY = {
+    email: { icon: 'mail', label: 'ఈమెయిల్ / Email', href: /^mailto:/i },
+    whatsapp: { icon: 'phone', label: 'వాట్సాప్ / WhatsApp', href: /^https:\/\/wa\.me\//i },
+    sms: { icon: 'message', label: 'ఎస్‌ఎంఎస్ / SMS', href: /^sms:/i },
   };
   const SAFE_KEY = /^[A-Za-z0-9_-]+$/;
 
   // Older documents only have `handled`; the status field is newer.
   function fbStatus(r) { return FB_STATUS[r.status] ? r.status : (r.handled ? 'closed' : 'new'); }
   function fbType(r) { return FB_TYPES[r.type] ? r.type : 'other'; }
+  // Who wrote last. Docs from before conversations have no lastFrom:
+  // a (legacy) reply means the team did, otherwise the reader.
+  function lastFrom(r) { return r.lastFrom === 'admin' || r.lastFrom === 'user' ? r.lastFrom : (r.reply ? 'admin' : 'user'); }
+  function inFilter(key, r) { return (FB_FILTERS[key] || FB_FILTERS.all).test(fbStatus(r), r); }
+  // Activity time (§1.1): lastAt, else the later of createdAt and repliedAt.
+  function activityDate(r) {
+    const last = toDate(r.lastAt);
+    if (last) return last;
+    const created = toDate(r.createdAt) || toDate(r.sentAt);
+    const replied = toDate(r.repliedAt);
+    if (created && replied) return replied > created ? replied : created;
+    return created || replied || null;
+  }
+  function byActivity(a, b) { return (activityDate(b) || 0) - (activityDate(a) || 0); }
+  // A declared attachment list, as far as this page needs it (attachments.js re-checks it).
+  function fileList(v) { return Array.isArray(v) ? v.filter((f) => f && typeof f.id === 'string' && f.id).slice(0, 3) : []; }
+  function threadOf(id) { return fb.threads.get(id) || null; }
   function fbMatches(r) {
     if (fb.type !== 'all' && fbType(r) !== fb.type) return false;
     if (!fb.q) return true;
+    const t = threadOf(r.id);
+    const loaded = t ? t.msgs.map((m) => m.text).concat(...t.msgs.map((m) => m.files.map((f) => f.name))) : [];
     return [r.message, r.name, r.contact, r.email, r.stotramTitle, r.stotram, r.reply]
+      .concat(fileList(r.files).map((f) => f.name), loaded)
       .some((v) => v && String(v).toLowerCase().includes(fb.q));
+  }
+
+  // Resolves / rejects with p, or rejects as "offline" after ms. A Firestore
+  // write that times out may still land later; the caller says so.
+  function withTimeout(p, ms) {
+    let timer = 0;
+    const cap = new Promise((resolve, reject) => {
+      timer = setTimeout(() => { const e = new Error('Timed out'); e.code = 'deadline-exceeded'; reject(e); }, ms);
+    });
+    return Promise.race([Promise.resolve(p), cap]).finally(() => clearTimeout(timer));
+  }
+  // Same shape as StotramFiles.newMessageId(), for when attachments.js is missing.
+  function localMessageId() {
+    const abc = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let tail = '';
+    for (let i = 0; i < 6; i++) tail += abc[Math.floor(Math.random() * abc.length)];
+    return 'm-' + Date.now() + '-' + tail;
   }
 
   async function loadFeedback(more) {
@@ -706,17 +766,30 @@
     const moreBtn = $('fbMoreBtn');
     if (!more) {
       fb.rows = []; fb.last = null; fb.more = false;
+      fb.threads.clear();          // each open conversation is read again
       $('feedbackList').innerHTML = skeletonHtml(3);
       $('fbMore').hidden = true;
     } else if (moreBtn) moreBtn.disabled = true;
     try {
-      let q = db.collection('feedback').orderBy('createdAt', 'desc').limit(FB_PAGE);
+      const col = db.collection('feedback');
+      let q = col.orderBy('createdAt', 'desc').limit(FB_PAGE);
       if (more && fb.last) q = q.startAfter(fb.last);
-      const snap = await q.get();
+      // The first page also takes the 50 most recently active conversations,
+      // so an old one with a new follow-up is not buried. Docs from before
+      // conversations have no lastAt (that query skips them) and the query
+      // may fail outright: the createdAt page alone is still the inbox.
+      const [snap, recent] = await Promise.all([
+        q.get(),
+        more ? null : col.orderBy('lastAt', 'desc').limit(FB_PAGE).get().catch((e) => { console.warn('[admin] lastAt query failed', e); return null; }),
+      ]);
       const seen = new Set(fb.rows.map((r) => r.id));
-      snap.forEach((d) => { if (!seen.has(d.id)) fb.rows.push({ id: d.id, ...d.data() }); });
+      const add = (d) => { if (!seen.has(d.id)) { seen.add(d.id); fb.rows.push({ id: d.id, ...d.data() }); } };
+      snap.forEach(add);
+      if (recent) recent.forEach(add);
+      // "Load older" continues the createdAt query only.
       if (snap.docs.length) fb.last = snap.docs[snap.docs.length - 1];
       fb.more = snap.size === FB_PAGE;
+      fb.rows.sort(byActivity);
       fb.loaded = true;
       fb.error = '';
     } catch (e) {
@@ -732,14 +805,10 @@
   }
 
   function fbCounts() {
-    const c = { open: 0, answered: 0, closed: 0, all: 0 };
+    const c = { open: 0, waiting: 0, answered: 0, closed: 0, all: 0 };
     fb.rows.forEach((r) => {
       if (!fbMatches(r)) return;
-      const s = fbStatus(r);
-      c.all++;
-      if (FB_FILTERS.open.test(s)) c.open++;
-      else if (s === 'answered') c.answered++;
-      else c.closed++;
+      Object.keys(c).forEach((k) => { if (inFilter(k, r)) c[k]++; });
     });
     return c;
   }
@@ -748,14 +817,18 @@
     document.querySelectorAll('#fbFilters [data-fbfilter]').forEach((b) => {
       b.setAttribute('aria-pressed', String(b.dataset.fbfilter === fb.filter));
     });
-    document.querySelectorAll('#fbFilters [data-fbcount]').forEach((el) => { el.textContent = c[el.dataset.fbcount]; });
+    document.querySelectorAll('#fbFilters [data-fbcount]').forEach((el) => { el.textContent = c[el.dataset.fbcount] || 0; });
   }
+  // The nav badge counts the conversations waiting for the team (the same test
+  // as the "Waiting" filter): the reader wrote last (or, on a doc from before
+  // conversations, there is no reply yet) and it is not closed. So a reader's
+  // follow-up on an answered conversation shows here too.
   function updateFbBadge() {
     const badgeEl = $('fbNavBadge');
     if (!badgeEl) return;
-    const n = fb.rows.filter((r) => fbStatus(r) === 'new').length;
+    const n = fb.rows.filter((r) => inFilter('waiting', r)).length;
     badgeEl.hidden = !n;
-    badgeEl.innerHTML = n ? (n + (fb.more && n === fb.rows.length ? '+' : '') + '<span class="ad-sr"> కొత్త సందేశాలు / new</span>') : '';
+    badgeEl.innerHTML = n ? (n + (fb.more && n === fb.rows.length ? '+' : '') + '<span class="ad-sr"> మీ జవాబు కోసం ఎదురుచూస్తున్నవి / waiting</span>') : '';
   }
 
   function renderFeedback() {
@@ -768,29 +841,58 @@
       $('fbMore').hidden = true;
       return;
     }
-    const list = fb.rows.filter((r) => fbMatches(r) && FB_FILTERS[fb.filter].test(fbStatus(r)));
+    const list = fb.rows.filter((r) => fbMatches(r) && inFilter(fb.filter, r)).sort(byActivity);
+    const plain = !fb.q && fb.type === 'all';
     if (!list.length) {
       if (!fb.rows.length) box.innerHTML = emptyHtml('message', 'ఇంకా అభిప్రాయాలు లేవు / No feedback yet', 'చదువరులు సైట్ నుండి పంపిన సందేశాలు ఇక్కడ కనిపిస్తాయి.');
-      else if (fb.filter === 'open' && !fb.q && fb.type === 'all') box.innerHTML = emptyHtml('check-circle', 'అన్నీ చూసుకున్నారు / All caught up', 'తెరిచిన సందేశాలు ఏవీ లేవు.');
+      else if (fb.filter === 'open' && plain) box.innerHTML = emptyHtml('check-circle', 'అన్నీ చూసుకున్నారు / All caught up', 'తెరిచిన సందేశాలు ఏవీ లేవు.');
+      else if (fb.filter === 'waiting' && plain) box.innerHTML = emptyHtml('check-circle', 'ఎవరూ ఎదురుచూడటం లేదు / Nobody is waiting', 'చదువరులు రాసిన ప్రతిదానికీ మీరు జవాబిచ్చారు.');
       else box.innerHTML = emptyHtml('search', 'సరిపడేవి లేవు / Nothing matches', 'ఈ ఎంపికలకు సరిపడే సందేశాలు లేవు. వేరే స్థితి లేదా రకం ఎంచుకోండి.');
     } else {
       box.innerHTML = '<div class="ad-fb-list">' + list.map(fbItemHtml).join('') + '</div>';
+      box.querySelectorAll('.ad-fb-item').forEach(hydrateCard);
     }
     $('fbMore').hidden = !fb.more;
-    note.textContent = 'తాజా ' + fb.rows.length + ' సందేశాలు చూపిస్తున్నాం' +
+    note.textContent = 'తాజా ' + fb.rows.length + ' సంభాషణలు చూపిస్తున్నాం' +
       (fb.more ? ' · పాతవి కోసం "ఇంకా పాతవి చూపించు" నొక్కండి' : ' · అన్నీ వచ్చాయి') + '.';
   }
 
+  // EMAIL_RE lets '?', '&', '=' and '%' through, so a guest could type
+  // "a@b.in?bcc=x%40y.in&body=…" and add recipients or a body to the link.
+  // Everything outside the plain address characters is percent-encoded in the
+  // href (as in attachments.js notifyLinks); the visible text stays as typed.
+  function mailtoHref(c) {
+    return 'mailto:' + c.replace(/[^A-Za-z0-9@._+-]/gu, (ch) => {
+      try { return encodeURIComponent(ch); } catch (e) { return ''; }   // a lone surrogate
+    });
+  }
   function contactHtml(c) {
-    if (/^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(c)) return '<a href="mailto:' + escapeHtml(c) + '">' + escapeHtml(c) + '</a>';
+    if (EMAIL_RE.test(c)) return '<a href="' + escapeHtml(mailtoHref(c)) + '">' + escapeHtml(c) + '</a>';
     const digits = c.replace(/[^\d+]/g, '');
     if (/^[\d\s+().-]+$/.test(c) && digits.replace(/\D/g, '').length >= 7) return '<a href="tel:' + escapeHtml(digits) + '">' + escapeHtml(c) + '</a>';
     return escapeHtml(c);
   }
   function meta(iconName, html) { return '<span class="ad-meta">' + icon(iconName) + '<span>' + html + '</span></span>'; }
+  function hintHtml(iconName, text) { return '<p class="ad-hint">' + icon(iconName) + '<span>' + escapeHtml(text) + '</span></p>'; }
   function pill(s) {
     const st = FB_STATUS[s];
     return '<span class="ad-pill" data-status="' + s + '">' + icon(st.icon) + st.te + ' · ' + st.en + '</span>';
+  }
+  function timeHtml(d, cls) {
+    return '<time' + (cls ? ' class="' + cls + '"' : '') + ' datetime="' + d.toISOString() + '" title="' + escapeHtml(fmtDateTime(d)) + '">' + escapeHtml(relTime(d)) + '</time>';
+  }
+
+  // "Who wrote last, and when" under the card's meta line.
+  function activityHtml(r) {
+    const d = activityDate(r);
+    const from = lastFrom(r);
+    const waiting = from === 'user' && fbStatus(r) !== 'closed';
+    const text = from === 'admin' ? 'చివరిగా మీరు జవాబిచ్చారు · You replied last'
+      : waiting ? 'మీ జవాబు కోసం ఎదురుచూస్తున్నారు · Waiting for you'
+      : 'చివరిగా చదువరి రాశారు · Reader wrote last';
+    return '<p class="ad-fb-activity" data-from="' + from + '"' + (waiting ? ' data-waiting' : '') + '>' +
+      icon(from === 'admin' ? 'check-circle' : 'message') +
+      '<span>' + text + (d ? ' · ' + timeHtml(d) : '') + '</span></p>';
   }
 
   function fbItemHtml(r) {
@@ -798,9 +900,9 @@
     const ty = FB_TYPES[fbType(r)];
     const id = escapeHtml(r.id);
     const created = toDate(r.createdAt) || toDate(r.sentAt);
-    const replied = toDate(r.repliedAt);
     const contact = String(r.contact || '').trim();
     const signedIn = !!r.uid;
+    const firstFiles = fileList(r.files);
     const stotramKey = String(r.stotram || '');
     const screen = String(r.screen || '');
     // Older messages (or cloud-only stotras) may lack stotramTitle: use the key's own title.
@@ -812,7 +914,6 @@
         : escapeHtml(whereLabel))
       : '';
     const open = fb.open.has(r.id);
-    const draft = fb.drafts.has(r.id) ? fb.drafts.get(r.id) : (r.reply || '');
 
     let h = '<article class="ad-fb-item" data-status="' + s + '" data-id="' + id + '" aria-labelledby="fbh-' + id + '">';
     h += '<div class="ad-fb-top">' +
@@ -825,17 +926,14 @@
       meta('user', escapeHtml(r.name || 'పేరు లేదు / No name')) +
       (contact ? meta('message', contactHtml(contact)) : '') +
       (whereHtml ? meta('book', whereHtml) : '') +
-      (created ? meta('clock', '<time datetime="' + created.toISOString() + '" title="' + escapeHtml(fmtDateTime(created)) + '">' + escapeHtml(relTime(created)) + '</time>') : '') +
+      (created ? meta('clock', timeHtml(created)) : '') +
       (signedIn && r.email && r.email !== contact ? meta('cloud', contactHtml(String(r.email))) : '') +
+      (firstFiles.length ? meta('attach', firstFiles.length + (firstFiles.length === 1 ? ' జోడింపు · attachment' : ' జోడింపులు · attachments')) : '') +
       (signedIn
         ? badge('signed', 'cloud', 'సైన్ ఇన్ చేసి పంపారు / Signed in')
         : badge('guest', 'user', 'సైన్ ఇన్ లేదు / Guest')) +
       '</div>';
-
-    if (r.reply) {
-      h += '<div class="ad-fb-reply"><b>స్తోత్రములు బృందం · మీ జవాబు</b><p>' + escapeHtml(r.reply) + '</p>' +
-        (replied ? '<small>' + escapeHtml(fmtDateTime(replied)) + '</small>' : '') + '</div>';
-    }
+    h += activityHtml(r);
 
     h += '<div class="ad-fb-controls">' +
       '<div><span class="ad-group-label" id="fbsl-' + id + '">స్థితి మార్చండి / Set status</span>' +
@@ -844,20 +942,16 @@
         icon(FB_STATUS[k].icon) + FB_STATUS[k].te + '<span class="ad-en"> · ' + FB_STATUS[k].en + '</span></button>').join('') +
       '</div></div>';
 
-    const guestNote = contact
-      ? 'వీరు సైన్ ఇన్ చేయకుండా పంపారు, కాబట్టి జవాబు సైట్‌లో వారికి కనిపించదు. నేరుగా సంప్రదించండి: ' + contact
-      : 'వీరు సైన్ ఇన్ చేయకుండా పంపారు, సంప్రదింపు వివరాలూ ఇవ్వలేదు. జవాబు మీ రికార్డు కోసం మాత్రమే ఉంటుంది.';
-    h += '<details class="ad-compose"' + (open ? ' open' : '') + '>' +
-      '<summary>' + icon('message') + (r.reply ? 'జవాబు మార్చండి / Edit reply' : 'జవాబు రాయండి / Write a reply') + icon('chevron-down', 'ad-chev') + '</summary>' +
+    // The conversation: thread, then the composer, then the notify buttons.
+    h += '<details class="ad-compose ad-convo"' + (open ? ' open' : '') + '>' +
+      '<summary>' + icon('message') + '<span>సంభాషణ <span class="ad-en">/ Conversation</span></span>' +
+        '<span class="ad-convo-count" data-convo-count>' + convoCountHtml(r) + '</span>' +
+        icon('chevron-down', 'ad-chev') + '</summary>' +
       '<div class="ad-compose-body">' +
-        (signedIn ? '' : '<p class="ad-hint">' + icon('info-circle') + '<span>' + escapeHtml(guestNote) + '</span></p>') +
-        '<div class="ad-label-row"><label class="ad-label" for="fbr-' + id + '">మీ జవాబు / Your reply</label>' +
-          '<span class="ad-counter" data-reply-count>' + draft.length + ' / ' + REPLY_MAX + '</span></div>' +
-        '<textarea class="ad-in" id="fbr-' + id + '" data-reply rows="4" maxlength="' + REPLY_MAX + '" placeholder="సరళమైన తెలుగులో, మర్యాదగా… / Reply in simple words">' + escapeHtml(draft) + '</textarea>' +
-        '<div class="ad-compose-actions">' +
-          '<button type="button" class="ad-btn ad-btn-primary" data-act="reply">' + icon('check') + 'జవాబు పంపండి / Send reply</button>' +
-          '<span class="ad-msg-slot" data-slot aria-live="polite"></span>' +
-        '</div>' +
+        '<div class="ad-thread-box" data-thread>' + threadHtml(r) + '</div>' +
+        (signedIn ? '' : '<p class="ad-hint ad-guest-note">' + icon('info-circle') + '<span>' + escapeHtml(guestNote(contact)) + '</span></p>') +
+        composerHtml(r) +
+        '<div data-notify-box>' + notifyHtml(r) + '</div>' +
       '</div></details>';
     h += '</div>';
 
@@ -866,28 +960,290 @@
         ? '<details class="ad-fb-device"><summary>' + icon('info-circle') + 'పరికరం వివరాలు / Device</summary><p>' + escapeHtml([r.lang, r.device].filter(Boolean).join(' · ')) + '</p></details>'
         : '') +
       '<span class="ad-spacer"></span>' +
+      '<span class="ad-msg-slot" data-del-slot aria-live="polite"></span>' +
       '<button type="button" class="ad-btn ad-btn-sm ad-btn-danger-quiet" data-act="delete">' + icon('delete') + 'తొలగించు / Delete</button>' +
       '</div>';
     return h + '</article>';
   }
 
+  function guestNote(contact) {
+    return contact
+      ? 'వీరు సైన్ ఇన్ చేయకుండా పంపారు. అదే ఫోన్‌లో Google తో సైన్ ఇన్ చేసే వరకు మీ జవాబు వారికి సైట్‌లో కనిపించదు, కాబట్టి జవాబు పంపాక క్రింది బటన్‌లతో తెలియజేయండి. సంప్రదింపు: ' + contact
+      : 'వీరు సైన్ ఇన్ చేయకుండా పంపారు, సంప్రదింపు వివరాలూ ఇవ్వలేదు. అదే ఫోన్‌లో Google తో సైన్ ఇన్ చేస్తేనే మీ జవాబు వారికి కనిపిస్తుంది.';
+  }
+
+  /* ---------- the thread: same bubble order as the reader's (§3.4) ---------- */
+  function threadBubbles(r) {
+    const t = threadOf(r.id);
+    const out = [{ key: 'first', from: 'user', text: String(r.message || ''), files: fileList(r.files), at: toDate(r.createdAt) || toDate(r.sentAt) }];
+    if (r.reply) out.push({ key: 'legacy', from: 'admin', text: String(r.reply), files: [], at: toDate(r.repliedAt) });
+    return t && t.state === 'ok' ? out.concat(t.msgs) : out;
+  }
+  function normMsg(id, d) {
+    d = d || {};
+    return { key: id, from: d.from === 'admin' ? 'admin' : 'user', text: String(d.text == null ? '' : d.text), files: fileList(d.files), at: toDate(d.createdAt) };
+  }
+  function convoCountHtml(r) {
+    const t = threadOf(r.id);
+    if (!t || t.state !== 'ok') return '';
+    const n = threadBubbles(r).length;
+    return '<span class="ad-count">' + n + (t.clipped ? '+' : '') + '<span class="ad-sr"> సందేశాలు / messages</span></span>';
+  }
+  function bubbleHtml(b, r) {
+    const team = b.from === 'admin';
+    const who = team ? 'స్తోత్రములు బృందం' : 'చదువరి' + (r.name ? ' · ' + String(r.name) : ' / Reader');
+    return '<li class="bubble ' + (team ? 'bubble-team' : 'bubble-user') + '">' +
+      '<span class="bubble-who">' + icon(team ? 'om' : 'user') + '<span>' + escapeHtml(who) + '</span></span>' +
+      (b.text ? '<p class="bubble-text">' + escapeHtml(b.text) + '</p>' : '') +
+      (b.files.length ? '<div class="bubble-files" data-files="' + escapeHtml(b.key) + '"></div>' : '') +
+      (b.at ? '<time class="bubble-time" datetime="' + b.at.toISOString() + '">' + escapeHtml(fmtDateTime(b.at)) + '</time>' : '') +
+      '</li>';
+  }
+  function threadHtml(r) {
+    const t = threadOf(r.id);
+    const items = threadBubbles(r).map((b) => bubbleHtml(b, r));
+    // Only the newest THREAD_LIMIT messages were read: say so where the gap
+    // is, after the first message (and legacy reply), before the newest ones.
+    if (t && t.state === 'ok' && t.clipped) {
+      items.splice(items.length - t.msgs.length, 0, '<li class="ad-thread-state">' + icon('info-circle') +
+        '<span>ఇక్కడ మధ్యలో పాత సందేశాలు కొన్ని చూపించలేదు — తాజా ' + THREAD_LIMIT + ' మాత్రమే కనిపిస్తున్నాయి. / Older messages not shown: only the newest ' + THREAD_LIMIT + '.</span></li>');
+    }
+    let h = '<ol class="ad-thread" aria-label="సంభాషణ / Conversation">' + items.join('') + '</ol>';
+    if (t && t.state === 'loading') {
+      h += '<p class="ad-thread-state" role="status">' + icon('clock') + '<span>మిగతా సందేశాలు తెస్తోంది… / Loading the replies…</span></p>';
+    } else if (t && t.state === 'error') {
+      h += '<div class="ad-thread-state" data-kind="error" role="alert">' + icon('warning') +
+        '<span>మిగతా సందేశాలు రాలేదు / Could not load the replies: ' + escapeHtml(t.error) + '</span>' +
+        '<button type="button" class="ad-btn ad-btn-sm" data-act="retry-thread">' + icon('reset') + 'మళ్ళీ ప్రయత్నించండి / Try again</button></div>';
+    }
+    const p = fb.pending.get(r.id);
+    if (p) {
+      h += '<div class="ad-thread-state" data-kind="error">' + icon('warning') +
+        '<span>మీ చివరి జవాబు చేరింది, కానీ ' + p.failed + ' ఫైల్(లు) పంపలేకపోయాం. / Your last reply was sent, but ' + p.failed + ' file(s) did not upload.</span>' +
+        '<button type="button" class="ad-btn ad-btn-sm" data-act="retry-files">' + icon('upload') + 'ఫైళ్ళు మళ్ళీ పంపండి / Retry files</button></div>';
+    }
+    return h;
+  }
+
+  /* ---------- composer: textarea + attachments + send ---------- */
+  function composerHtml(r) {
+    const id = escapeHtml(r.id);
+    const draft = fb.drafts.get(r.id) || '';
+    const F = Files();
+    const canAttach = !!(F && typeof F.createPicker === 'function');
+    return '<div class="ad-composer" data-composer>' +
+      '<div class="ad-label-row"><label class="ad-label" for="fbr-' + id + '">మీ జవాబు / Your reply</label>' +
+        '<span class="ad-counter" data-reply-count>' + draft.length + ' / ' + REPLY_MAX + '</span></div>' +
+      '<textarea class="ad-in" id="fbr-' + id + '" data-reply rows="4" maxlength="' + REPLY_MAX + '" placeholder="సరళమైన తెలుగులో, మర్యాదగా… / Reply in simple words">' + escapeHtml(draft) + '</textarea>' +
+      (canAttach
+        ? '<div class="ad-attach">' +
+            '<button type="button" class="ad-btn ad-btn-sm" data-act="attach" aria-describedby="fbah-' + id + '">' + icon('attach') + 'స్క్రీన్‌షాట్ / PDF జోడించండి · Attach</button>' +
+            '<input type="file" class="ad-file-input" accept="image/*,application/pdf" multiple hidden>' +
+            '<p class="ad-attach-hint" id="fbah-' + id + '">3 వరకు. చిత్రాలు ఆటోమేటిక్‌గా చిన్నవి అవుతాయి. PDF 750 KB లోపు ఉండాలి.</p>' +
+            '<div class="attach-list" data-attach-list></div>' +
+          '</div>'
+        : '') +
+      '<div class="ad-compose-actions">' +
+        '<button type="button" class="ad-btn ad-btn-primary" data-act="reply">' + icon('send') + 'జవాబు పంపండి / Send reply</button>' +
+        '<span class="ad-msg-slot" data-slot aria-live="polite"></span>' +
+      '</div></div>';
+  }
+
+  /* ---------- notify: open the admin's own mail / WhatsApp / SMS app ---------- */
+  // The team's latest words: the newest admin message with text, else the legacy reply.
+  function latestTeamText(r) {
+    const t = threadOf(r.id);
+    if (t && t.state === 'ok') {
+      for (let i = t.msgs.length - 1; i >= 0; i--) if (t.msgs[i].from === 'admin' && t.msgs[i].text.trim()) return t.msgs[i].text.trim();
+    }
+    return String(r.reply || '').trim();
+  }
+  // null = attachments.js is missing; [] = no usable email / phone.
+  function notifyLinksFor(r) {
+    const F = Files();
+    if (!F || typeof F.notifyLinks !== 'function') return null;
+    const contact = String(r.contact || '').trim();
+    let links;
+    try {
+      links = F.notifyLinks({
+        name: String(r.name || '').trim(),
+        email: String(r.email || '').trim() || (EMAIL_RE.test(contact) ? contact : ''),
+        phone: typeof F.phoneDigits === 'function' ? F.phoneDigits(contact) : '',
+        reply: latestTeamText(r),
+        signedIn: !!r.uid,
+        siteUrl: location.origin + '/',
+      });
+    } catch (e) {
+      console.warn('[admin] notify links failed', e);
+      return null;
+    }
+    return (Array.isArray(links) ? links : []).filter((a) => a && NOTIFY[a.kind] && typeof a.href === 'string' && NOTIFY[a.kind].href.test(a.href));
+  }
+  // The contact decides which buttons exist; the thread only decides their
+  // prefilled text. So "no contact" shows at once, and the buttons wait for
+  // the thread (not read yet = it is read the moment the conversation opens).
+  function notifyHtml(r) {
+    const id = escapeHtml(r.id);
+    const t = threadOf(r.id);
+    const links = notifyLinksFor(r);
+    let body;
+    if (links === null) {
+      body = hintHtml('warning', 'తెలియజేసే బటన్‌లు లోడ్ కాలేదు (attachments.js). పై సంప్రదింపు వివరాలతో నేరుగా తెలియజేయండి. / Notify buttons are unavailable.');
+    } else if (!links.length) {
+      body = hintHtml('info-circle', r.uid
+        ? 'వీరు ఈమెయిల్ గానీ ఫోన్ నంబర్ గానీ ఇవ్వలేదు. సైన్ ఇన్ చేసి పంపారు కాబట్టి మీ జవాబు వారి "నా సందేశాలు" లో కనిపిస్తుంది. / No contact was left.'
+        : 'వీరు ఈమెయిల్ గానీ ఫోన్ నంబర్ గానీ ఇవ్వలేదు, కాబట్టి నేరుగా తెలియజేయలేం. / No contact was left.');
+    } else if (!t || t.state === 'loading') {
+      body = hintHtml('clock', 'సంభాషణ తెస్తోంది… / Loading…');     // the prefilled text needs the latest reply
+    } else {
+      body = (latestTeamText(r) ? '' : hintHtml('info-circle', 'ఇంకా జవాబు పంపలేదు. ముందు జవాబు పంపి, తర్వాత తెలియజేయండి. / Send a reply first.')) +
+        '<div class="ad-notify-links">' + links.map((a) => {
+          const n = NOTIFY[a.kind];
+          const web = /^https?:/i.test(a.href);
+          return '<a class="ad-btn ad-btn-sm ad-notify-btn" data-notify="' + a.kind + '" href="' + escapeHtml(a.href) + '"' +
+            (web ? ' target="_blank" rel="noopener"' : '') + '>' + icon(n.icon) + escapeHtml(String(a.label || n.label)) +
+            (web ? '<span class="ad-sr"> (కొత్త ట్యాబ్‌లో / opens in a new tab)</span>' : '') + '</a>';
+        }).join('') + '</div>';
+    }
+    return '<div class="ad-notify" role="group" aria-labelledby="fbn-' + id + '">' +
+      '<span class="ad-group-label" id="fbn-' + id + '">' + icon('bell') + 'తెలియజేయండి / Let them know</span>' + body + '</div>';
+  }
+
+  /* ---------- card lifecycle ---------- */
   function fbNode(id) {
     return [...document.querySelectorAll('#feedbackList .ad-fb-item')].find((n) => n.dataset.id === id) || null;
   }
+  // Disables what is enabled now and remembers it, so unlocking never
+  // re-enables a control something else (the picker) had switched off.
   function lockItem(node, on) {
     if (!node) return;
     node.setAttribute('aria-busy', String(on));
-    node.querySelectorAll('button, textarea').forEach((el) => { el.disabled = on; });
+    if (on) node.querySelectorAll('button, textarea, input').forEach((el) => { if (!el.disabled) { el.disabled = true; el.dataset.locked = ''; } });
+    else unlockEls(node);
   }
+  function unlockEls(scope) {
+    scope.querySelectorAll('[data-locked]').forEach((el) => { el.disabled = false; delete el.dataset.locked; });
+  }
+  // After a card is (re)drawn: put its live composer back (typed text,
+  // picked files and the picker's listeners stay), keep a busy card locked,
+  // and fill an open conversation.
+  function hydrateCard(card) {
+    const id = card.dataset.id;
+    const r = fb.rows.find((x) => x.id === id);
+    if (!r) return;
+    const entry = fb.composers.get(id);
+    const slot = card.querySelector('[data-composer]');
+    if (entry && slot && slot !== entry.el) slot.replaceWith(entry.el);
+    if (fb.busy.has(id)) lockItem(card, true);
+    else if (entry) unlockEls(entry.el);
+    const d = card.querySelector('details.ad-convo');
+    if (d && d.open) openConvo(card, r);
+  }
+  function openConvo(card, r) {
+    ensureComposer(card, r.id);
+    if (!threadOf(r.id)) loadThread(r.id);   // draws the thread (and its files) at once
+    paintFiles(card, r);
+  }
+  // One composer (and one picker) per conversation, made the first time it opens.
+  function ensureComposer(card, id) {
+    if (fb.composers.has(id)) return;
+    const el = card.querySelector('[data-composer]');
+    if (!el) return;
+    const entry = { el, picker: null };
+    fb.composers.set(id, entry);
+    const F = Files();
+    const box = el.querySelector('.ad-attach');
+    const button = el.querySelector('[data-act="attach"]');
+    const input = el.querySelector('input.ad-file-input');
+    const list = el.querySelector('[data-attach-list]');
+    if (!box || !button || !input || !list) return;
+    try {
+      entry.picker = F.createPicker({
+        button, input, list,
+        onChange: () => { const s = el.querySelector('[data-slot]'); if (s && s.firstChild) setMsg(s); },
+      });
+    } catch (e) {
+      console.warn('[admin] attachment picker failed', e);
+      box.hidden = true;
+    }
+  }
+  // Saved attachments of every bubble in an open conversation (images load lazily).
+  function paintFiles(card, r) {
+    const F = Files();
+    card.querySelectorAll('[data-files]').forEach((box) => {
+      if (box.dataset.painted) return;
+      box.dataset.painted = '1';
+      const key = box.dataset.files;
+      const bubble = threadBubbles(r).find((b) => b.key === key);
+      const list = bubble ? bubble.files : [];
+      if (!list.length) return;
+      if (!F || typeof F.render !== 'function') {
+        box.innerHTML = hintHtml('warning', list.length + ' జోడింపు(లు) ఉన్నాయి, కానీ ఇక్కడ చూపించలేం (attachments.js లోడ్ కాలేదు). / Attachments unavailable.');
+        return;
+      }
+      try { F.render(box, db, r.id, list); } catch (e) {
+        console.warn('[admin] attachments render failed', e);
+        box.innerHTML = '<div class="attach-error" role="alert">చూపించలేకపోయాం</div>';
+      }
+    });
+  }
+  // Redraw the parts of a card that depend on its thread, in place.
+  function paintThread(id) {
+    const card = fbNode(id);
+    const r = fb.rows.find((x) => x.id === id);
+    if (!card || !r) return;
+    const box = card.querySelector('[data-thread]');
+    const nb = card.querySelector('[data-notify-box]');
+    const hadFocus = !!((box && box.contains(document.activeElement)) || (nb && nb.contains(document.activeElement)));
+    if (box) box.innerHTML = threadHtml(r);
+    if (nb) nb.innerHTML = notifyHtml(r);
+    const count = card.querySelector('[data-convo-count]');
+    if (count) count.innerHTML = convoCountHtml(r);
+    const d = card.querySelector('details.ad-convo');
+    if (d && d.open) paintFiles(card, r);
+    if (fb.busy.has(id)) lockItem(card, true);
+    if (hadFocus) focusFirst(card.querySelector('details.ad-convo > summary'));
+  }
+  // A reader can post any number of follow-ups into their own conversation,
+  // so an open thread reads at most THREAD_LIMIT messages (as messages.js
+  // does). Newest first, then put back in time order: reading oldest first
+  // would hide every new follow-up once a thread passes the limit.
+  async function loadThread(id) {
+    const cur = threadOf(id);
+    if (cur && cur.state !== 'error') return;
+    const t = { state: 'loading', msgs: [], error: '', clipped: false };
+    fb.threads.set(id, t);
+    paintThread(id);
+    try {
+      const snap = await withTimeout(db.collection('feedback').doc(id).collection('messages')
+        .orderBy('createdAt', 'desc').limit(THREAD_LIMIT).get(), READ_TIMEOUT);
+      const msgs = [];
+      snap.forEach((d) => msgs.push(normMsg(d.id, d.data())));
+      msgs.reverse();
+      t.msgs = msgs;
+      t.clipped = snap.size >= THREAD_LIMIT;
+      t.state = 'ok';
+    } catch (e) {
+      console.warn('[admin] conversation load failed', e);
+      t.state = 'error';
+      t.error = errText(e);
+    }
+    if (fb.threads.get(id) !== t) return;     // refreshed, replied to or deleted meanwhile
+    paintThread(id);
+  }
+
   // Re-draw one item after a write, without re-animating the whole list.
-  // If it no longer fits the current filter it leaves, and focus moves on.
-  function refreshFbItem(id, focusSel) {
+  // If it no longer fits the current filter it leaves, and focus moves on;
+  // with `keep` it stays in place until the list is next drawn (after a
+  // reply, so its notify buttons are still there to use).
+  // focusSel: a selector, or a list of them (the first that matches wins).
+  function refreshFbItem(id, focusSel, keep) {
     renderFbFilters();
     updateFbBadge();
     const node = fbNode(id);
     const r = fb.rows.find((x) => x.id === id);
     if (!node) { renderFeedback(); return; }
-    if (!r || !fbMatches(r) || !FB_FILTERS[fb.filter].test(fbStatus(r))) {
+    if (!r || (!keep && (!fbMatches(r) || !inFilter(fb.filter, r)))) {
       const next = node.nextElementSibling || node.previousElementSibling;
       node.remove();
       if (!document.querySelector('#feedbackList .ad-fb-item')) {
@@ -904,77 +1260,247 @@
     tmp.innerHTML = fbItemHtml(r);
     const fresh = tmp.firstElementChild;
     node.replaceWith(fresh);
-    const f = focusSel && fresh.querySelector(focusSel);
-    if (f) f.focus();
+    hydrateCard(fresh);
+    const sels = Array.isArray(focusSel) ? focusSel : (focusSel ? [focusSel] : []);
+    for (const sel of sels) {
+      const f = fresh.querySelector(sel);
+      if (f && !f.disabled) { f.focus(); break; }
+    }
   }
 
   async function setFbStatus(id, status) {
     const r = fb.rows.find((x) => x.id === id);
-    if (!r || !FB_STATUS[status] || fbStatus(r) === status) return;
+    if (!r || !FB_STATUS[status] || fbStatus(r) === status || fb.busy.has(id)) return;
     const patch = { status, handled: status === 'answered' || status === 'closed' };
-    const node = fbNode(id);
-    lockItem(node, true);
+    fb.busy.add(id);
+    lockItem(fbNode(id), true);
     try {
       await db.collection('feedback').doc(id).update(patch);
       Object.assign(r, patch);
+      fb.busy.delete(id);
       const st = FB_STATUS[status];
-      const stays = FB_FILTERS[fb.filter].test(status);
+      const stays = inFilter(fb.filter, r);
       toast('స్థితి: ' + st.te + ' / ' + st.en + (stays ? '' : ' — ఇప్పుడు "' + filterFor(status).te + '" లో ఉంది'));
       refreshFbItem(id, '.ad-status-btn[data-status="' + status + '"]');
     } catch (e) {
-      lockItem(node, false);
+      fb.busy.delete(id);
+      lockItem(fbNode(id), false);
       toast('స్థితి మారలేదు: ' + errText(e), 'error');
     }
   }
   function filterFor(status) { return status === 'answered' ? FB_FILTERS.answered : status === 'closed' ? FB_FILTERS.closed : FB_FILTERS.open; }
 
+  // One batch: the message doc + the parent's triage fields (never the
+  // legacy `reply`). Then the declared files upload (from: 'admin').
   async function sendFbReply(id) {
     const r = fb.rows.find((x) => x.id === id);
     const node = fbNode(id);
-    if (!r || !node) return;
-    const ta = node.querySelector('textarea[data-reply]');
-    const slot = node.querySelector('[data-slot]');
+    if (!r || !node || fb.busy.has(id)) return;
+    const composer = node.querySelector('[data-composer]');
+    if (!composer) return;
+    const ta = composer.querySelector('textarea[data-reply]');
+    const slot = composer.querySelector('[data-slot]');
+    const entry = fb.composers.get(id);
+    const picker = entry ? entry.picker : null;
+    if (picker && picker.busy()) { setMsg(slot, 'info', 'చిత్రం సిద్ధమవుతోంది… ఒక్క క్షణం. / Preparing the image…'); return; }
+    const picked = picker ? picker.files() : [];
     const text = ta.value.trim();
-    if (!text) { setMsg(slot, 'error', 'జవాబు ఖాళీగా ఉంది / The reply is empty'); ta.focus(); return; }
+    if (!text && !picked.length) { setMsg(slot, 'error', 'జవాబు ఖాళీగా ఉంది / The reply is empty'); ta.focus(); return; }
     if (text.length > REPLY_MAX) { setMsg(slot, 'error', 'జవాబు చాలా పొడవుగా ఉంది (' + REPLY_MAX + ' అక్షరాల లోపు)'); ta.focus(); return; }
+    const user = auth.currentUser;
+    if (!user) return;                       // signed out meanwhile: onAuth reloads the page
+    const F = Files();
+    const mid = F && typeof F.newMessageId === 'function' ? F.newMessageId() : localMessageId();
+    const fileMeta = picked.length ? F.meta(picked, mid) : [];
+    const ref = db.collection('feedback').doc(id);
+    const msg = { from: 'admin', uid: user.uid, text, createdAt: FieldValue.serverTimestamp() };
+    if (fileMeta.length) msg.files = fileMeta;
+
+    fb.busy.add(id);
     lockItem(node, true);
     setMsg(slot, 'busy', 'పంపుతోంది… / Sending…');
     try {
-      await db.collection('feedback').doc(id).update({
-        reply: text,
-        repliedAt: FieldValue.serverTimestamp(),
+      const batch = db.batch();
+      batch.set(ref.collection('messages').doc(mid), msg);
+      batch.update(ref, {
         status: 'answered',
         handled: true,
+        lastAt: FieldValue.serverTimestamp(),
+        lastFrom: 'admin',
+        lastAdminAt: FieldValue.serverTimestamp(),
       });
-      Object.assign(r, { reply: text, repliedAt: new Date(), status: 'answered', handled: true });
-      fb.drafts.delete(id);
-      fb.open.delete(id);
-      toast(r.uid ? 'జవాబు పంపాం — వారి "నా సందేశాలు" లో కనిపిస్తుంది / Reply sent' : 'జవాబు సేవ్ అయ్యింది (వీరు సైన్ ఇన్ చేయలేదు) / Reply saved');
-      refreshFbItem(id, '.ad-compose > summary');
+      await withTimeout(batch.commit(), SEND_TIMEOUT);
     } catch (e) {
-      lockItem(node, false);
-      setMsg(slot, 'error', 'జవాబు పంపలేదు: ' + errText(e));
+      console.warn('[admin] reply failed', e);
+      fb.busy.delete(id);
+      lockItem(fbNode(id), false);
+      setMsg(slot, 'error', 'జవాబు పంపలేదు: ' + errText(e) +
+        (e && e.code === 'deadline-exceeded' ? ' (కనెక్షన్ వస్తే అది తర్వాత కూడా చేరవచ్చు — మళ్ళీ పంపే ముందు పేజీ మళ్ళీ తెచ్చి చూడండి)' : ''));
+      ta.focus();
+      return;
     }
+
+    const now = new Date();
+    Object.assign(r, { status: 'answered', handled: true, lastAt: now, lastFrom: 'admin', lastAdminAt: now });
+    const t = threadOf(id);
+    if (t && t.state === 'ok') t.msgs.push({ key: mid, from: 'admin', text, files: fileMeta, at: now });
+    else fb.threads.delete(id);              // read it again when drawn (it includes this reply)
+    ta.value = '';
+    fb.drafts.delete(id);
+    const count = composer.querySelector('[data-reply-count]');
+    if (count) count.textContent = '0 / ' + REPLY_MAX;
+
+    let failed = 0;
+    if (picked.length) {
+      setMsg(slot, 'busy', 'ఫైళ్ళు పంపుతోంది… / Uploading files…');
+      const res = await F.upload(db, id, mid, picked, { from: 'admin' });   // never rejects
+      failed = res && typeof res.failed === 'number' ? res.failed : picked.length;
+      // The picked files are kept for "Retry files": upload() skips the ones that landed.
+      if (failed) fb.pending.set(id, { mid, files: picked, failed });
+      picker.clear();
+    }
+    setMsg(slot);
+    fb.busy.delete(id);
+    fb.open.add(id);
+    const moved = !inFilter(fb.filter, r);
+    if (failed) {
+      toast('సందేశం చేరింది, కానీ కొన్ని చిత్రాలు పంపలేకపోయాం. మళ్ళీ ప్రయత్నించండి: "ఫైళ్ళు మళ్ళీ పంపండి" నొక్కండి. / Reply sent, but ' + failed + ' file(s) did not upload.', 'error');
+    } else {
+      toast((r.uid ? 'జవాబు పంపాం — వారి "నా సందేశాలు" లో కనిపిస్తుంది / Reply sent' : 'జవాబు సేవ్ అయ్యింది — క్రింది బటన్‌లతో వారికి తెలియజేయండి / Reply saved') +
+        (moved ? ' — ఇప్పుడు "' + FB_FILTERS.answered.te + '" లో ఉంది' : ''));
+    }
+    refreshFbItem(id, failed ? '[data-act="retry-files"]' : ['.ad-notify a', 'textarea[data-reply]'], true);
   }
 
+  // Upload the files of the last reply again; the ones already stored are skipped.
+  async function retryFiles(id) {
+    const p = fb.pending.get(id);
+    const F = Files();
+    if (!p || !F || typeof F.upload !== 'function' || fb.busy.has(id)) return;
+    fb.busy.add(id);
+    lockItem(fbNode(id), true);
+    const res = await F.upload(db, id, p.mid, p.files, { from: 'admin' });
+    fb.busy.delete(id);
+    const failed = res && typeof res.failed === 'number' ? res.failed : p.files.length;
+    if (failed) {
+      p.failed = failed;
+      toast(failed + ' ఫైల్(లు) ఇంకా పంపలేదు. ఇంటర్నెట్ చూసి మళ్ళీ ప్రయత్నించండి. / Still failing.', 'error');
+    } else {
+      fb.pending.delete(id);
+      toast('ఫైళ్ళు పంపాం / Files uploaded');
+    }
+    refreshFbItem(id, failed ? '[data-act="retry-files"]' : ['.ad-notify a', 'textarea[data-reply]'], true);
+  }
+
+  // Deletes every files doc and messages doc, then the parent. If any part
+  // fails, the conversation stays (and can be deleted again, which carries
+  // on from where this run stopped).
+  // File docs hold the bytes (up to 800 KB each), so they are not listed up
+  // front: the ones declared on the parent and on each message are deleted
+  // by id, which downloads nothing. A reader can post any number of
+  // messages, so they are read MSG_PAGE at a time: each page's declared
+  // files go first, then that page's messages, so a declared list always
+  // outlives the files it points to. After MSG_ROUNDS pages this run stops
+  // and the parent stays; pressing Delete again goes on. Then a sweep lists
+  // the files still left, a few at a time (e.g. files of a message an
+  // earlier, interrupted delete had already removed), and the parent goes last.
+  const FILE_ID_RE = /^(first|m-[0-9]{10,16}-[a-z0-9]{4,10})-[0-2]$/;
+  const MSG_PAGE = 50;
+  const MSG_ROUNDS = 20;     // up to MSG_PAGE × MSG_ROUNDS (1000) messages per press
+  const SWEEP_PAGE = 3;
+  const SWEEP_ROUNDS = 40;   // a hard stop; each round removes up to SWEEP_PAGE
   async function deleteFb(id) {
     const r = fb.rows.find((x) => x.id === id);
-    if (!r) return;
-    const ok = await siteConfirm('ఈ అభిప్రాయం శాశ్వతంగా తొలగించాలా?\nDelete this message permanently?', { okLabel: 'తొలగించు / Delete', danger: true });
+    if (!r || fb.busy.has(id)) return;
+    const ok = await siteConfirm('ఈ సంభాషణ మొత్తం — జవాబులు, జోడించిన ఫైళ్ళతో సహా — శాశ్వతంగా తొలగించాలా?\nDelete this whole conversation, with its replies and files, permanently?', { okLabel: 'తొలగించు / Delete', danger: true });
     if (!ok) return;
-    const node = fbNode(id);
-    lockItem(node, true);
+    fb.busy.add(id);
+    lockItem(fbNode(id), true);
+    const progress = (text) => { const n = fbNode(id); setMsg(n && n.querySelector('[data-del-slot]'), 'busy', text); };
+    const ref = db.collection('feedback').doc(id);
+    let total = 0;
+    let done = 0;
+    const step = () => progress('తొలగిస్తోంది… ' + done + ' / ' + total + ' / Deleting…');
+    let firstErr = null;
+    const drop = async (docRef) => {
+      try { await withTimeout(docRef.delete(), READ_TIMEOUT); done++; } catch (e) {
+        if (e && String(e.code || '').replace(/^firestore\//, '') === 'not-found') done++;   // already gone
+        else if (!firstErr) firstErr = e;
+      }
+      step();
+    };
+    // The declared files of one list, by id (a slot never uploaded deletes as
+    // a no-op). Each id once per run; stops at the first failure.
+    const gone = new Set();
+    const dropFiles = async (list) => {
+      const ids = fileList(list).map((f) => f.id).filter((f) => FILE_ID_RE.test(f) && !gone.has(f));
+      if (!ids.length) return;
+      ids.forEach((f) => gone.add(f));
+      total += ids.length;
+      step();
+      for (const f of ids) {
+        await drop(ref.collection('files').doc(f));
+        if (firstErr) throw firstErr;
+      }
+    };
     try {
-      await db.collection('feedback').doc(id).delete();
-      fb.rows = fb.rows.filter((x) => x.id !== id);
-      fb.drafts.delete(id);
-      fb.open.delete(id);
-      toast('తొలగించాం / Deleted');
-      refreshFbItem(id);
+      progress('తొలగిస్తోంది… / Deleting…');
+      await dropFiles(r.files);              // the first message's files (the parent itself goes last)
+      for (let round = 0; ; round++) {
+        const page = await withTimeout(ref.collection('messages').limit(MSG_PAGE).get(), READ_TIMEOUT);
+        if (page.empty) break;
+        if (round >= MSG_ROUNDS) {           // the parent stays, so the next Delete carries on
+          const more = new Error('ఇంకా సందేశాలు మిగిలాయి. మిగతావి తొలగించడానికి మళ్ళీ "తొలగించు" నొక్కండి. / More messages are left: press Delete again to carry on.');
+          more.code = 'more-left';
+          throw more;
+        }
+        total += page.size;
+        step();
+        for (const d of page.docs) await dropFiles((d.data() || {}).files);
+        for (const d of page.docs) {
+          await drop(d.ref);
+          if (firstErr) throw firstErr;
+        }
+      }
+      for (let round = 0; ; round++) {
+        const left = await withTimeout(ref.collection('files').limit(SWEEP_PAGE).get(), READ_TIMEOUT);
+        if (left.empty) break;
+        if (round >= SWEEP_ROUNDS) throw new Error('files still left after ' + SWEEP_ROUNDS + ' rounds');
+        total += left.size;
+        for (const d of left.docs) {
+          await drop(d.ref);
+          if (firstErr) throw firstErr;
+        }
+      }
+      progress('తొలగిస్తోంది… / Deleting…');
+      await withTimeout(ref.delete(), READ_TIMEOUT);
     } catch (e) {
+      console.warn('[admin] delete failed', e);
+      fb.busy.delete(id);
+      const node = fbNode(id);
       lockItem(node, false);
-      toast('తొలగించలేదు: ' + errText(e), 'error');
+      if (node) setMsg(node.querySelector('[data-del-slot]'));
+      toast((done
+        ? 'పూర్తిగా తొలగించలేదు (' + done + ' / ' + total + ' భాగాలు తొలగాయి), సంభాషణ అలాగే ఉంది: '
+        : 'తొలగించలేదు: ') + errText(e), 'error');
+      if (done) {                              // some replies may be gone: read the thread again
+        fb.threads.delete(id);
+        if (fb.open.has(id)) loadThread(id); else paintThread(id);
+      }
+      focusFirst(node && node.querySelector('[data-act="delete"]'));
+      return;
     }
+    fb.busy.delete(id);
+    fb.rows = fb.rows.filter((x) => x.id !== id);
+    fb.drafts.delete(id);
+    fb.open.delete(id);
+    fb.threads.delete(id);
+    fb.pending.delete(id);
+    const entry = fb.composers.get(id);
+    if (entry && entry.picker) { try { entry.picker.clear(); } catch (e) { /* nothing left to free */ } }
+    fb.composers.delete(id);
+    toast('సంభాషణ తొలగించాం / Deleted' + (total ? ' (' + total + ' భాగాలతో / with ' + total + ' parts)' : ''));
+    refreshFbItem(id);
   }
 
   /* ============================================================
@@ -1469,13 +1995,16 @@
     if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
   }
 
-  // A reply typed but not sent (and different from the one already saved).
+  // A reply typed but not sent, files picked but not sent, or files of a
+  // sent reply still waiting for "Retry files".
   function hasUnsentReply() {
-    for (const [id, text] of fb.drafts) {
-      const t = String(text || '').trim();
-      const r = fb.rows.find((x) => x.id === id);
-      if (t && r && t !== String(r.reply || '').trim()) return true;
+    const live = new Set(fb.rows.map((r) => r.id));
+    for (const [id, text] of fb.drafts) if (live.has(id) && String(text || '').trim()) return true;
+    for (const [id, c] of fb.composers) {
+      if (!live.has(id) || !c.picker) continue;
+      try { if (c.picker.count() > 0) return true; } catch (e) { /* a broken picker holds nothing to lose */ }
     }
+    for (const id of fb.pending.keys()) if (live.has(id)) return true;
     return false;
   }
   function hasUnsaved() {
@@ -1532,6 +2061,9 @@
       if (b.dataset.act === 'status') setFbStatus(id, b.dataset.status);
       else if (b.dataset.act === 'reply') sendFbReply(id);
       else if (b.dataset.act === 'delete') deleteFb(id);
+      else if (b.dataset.act === 'retry-thread') loadThread(id);
+      else if (b.dataset.act === 'retry-files') retryFiles(id);
+      // data-act="attach" belongs to the picker: attachments.js opens the file chooser.
     });
     list.addEventListener('input', (e) => {
       const ta = e.target.closest('textarea[data-reply]');
@@ -1543,15 +2075,20 @@
       const slot = item.querySelector('[data-slot]');
       if (slot && slot.firstChild) setMsg(slot);
     });
-    // `toggle` doesn't bubble; listen in the capture phase.
+    // `toggle` doesn't bubble; listen in the capture phase. Opening a
+    // conversation reads its messages (once) and sets up its composer.
+    // Focus stays on the summary: the thread is read first, and on a phone
+    // a focused textarea would pop the keyboard over it.
     list.addEventListener('toggle', (e) => {
       const d = e.target;
-      if (!d.matches || !d.matches('details.ad-compose')) return;
-      const id = d.closest('.ad-fb-item').dataset.id;
+      if (!d.matches || !d.matches('details.ad-convo')) return;
+      const card = d.closest('.ad-fb-item');
+      if (!card) return;
+      const id = card.dataset.id;
       if (d.open) {
         fb.open.add(id);
-        // only when the reader opened it (not when a re-render restores it)
-        if (d.contains(document.activeElement)) { const ta = d.querySelector('textarea'); if (ta) ta.focus(); }
+        const r = fb.rows.find((x) => x.id === id);
+        if (r) openConvo(card, r);
       } else fb.open.delete(id);
     }, true);
 

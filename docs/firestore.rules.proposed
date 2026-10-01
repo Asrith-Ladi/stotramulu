@@ -1,5 +1,3 @@
-rules_version = '2';
-
 // =====================================================================
 // PROPOSED Firestore security rules for stotramulu (project stotramulu-eddf4)
 //
@@ -9,10 +7,20 @@ rules_version = '2';
 //   2. Copy the rules that are live now into a text file first, so you can
 //      paste them back if anything misbehaves.
 //   3. Select everything in the editor and paste this WHOLE file in its
-//      place (these comment lines are fine to keep).
+//      place (these comment lines are fine to keep). The paste must
+//      include the line  rules_version = '2';  just above `service`.
 //   4. Before pressing "Publish", open "Rules Playground" and try the
 //      checks listed at the end of this file.
 //   5. Press "Publish". Every client picks the change up within a minute.
+//   6. Then run the live-site tests listed at the end of this file.
+//
+// DEPLOY ORDER (conversations and attachments, Phase 27)
+//   Paste and publish these rules FIRST, and only then deploy the new site.
+//   These rules still accept everything the site that is live today writes
+//   (the 14 old feedback fields, the old reply / status writes), so the old
+//   site keeps working in the meantime. The old rules would reject the new
+//   site's writes (lastAt, claimKey, files, messages, attachments), and a
+//   rejected message is dropped silently, so the other order loses messages.
 //
 // WHAT EACH COLLECTION IS FOR (read with the code that talks to Firestore)
 //   users/{uid}     cloud.js: each signed-in reader syncs { track, email,
@@ -27,24 +35,121 @@ rules_version = '2';
 //                   (admin-dashboard.js) is the only writer and always writes
 //                   the full shape { date, tag, title, body, published,
 //                   updatedAt }.
-//   feedback/{id}   cloud.js lets anyone (signed in or not) send a message.
-//                   Only the admin may triage it: status / reply / repliedAt
-//                   can NEVER be sent on create.
-//                   A signed-in reader can read back their own messages
+//   feedback/{id}   One conversation. cloud.js lets anyone (signed in or not)
+//                   start one, and the first message IS this document
+//                   (`message`, plus a `files` list when it has attachments).
+//                   A reader who is not signed in also sends a random
+//                   `claimKey`, which lets them claim the conversation when
+//                   they later sign in on the same phone (messages.js).
+//                   status / reply / repliedAt / lastAdminAt / claimProof can
+//                   NEVER be sent on create.
+//                   A signed-in reader can read back their own conversations
 //                   (messages.js: where('uid', '==', uid), no orderBy).
+//                   Three kinds of update are allowed, each with its own
+//                   short list of fields: the admin's triage and reply
+//                   (admin-dashboard.js), the owner's follow-up
+//                   (messages.js) and the claim on sign-in (messages.js).
+//     .../messages/{mid}   The follow-up messages of that conversation, in
+//                   the order of `createdAt`. The signed-in owner writes
+//                   `from: 'user'` ones (messages.js), the admin writes
+//                   `from: 'admin'` ones (admin-dashboard.js). They are never
+//                   edited; only the admin deletes them, together with the
+//                   conversation.
+//     .../files/{fileId}   One attachment each (attachments.js upload()):
+//                   the image or PDF itself is stored in the `data` field as
+//                   Bytes, because Firebase Storage needs the paid plan. A file
+//                   must first be declared in the `files` list of the message
+//                   it belongs to. It is written once, never edited; only the
+//                   admin deletes it. The same people who may read the
+//                   conversation may read its messages and files.
 //
-// KEEP IN STEP WITH cloud.js
-//   app.js retries a queued message with set() on the same id. If that doc
-//   already exists the retry is an *update*, which is denied here, and
-//   app.js drops the queue entry on permission-denied (that is intended).
-//   The flip side: a create that FAILS VALIDATION is also dropped silently.
-//   So whenever cloud.js adds a field to the feedback `doc`, add it to
-//   validNewFeedback() below and publish the rules FIRST.
+// KEEP IN STEP WITH THE CODE
+//   feedback.js (the send form and its offline queue) retries a queued
+//   message with set() on the same id. If that doc already exists, the
+//   retry is an *update*. None of the three update paths below accepts it
+//   (a retry always carries a new createdAt), so it is denied, and
+//   feedback.js drops the queue entry on permission-denied (that is
+//   intended). cloud.js __cloudSendReport() (a first message with
+//   attachments) reads the same permission-denied as "the conversation is
+//   already there" only when an earlier try of that message may have
+//   landed, and then goes on to the attachments. On a first try it means
+//   the rules refused the message, and the reader is told it did not send.
+//   The flip side: a queued message that FAILS VALIDATION is also dropped
+//   silently. So, and always publish the rules FIRST (see DEPLOY ORDER):
+//   - a new field in cloud.js's feedback `doc`   -> add it to validNewFeedback();
+//   - a new field in the admin's status / reply write (admin-dashboard.js)
+//                                                 -> add it to validTriage();
+//   - a new field in the reader's follow-up or claim write (messages.js)
+//                                -> add it to validOwnerFollowUp() / validClaim();
+//   - a new field in a follow-up or reply message -> add it to validMessage();
+//   - a change to the entries of a `files` list. validMeta() mirrors
+//     StotramFiles.meta() in attachments.js, which builds them, and
+//     cloud.js cleanFilesMeta(), which passes them on: exactly
+//     { id, name, type, size }, a name of up to 120 characters, one of the
+//     four types, and a whole number of bytes   -> change validMeta();
+//   - a change to StotramFiles.LIMITS in attachments.js (3 files, 800000
+//     bytes, the four types), to StotramFiles.fileId() (mid + '-' + n) or to
+//     the format of StotramFiles.newMessageId()   -> change validMeta(),
+//     validFile() and the id check on messages create the same way.
+//
+// COST (the free Spark plan allows 50,000 document reads a day)
+//   Every get() inside a rule is billed as one document read, on top of the
+//   documents the request itself reads. These rules make at most two get()
+//   calls per request:
+//   - a reader opening their thread or one attachment: 1 (the conversation);
+//   - the owner adding a follow-up message: 1 (the conversation);
+//   - an attachment of the first message: 1 (the conversation);
+//   - an attachment of a later message: 1 for the admin (the message), 2 for
+//     the owner (the message and the conversation);
+//   - everything else the admin does (reading, deleting, status changes,
+//     the reply batch itself): 0.
+//   A file document is at most about 800 KB, under Firestore's 1 MiB limit.
+//
+// ABUSE AND STORAGE (read this once before publishing)
+//   The risk. Starting a conversation needs no sign-in, and neither do the
+//   up to 3 attachments of that first message (800,000 bytes each, sent
+//   within 15 minutes). The site's Firebase web key is public (it is in
+//   every page), so a script can do this again and again. Rules cannot
+//   count or slow down requests, and they cannot tell whether the bytes
+//   really are a picture or a PDF: they only check the declared type and
+//   the size. One such conversation stores about 2.4 MB, so a little over
+//   400 of them fill the free plan's 1 GiB of stored data. That 1 GiB is
+//   shared by everything in the database (stotras, config, updates, users
+//   and feedback). Every text field is capped, and so is each entry of a
+//   `files` list (validMeta), so text alone cannot fill it quickly.
+//   What it looks like when the 1 GiB is full. Firestore refuses new writes
+//   (the browser console shows quota errors such as "resource-exhausted")
+//   until the stored data is back under the limit: new messages and
+//   attachments fail, the dashboard cannot reply or save, and signed-in
+//   readers' practice sync (users/) stops saving. Reading the site keeps
+//   working. Text-only messages wait in the phone's queue and are sent
+//   again later; a message with attachments shows its error to the reader.
+//   Firestore -> Usage in the console shows the stored size (the figure is
+//   not live and can lag behind).
+//   How to recover. In the dashboard's Feedback tab, delete the junk
+//   conversations one by one: Delete removes a conversation together with
+//   its messages and files, and can simply be pressed again if it stops
+//   half-way. Deletes have their own free allowance (20,000 a day); one
+//   conversation with 3 attachments is about 4 deletes. Writes work again
+//   once the stored data is under 1 GiB.
+//   Optional hardening, later (a site change, not a rules change):
+//   Firebase App Check with the reCAPTCHA v3 provider. Turn it on in
+//   MONITOR mode first (App Check -> APIs -> Cloud Firestore stays
+//   "Unenforced") and watch the verified / unverified figures for a week
+//   or two. Enforcing it covers EVERY Firestore request, including the
+//   public stotras and config reads, so older phones where reCAPTCHA fails
+//   or is blocked would lose the whole site, not just the feedback form.
+//   reCAPTCHA's free monthly allowance of checks also applies. Enforce it
+//   only if nearly all real traffic shows as verified. Do not shrink the
+//   not-signed-in size limit instead: the form promises PDFs up to 750 KB.
 //
 // The admin UID matches window.ADMIN_UID in public/assets/site-config.js.
 // Anything not matched below is denied (Firestore's default).
 // =====================================================================
 
+// Keep the next line: without it Firebase assumes rules version 1 and
+// rejects the `let` lines below. Copy from here down (or the whole file).
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -101,14 +206,46 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // ---------- feedback ----------
-    // Exactly the fields cloud.js writes, nothing more. `status`, `reply`
-    // and `repliedAt` are not in the list, so a create carrying any of them
-    // is denied; `handled` must be the default false.
+    // ---------- the `files` list of a message ----------
+    // The first message of a conversation and every follow-up or reply can
+    // list up to 3 attachments as [{id, name, type, size}], built by
+    // StotramFiles.meta() in attachments.js. Each entry is checked on its
+    // own: every other field has a size cap, and without this check a
+    // 3-entry list of long strings could fill a whole document.
+    // f['size'] is read with brackets because size() is also a map method.
+    function validMeta(f) {
+      return f is map
+        && f.keys().hasOnly(['id', 'name', 'type', 'size'])
+        && f.keys().hasAll(['id', 'name', 'type', 'size'])
+        && isStr(f.id, 80)
+        && isStr(f.name, 120)
+        && f.type in ['image/webp', 'image/jpeg', 'image/png', 'application/pdf']
+        && f['size'] is int
+        && f['size'] >= 0
+        && f['size'] <= 800000;
+    }
+    // A list of at most 3 entries, each one valid. Rules have no loops, so
+    // the three places are checked one by one. An empty list is fine.
+    function validMetaList(l) {
+      return l is list
+        && l.size() <= 3
+        && (l.size() < 1 || validMeta(l[0]))
+        && (l.size() < 2 || validMeta(l[1]))
+        && (l.size() < 3 || validMeta(l[2]));
+    }
+
+    // ---------- feedback: one conversation per document ----------
+    // Exactly the fields cloud.js writes, nothing more. `status`, `reply`,
+    // `repliedAt`, `lastAdminAt` and `claimProof` are not in the list, so a
+    // create carrying any of them is denied; `handled` must be the default
+    // false. The last four names in the list are new in Phase 27 and are all
+    // optional, so the 14-field document that the site live today writes
+    // still passes.
     function validNewFeedback(d) {
       return d.keys().hasOnly([
             'type', 'name', 'contact', 'message', 'screen', 'stotram', 'stotramTitle',
-            'lang', 'device', 'sentAt', 'uid', 'email', 'handled', 'createdAt'])
+            'lang', 'device', 'sentAt', 'uid', 'email', 'handled', 'createdAt',
+            'lastAt', 'lastFrom', 'claimKey', 'files'])
         && d.keys().hasAll(['type', 'message', 'createdAt'])
         && d.type in ['correction', 'problem', 'suggestion', 'other']
         && d.message is string && d.message.size() > 0 && d.message.size() <= 20000
@@ -126,49 +263,316 @@ service cloud.firestore {
         && (!('email' in d) || d.email == null
             || (signedIn() && d.email == request.auth.token.get('email', null)))
         && (!('handled' in d) || d.handled == false)
-        && d.createdAt == request.time;
+        && d.createdAt == request.time
+        // New (Phase 27), all optional. lastAt / lastFrom: when the
+        // conversation last moved and who moved it (serverTimestamp(), 'user').
+        && (!('lastAt' in d) || d.lastAt == request.time)
+        && (!('lastFrom' in d) || d.lastFrom == 'user')
+        // claimKey: only on a message sent without signing in. It is the
+        // secret the same phone shows later to claim the conversation
+        // (validClaim), so it must be long and random: 32-64 hex characters.
+        && (!('claimKey' in d)
+            || (d.get('uid', null) == null
+                && d.claimKey is string
+                && d.claimKey.matches('^[0-9a-fA-F]{32,64}$')))
+        // files: the attachments of this first message, at most 3, each
+        // entry checked by validMeta(). Each one is uploaded afterwards as
+        // its own files/first-<n> document (see validFile).
+        && (!('files' in d) || validMetaList(d.files));
     }
-    // Admin triage writes only these fields (admin-dashboard.js):
+
+    // Update path 1 - admin triage and reply (admin-dashboard.js):
     //   status change -> { status, handled }
-    //   reply         -> { reply, repliedAt: serverTimestamp(), status: 'answered', handled: true }
+    //   reply         -> batch: a new messages/{mid} document (see below) and
+    //                    { status: 'answered', handled: true,
+    //                      lastAt: serverTimestamp(), lastFrom: 'admin',
+    //                      lastAdminAt: serverTimestamp() }
+    //   legacy reply  -> { reply, repliedAt: serverTimestamp(), status:
+    //                    'answered', handled: true } (the dashboard that is
+    //                    live today; the new one never writes `reply`)
     function validTriage() {
       let d = request.resource.data;
       let changed = d.diff(resource.data).affectedKeys();
-      return changed.hasOnly(['status', 'handled', 'reply', 'repliedAt'])
+      return changed.hasOnly(['status', 'handled', 'reply', 'repliedAt',
+                              'lastAt', 'lastFrom', 'lastAdminAt'])
         && (!('status' in d) || d.status in ['new', 'in_progress', 'answered', 'closed'])
         && (!('handled' in d) || d.handled is bool)
         && (!('reply' in d) || isStr(d.reply, 5000))
-        && (!changed.hasAny(['repliedAt']) || d.repliedAt == request.time);
+        && (!changed.hasAny(['repliedAt']) || d.repliedAt == request.time)
+        && (!('lastAt' in d) || d.lastAt is timestamp)
+        && (!('lastFrom' in d) || d.lastFrom in ['user', 'admin'])
+        && (!changed.hasAny(['lastAdminAt']) || d.lastAdminAt == request.time);
     }
+
+    // Update path 2 - the owner's follow-up (messages.js). A signed-in
+    // reader writing back in their own conversation sends one batch: a new
+    // messages/{mid} document (see below) and exactly this patch, which puts
+    // the conversation back in the admin's "new" pile:
+    //   { lastAt: serverTimestamp(), lastFrom: 'user', status: 'new',
+    //     handled: false }
+    // (The rule cannot see the message in the same batch, so an owner could
+    // send this patch alone. That only re-opens their own conversation.)
+    function validOwnerFollowUp() {
+      let d = request.resource.data;
+      return signedIn()
+        && resource.data.get('uid', null) == request.auth.uid
+        && d.diff(resource.data).affectedKeys().hasOnly(['lastAt', 'lastFrom', 'status', 'handled'])
+        && d.lastAt == request.time
+        && d.lastFrom == 'user'
+        && d.status == 'new'
+        && d.handled == false;
+    }
+
+    // Update path 3 - the claim (messages.js, when the reader signs in). A
+    // conversation started without signing in has uid == null and a stored
+    // claimKey. The phone that sent it kept the key, and on sign-in sends
+    //   { uid: <their uid>, email: <their email or null>, claimProof: <the key> }
+    // Only someone holding the key can do this: until the claim, only the
+    // admin can read the conversation or its files, so nobody else sees it.
+    // After the claim uid is no longer null, so it can never be claimed again.
+    // A claim is accepted up to 30 days after the message was sent.
+    function validClaim() {
+      let d = request.resource.data;
+      let stored = resource.data;
+      return signedIn()
+        && stored.get('uid', null) == null
+        && stored.get('claimKey', null) is string
+        && stored.claimKey.size() >= 32
+        && d.diff(stored).affectedKeys().hasOnly(['uid', 'email', 'claimProof'])
+        && d.uid == request.auth.uid
+        && d.get('claimProof', null) == stored.claimKey
+        && (d.get('email', null) == null
+            || d.email == request.auth.token.get('email', null))
+        && stored.createdAt > request.time - duration.value(30, 'd');
+    }
+
+    // ---------- the conversation behind a message or a file ----------
+    // Each call to conversation() is one billed read (see COST at the top).
+    function conversation(fbid) {
+      return get(/databases/$(database)/documents/feedback/$(fbid)).data;
+    }
+    // Signed in, and the owner of conversation fbid. A conversation started
+    // without signing in has no owner (uid == null) until it is claimed.
+    function ownsConversation(fbid) {
+      return signedIn() && conversation(fbid).get('uid', null) == request.auth.uid;
+    }
+
+    // ---------- messages: follow-ups, append-only ----------
+    // { from: 'user' | 'admin', uid, text (0-5000 characters),
+    //   files: [{id, name, type, size}] (0-3, optional, each entry checked
+    //   by validMeta(); messages.js sends files: [] when nothing is
+    //   attached, the dashboard leaves the key out),
+    //   createdAt: serverTimestamp() }
+    // The text may be empty only when at least one file is declared.
+    function validMessage(d) {
+      return d.keys().hasOnly(['from', 'uid', 'text', 'files', 'createdAt'])
+        && d.keys().hasAll(['from', 'uid', 'text', 'createdAt'])
+        && d.from in ['user', 'admin']
+        && d.text is string && d.text.size() <= 5000
+        && (!('files' in d) || validMetaList(d.files))
+        && (d.text.size() > 0 || d.get('files', []).size() > 0)
+        && d.createdAt == request.time;
+    }
+    // Who may post: the admin as 'admin', or the conversation's signed-in
+    // owner as 'user'; either way `uid` is the sender's own uid. The admin
+    // check comes first, so the admin's reply costs no extra read.
+    function canPostMessage(fbid, d) {
+      return signedIn()
+        && d.uid == request.auth.uid
+        && ((d.from == 'admin' && isAdmin())
+            || (d.from == 'user' && ownsConversation(fbid)));
+    }
+
+    // ---------- files: one attachment per document, create-only ----------
+    // { mid: 'first' | <message id>, n: 0 | 1 | 2 (a whole number), name (up to 120),
+    //   type: 'image/webp' | 'image/jpeg' | 'image/png' | 'application/pdf',
+    //   size: <number of bytes in data>, data: Bytes (up to 800000),
+    //   from: 'user' | 'admin', createdAt: serverTimestamp(),
+    //   key: <the conversation's claimKey> (only when not signed in) }
+    // The document id must be mid + '-' + n (first-0, m-1790000000000-a1b2c3-2),
+    // so each file slot can be written exactly once. `n is int` matters:
+    // Firestore counts 0.0 as equal to 0, and string(0.0) is '0.0', so
+    // without it a script could add extra slots such as first-0.0.
+    // `size` and `data` are read with d['...'] on purpose: `size` is also
+    // the name of the map method size(), and the brackets keep that apart.
+    function validFile(d, fileId) {
+      return d.keys().hasOnly(['mid', 'n', 'name', 'type', 'size', 'data',
+                               'from', 'createdAt', 'key'])
+        && d.keys().hasAll(['mid', 'n', 'name', 'type', 'size', 'data',
+                            'from', 'createdAt'])
+        && d.mid is string
+        && d.mid.matches('^(first|m-[0-9]{10,16}-[a-z0-9]{4,10})$')
+        && d.n is int
+        && d.n in [0, 1, 2]
+        && fileId == d.mid + '-' + string(d.n)
+        && isStr(d.name, 120)
+        && d.type in ['image/webp', 'image/jpeg', 'image/png', 'application/pdf']
+        && d['data'] is bytes
+        && d['data'].size() <= 800000
+        && d['size'] == d['data'].size()
+        && d.from in ['user', 'admin']
+        && optStr(d, 'key', 64)
+        && d.createdAt == request.time;
+    }
+    // An attachment of the FIRST message (mid == 'first'). It must be
+    // declared in the conversation's own `files` list (n < its length), and
+    // written by one of:
+    //   - the admin, as 'admin';
+    //   - the conversation's signed-in owner, as 'user' (cloud.js, signed in;
+    //     or a retry after the claim);
+    //   - the phone that just sent it without signing in, as 'user': the
+    //     conversation still has no owner, the file carries the
+    //     conversation's claimKey as `key`, and the conversation was created
+    //     less than 15 minutes ago (cloud.js uploads right after sending).
+    // p = the conversation's stored data.
+    function firstFileOk(d, p) {
+      return d.n < p.get('files', []).size()
+        && ((d.from == 'admin' && isAdmin())
+            || (d.from == 'user' && signedIn()
+                && p.get('uid', null) == request.auth.uid)
+            || (d.from == 'user'
+                && p.get('uid', null) == null
+                && p.get('claimKey', null) is string
+                && d.get('key', null) == p.claimKey
+                && p.createdAt > request.time - duration.value(15, 'm')));
+    }
+    // An attachment of a follow-up or reply message (mid == a message id).
+    // It must be declared in that message's `files` list, have the same
+    // `from` as the message (so nobody can slip a file into the other
+    // side's message), and be written by the admin as 'admin' or by the
+    // conversation's signed-in owner as 'user'.
+    // m = the message's stored data.
+    function messageFileOk(fbid, d, m) {
+      return d.n < m.get('files', []).size()
+        && d.from == m.from
+        && ((d.from == 'admin' && isAdmin())
+            || (d.from == 'user' && ownsConversation(fbid)));
+    }
+    // Shape first (no reads), then one get() for the document that declares
+    // the file: the conversation for 'first', else the message. Only a
+    // reader's file on a later message needs a second get() (the
+    // conversation, for the owner check).
+    function canCreateFile(fbid, fileId) {
+      let d = request.resource.data;
+      return validFile(d, fileId)
+        && ((d.mid == 'first'
+             && firstFileOk(d, conversation(fbid)))
+            || (d.mid != 'first'
+                && messageFileOk(fbid, d,
+                     get(/databases/$(database)/documents/feedback/$(fbid)/messages/$(d.mid)).data)));
+    }
+
     match /feedback/{fbid} {
       allow create: if fbid.size() <= 100 && validNewFeedback(request.resource.data);
       allow read: if isAdmin()
         || (signedIn() && resource.data.uid == request.auth.uid);
-      allow update: if isAdmin() && validTriage();
+      allow update: if (isAdmin() && validTriage())
+        || validOwnerFollowUp()
+        || validClaim();
       allow delete: if isAdmin();
+
+      // Follow-up messages. Read (one message or the whole list): the
+      // admin, or the conversation's owner. Created only under an id of the
+      // shape StotramFiles.newMessageId() makes, m-<milliseconds>-<4 to 10
+      // of a-z 0-9>, the same pattern validFile() allows for `mid`: a
+      // message under any other id could never get its files, so it is
+      // refused here, and the whole batch (message + parent patch) fails
+      // before anything is stored. Never edited. Deleted only by the admin
+      // (admin-dashboard.js deletes every message and file of a
+      // conversation before the conversation itself).
+      match /messages/{mid} {
+        allow read: if isAdmin() || ownsConversation(fbid);
+        allow create: if mid.matches('^m-[0-9]{10,16}-[a-z0-9]{4,10}$')
+          && validMessage(request.resource.data)
+          && canPostMessage(fbid, request.resource.data);
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
+
+      // Attachments. Read: the admin, or the conversation's owner. Written
+      // once (canCreateFile), never edited, deleted only by the admin.
+      match /files/{fileId} {
+        allow read: if isAdmin() || ownsConversation(fbid);
+        allow create: if canCreateFile(fbid, fileId);
+        allow update: if false;
+        allow delete: if isAdmin();
+      }
     }
   }
 }
 
 // ---------------------------------------------------------------------
-// Rules Playground checks worth running before "Publish"
-//   OK create /feedback/fb-1-abc, unauthenticated, data:
-//       { type:'suggestion', name:'Ravi', contact:'', message:'test',
-//         screen:'home', stotram:'', stotramTitle:'', lang:'te', device:'x',
-//         sentAt:'2026-09-28T10:00:00Z', uid:null, email:null,
-//         handled:false, createdAt: request.time }        -> allowed
-//   NO same, plus status:'new', status:'answered' or reply:'hi' -> denied
-//   NO same, with handled:true                               -> denied
-//   NO same, signed in as user A but uid:'someone-else'      -> denied
-//   NO update /feedback/fb-1-abc as a non-admin              -> denied
-//   OK update { status:'in_progress', handled:false } as the admin -> allowed
-//   OK update { reply:'…', repliedAt: request.time, status:'answered',
-//               handled:true } as the admin                  -> allowed
-//   NO update { message:'changed' } as the admin             -> denied
-//   OK get /feedback/X as the signed-in user whose uid is on it -> allowed
-//   NO get /feedback/X as any other signed-in user           -> denied
-//   OK get /stotras/anything, /config/weekday, /updates/X unauthenticated -> allowed
-//   NO write /updates/X as a non-admin                       -> denied
-//   NO write /updates/X as the admin with tag:'other'        -> denied
-//   OK read/write /users/<own uid>;  NO /users/<someone else>
+// Rules Playground checks worth running (Firestore -> Rules -> Rules playground).
+// Type the path into "Location", set "Authenticated" as shown and press Run
+// after each one. "Admin" means Authenticated on with Firebase UID
+// 0d3PPSYaFncy1tY2oUGtBMGMFwu2. test123 and m-1 are made-up ids that do not
+// exist, which is the point: these results do not depend on your data.
+//   get    /stotras/test                    Authenticated off     -> Allowed
+//   get    /updates/test                    Authenticated off     -> Allowed
+//   get    /users/abc                       on, Firebase UID abc  -> Allowed
+//   get    /users/abc                       on, Firebase UID xyz  -> Denied
+//   get    /feedback/test123                Authenticated off     -> Denied
+//   get    /feedback/test123                Admin                 -> Allowed
+//   get    /feedback/test123/messages/m-1   Authenticated off     -> Denied
+//   get    /feedback/test123/messages/m-1   Admin                 -> Allowed
+//   get    /feedback/test123/messages/m-1   on, Firebase UID xyz  -> Denied
+//   get    /feedback/test123/files/first-0  Authenticated off     -> Denied
+//   get    /feedback/test123/files/first-0  Admin                 -> Allowed
+//   get    /feedback/test123/files/first-0  on, Firebase UID xyz  -> Denied
+//   delete /feedback/test123/files/first-0  on, Firebase UID xyz  -> Denied
+//   delete /feedback/test123/files/first-0  Admin                 -> Allowed
+//   delete /feedback/test123/messages/m-1   Admin                 -> Allowed
+//   delete /feedback/test123                Admin                 -> Allowed
+// These need "Build document", but only to have something to send (add one
+// string field, text = "x"); they must be Denied whatever the document says:
+//   update /feedback/test123/messages/m-1   Admin                 -> Denied
+//          (nobody edits a message, not even the admin)
+//   update /feedback/test123/files/first-0  Admin                 -> Denied
+//          (nobody edits an attachment)
+//   update /feedback/test123                Authenticated off     -> Denied
+//          (a reader who is not signed in can never change a conversation)
+// (Playground simulations are not saved, so the "delete" checks delete nothing.)
+//
+// What the Playground CANNOT test: every create here (and the reply,
+// follow-up and claim updates) needs createdAt / lastAt to equal the server
+// clock (request.time), which the site sets with serverTimestamp() but a
+// typed-in timestamp never matches. Test those on the live site instead.
+//
+// Live-site tests, part 1 - right after publishing, while the OLD site is
+// still live (this proves the old site's writes still pass):
+//   1. Without signing in, send a message -> it appears in the dashboard
+//      (a rejected message is dropped silently, so do not skip this).
+//   2. Signed in, send a message, then open "My messages" -> it is there.
+//   3. In the dashboard, change that message's status and send a reply ->
+//      both work, and the reply shows up in "My messages".
+//   4. Add an entry in the dashboard's Updates tab -> it shows under the bell.
+// Live-site tests, part 2 - after deploying the NEW site:
+//   5. Without signing in, send a message with a screenshot and a small PDF
+//      -> the dashboard's conversation shows the text and both attachments
+//      (the create with claimKey + files, then files/first-0 and first-1
+//      written by the not-signed-in path).
+//   6. On the same phone, sign in with Google and open "My messages" -> that
+//      message is listed, and its attachments open (the claim worked; in the
+//      console's Data tab the document now has uid and claimProof).
+//   7. Reply from the dashboard with a picture -> the dashboard shows it as
+//      answered; on the phone the unread dot appears, and the thread shows
+//      the reply with its picture (the admin's reply batch and upload; the
+//      owner reading messages and files).
+//   8. On the phone, write back with a picture -> the dashboard shows the
+//      conversation under "Waiting" with the new message and picture (the
+//      owner's follow-up batch and upload).
+//   9. Signed in from the start, send a new message with a screenshot -> the
+//      dashboard shows it with the screenshot (the owner path for first-0).
+//  10. Change a conversation's status in the dashboard -> it moves to the
+//      matching filter.
+//  11. Delete a test conversation from the dashboard -> in the console's Data
+//      tab, the document and its messages and files are all gone.
+// The 15-minute window for uploads without signing in and the 30-day
+// window for claims cannot be tested quickly on the live site; check them
+// by reading firstFileOk() and validClaim() above. The same goes for the
+// checks that only a hand-made request can trip (each `files` entry in
+// validMeta(), a whole-number `n` in validFile(), the message id pattern
+// on messages create): the site never sends such values, so on the live
+// site they only have to let the site's own writes through, which tests
+// 5 to 9 above show.
 // ---------------------------------------------------------------------

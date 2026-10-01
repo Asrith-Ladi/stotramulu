@@ -4,8 +4,8 @@
    with no login; signing in only keeps counts safe across devices.
 
    Uses the Firebase "compat" SDK (loaded via <script> in index.html),
-   so this is a classic script and can share app.js globals
-   (getTrack / setTrack / siteAlert / flushFeedback).
+   so this is a classic script and can share the page's globals
+   (getTrack / setTrack / siteAlert, and flushFeedback from feedback.js).
 
    Also the one place the rest of the site gets Firebase from:
      window.StotramCloud = { firebase, auth, db, get user() }
@@ -13,6 +13,9 @@
      document 'cloud-auth'   — on every auth change, detail: user | null
    Scripts that load later (updates.js, messages.js) check
    window.StotramCloud first, then listen for the events.
+   feedback.js sends through window.__cloudFeedback (one message, also
+   the offline queue) and window.__cloudSendReport (a first message with
+   attachments; needs attachments.js, window.StotramFiles).
 
    If the SDK is missing (offline, blocked, the e2e run aborts it) this
    file only replaces the "loading" line in #cloudAuthBox and stops; no
@@ -314,13 +317,55 @@
   window.stotramSignOut = signOutUser;
 
   /* ---------- feedback → Firestore ---------- */
+  // The attachment list kept on the parent doc: at most 3 plain
+  // {id, name, type, size}, whatever the caller handed over.
+  const FILE_TYPES = ['image/webp', 'image/jpeg', 'image/png', 'application/pdf'];
+  function cleanFilesMeta(list) {
+    if (!Array.isArray(list)) return [];
+    return list.slice(0, 3).filter((f) => f && typeof f === 'object').map((f) => {
+      const size = Math.round(Number(f.size));
+      return {
+        id: String(f.id == null ? '' : f.id).slice(0, 64),
+        name: String(f.name == null ? '' : f.name).replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 120),
+        type: FILE_TYPES.indexOf(f.type) >= 0 ? f.type : '',
+        size: Number.isFinite(size) ? Math.min(Math.max(size, 0), 800000) : 0,
+      };
+    });
+  }
+
   // Anyone may submit (signed in or not). A signed-in reader can read their own
   // messages back (messages.js); everything else is admin-only, which the
-  // security rules enforce. Returns a promise so app.js can keep the entry
-  // queued and retry it if this fails (offline, etc.).
+  // security rules enforce. Returns a promise so feedback.js can keep the entry
+  // queued and retry it if this fails (offline, etc.). Payloads queued before
+  // attachments existed (no claimKey, no files) are sent the same way.
+  // A queued message goes out as the account that wrote it. feedback.js stamps
+  // payload.byUid (null when written signed out); entries queued before that
+  // stamp existed have no byUid and go out as whoever is signed in, as before.
+  //   written signed out            -> no account, with its claim key
+  //   author signed in now          -> that account
+  //   author signed out since       -> no account, with its claim key (the
+  //                                    author's next sign-in here claims it)
+  //   another account signed in     -> held (code 'held', stays queued), and
+  //                                    after 7 days sent with no account
+  const HOLD_MS = 7 * 24 * 60 * 60 * 1000;
+  function senderFor(payload) {
+    const u = auth.currentUser;
+    if (!payload || !Object.prototype.hasOwnProperty.call(payload, 'byUid')) return { user: u };
+    const by = typeof payload.byUid === 'string' && payload.byUid ? payload.byUid : null;
+    if (!by || !u) return { user: null };
+    if (u.uid === by) return { user: u };
+    const at = Date.parse(payload.at || '');
+    if (isFinite(at) && Date.now() - at < HOLD_MS) return { held: true };
+    return { user: null };
+  }
+
   window.__cloudFeedback = function (payload) {
     if (payload && payload.website) return Promise.resolve();   // honeypot tripped → drop
-    const u = auth.currentUser;
+    const sender = senderFor(payload);
+    if (sender.held) {
+      return Promise.reject(Object.assign(new Error('held for the account that wrote it'), { code: 'held' }));
+    }
+    const u = sender.user;
     const doc = {
       type: payload.type || 'other',
       name: payload.name || '',
@@ -336,12 +381,113 @@
       email: u ? (u.email || null) : null,
       handled: false,                                 // admin marks it done
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastAt: firebase.firestore.FieldValue.serverTimestamp(),   // latest activity in the conversation
+      lastFrom: 'user',
     };
+    // Sent without signing in: the key lets this phone claim the message
+    // later (messages.js). The rules accept it only on an anonymous create.
+    if (!u && typeof payload.claimKey === 'string' && /^[0-9a-f]{32,64}$/.test(payload.claimKey)) {
+      doc.claimKey = payload.claimKey;
+    }
+    const files = cleanFilesMeta(payload.files);
+    if (files.length) doc.files = files;             // declares the files/first-<n> docs that follow
     // Write under the client-generated id when we have one, so retrying a
     // message that may already have landed overwrites it instead of duplicating.
     return payload.fbid
       ? db.collection('feedback').doc(payload.fbid).set(doc)
       : db.collection('feedback').add(doc);
+  };
+
+  /* ---------- a first message with attachments ---------- */
+  // feedback.js calls this instead of the queue when the reader picked files
+  // (they are too big to keep in localStorage). The parent doc goes first and
+  // declares the files; then each file becomes feedback/{fbid}/files/first-<n>.
+  // Resolves when everything is stored. Otherwise rejects with an Error whose
+  // .te is the Telugu line to show and whose .code is
+  //   'offline'  nothing confirmed (no signal, or no answer in 15 s): try again;
+  //   'failed'   the rules refused the message itself;
+  //   'partial'  the message is stored, but some files are not.
+  // feedback.js retries with the same fbid, claim key and picked files. A parent
+  // that may have landed on an earlier try answers "permission-denied" (it
+  // exists, so set() is an update); a parent known to be stored is not sent
+  // again. StotramFiles.upload itself skips files an earlier try stored.
+  const REPORT_PARENT_MS = 15000;
+  const REPORT_TE = {
+    offline: "స్క్రీన్‌షాట్‌లు పంపడానికి ఇంటర్నెట్ కావాలి. కనెక్షన్ చూసి మళ్ళీ 'పంపండి' నొక్కండి.",
+    failed: 'పంపలేకపోయాం. ఇంటర్నెట్ చూసి మళ్ళీ ప్రయత్నించండి.',
+    partial: 'సందేశం చేరింది, కానీ కొన్ని చిత్రాలు పంపలేకపోయాం. మళ్ళీ ప్రయత్నించండి.',
+  };
+  function reportError(code, cause) {
+    const err = new Error(REPORT_TE[code]);
+    err.code = code;
+    err.te = REPORT_TE[code];
+    if (cause) err.cause = cause;
+    return err;
+  }
+  function capped(promise, ms) {
+    return new Promise((resolve, reject) => {
+      const t = setTimeout(() => reject(new Error('timeout')), ms);
+      Promise.resolve(promise).then(
+        (v) => { clearTimeout(t); resolve(v); },
+        (e) => { clearTimeout(t); reject(e); }
+      );
+    });
+  }
+  // fbid -> { parent: '' | 'maybe' | 'stored', anon: was the parent written
+  // signed out }; the entry goes once the report is complete (or the page closes).
+  const reportTries = new Map();
+
+  window.__cloudSendReport = async function (payload, prepared) {
+    if (!payload || typeof payload !== 'object') throw reportError('failed');
+    if (payload.website) return;                     // honeypot tripped → drop, like __cloudFeedback
+    const Files = window.StotramFiles;
+    if (!Files || typeof Files.meta !== 'function' || typeof Files.upload !== 'function') throw reportError('offline');
+    if (navigator.onLine === false) throw reportError('offline');   // say so now, not after 15 s
+    if (!payload.fbid) payload.fbid = 'fb-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    const list = (Array.isArray(prepared) ? prepared : []).filter(Boolean).slice(0, 3);
+    payload.files = Files.meta(list, 'first');
+    let tries = reportTries.get(payload.fbid);
+    if (!tries) {
+      tries = { parent: '', anon: false };
+      reportTries.set(payload.fbid, tries);
+    }
+
+    // 1. The parent doc (the message itself, declaring the files).
+    if (tries.parent !== 'stored') {
+      const anon = !auth.currentUser;
+      try {
+        await capped(window.__cloudFeedback(payload), REPORT_PARENT_MS);
+        tries.anon = anon;                           // this write created it (a set() on an existing doc is refused)
+        tries.parent = 'stored';
+      } catch (e) {
+        if (e && e.code === 'permission-denied' && tries.parent === 'maybe') {
+          tries.parent = 'stored';                   // an earlier try landed after all
+        } else if (e && e.code === 'permission-denied') {
+          console.warn('[cloud] the message was refused', e);
+          throw reportError('failed', e);
+        } else {
+          if (tries.parent === '') tries.anon = anon;
+          tries.parent = 'maybe';                    // may still land (Firestore keeps it pending)
+          console.warn('[cloud] the message did not confirm', e);
+          throw reportError('offline', e);
+        }
+      }
+    }
+    if (!list.length) { reportTries.delete(payload.fbid); return; }
+
+    // 2. The files. A message sent without signing in proves itself with its
+    //    claim key; a signed-in reader owns the parent.
+    const opts = { from: 'user' };
+    if (tries.anon && payload.claimKey) opts.key = payload.claimKey;
+    let result = null;
+    try {
+      result = await Files.upload(db, payload.fbid, 'first', list, opts);
+    } catch (e) {
+      console.warn('[cloud] attachment upload failed', e);   // upload() should never reject
+    }
+    const failed = result ? Math.max(0, Math.floor(Number(result.failed)) || 0) : list.length;
+    if (failed > 0) throw reportError('partial');
+    reportTries.delete(payload.fbid);
   };
 
   /* ---------- shared handle for the other scripts ---------- */

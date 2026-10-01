@@ -145,6 +145,7 @@
     --z-info: 800;        /* info sheet opens above any of the above */
     --z-toast: 900;
     --z-dialog: 950;
+    --z-viewer: 960;      /* attachment viewer: opens from any sheet, nothing opens on top of it */
     --z-skip: 1000;
 }
 

@@ -77,6 +77,66 @@ const clickFirstVisible = (selector) => async (page) => {
 };
 
 const PH = ['phone'], PD = ['phone', 'desktop'], ALL = ['phone', 'small', 'desktop'];
+
+/* ---------- conversations (fake Firebase) ---------- */
+// A drawn test screenshot, as base64 PNG.
+const drawPng = (page, w, h, label) => page.evaluate(([w, h, label]) => {
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#faf8f2'); g.addColorStop(1, '#eef5f1');
+  x.fillStyle = g; x.fillRect(0, 0, w, h);
+  x.fillStyle = '#0d3b3a'; x.fillRect(0, 0, w, Math.round(h * 0.12));
+  x.fillStyle = '#c39a3d'; x.font = Math.round(w / 14) + 'px sans-serif'; x.fillText(label, Math.round(w * 0.06), Math.round(h * 0.3));
+  x.fillStyle = '#8e1f26'; x.lineWidth = 6; x.strokeStyle = '#8e1f26'; x.strokeRect(w * 0.1, h * 0.45, w * 0.8, h * 0.18);
+  return c.toDataURL('image/png').split(',')[1];
+}, [w, h, label]);
+const SMALL_PDF = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n');
+// Seeds two conversations of the signed-in reader 'reader-1' (one with an
+// unread team reply and a screenshot, one older and answered), then signs in.
+async function seedReader(page) {
+  const png = await drawPng(page, 720, 1280, 'పేజీ 12 — తప్పు');
+  await page.evaluate(([png, admin]) => {
+    const fb = window.__fb, now = Date.now();
+    const base = (extra) => Object.assign({ type: 'correction', name: 'లక్ష్మి', contact: '', message: '', screen: 'reader:lalitha', stotram: 'lalitha', stotramTitle: 'శ్రీ లలితా సహస్రనామ స్తోత్రం', lang: 'te', device: 'x', sentAt: new Date(now).toISOString(), uid: 'reader-1', email: 'lakshmi@example.com', handled: false }, extra);
+    const size = atob(png).length;
+    fb.seed('feedback/conv-1', base({ message: '45వ శ్లోకంలో "శివా" బదులు "శివ" అని ఉంది. స్క్రీన్‌షాట్ జత చేశాను.', createdAt: { __ts: now - 3 * 3600e3 }, lastAt: { __ts: now - 20 * 60e3 }, lastFrom: 'admin', lastAdminAt: { __ts: now - 20 * 60e3 }, status: 'answered', handled: true,
+      files: [{ id: 'first-0', name: 'screenshot.webp', type: 'image/png', size: size }] }));
+    fb.seed('feedback/conv-1/files/first-0', { mid: 'first', n: 0, name: 'screenshot.webp', type: 'image/png', size: size, data: { __b64: png }, from: 'user', createdAt: { __ts: now - 3 * 3600e3 } });
+    fb.seed('feedback/conv-1/messages/m-1790000000001-aaaaaa', { from: 'admin', uid: admin, text: 'నమస్కారం లక్ష్మి గారు, చూపించినందుకు ధన్యవాదాలు. ఒక్క ప్రశ్న: మీరు చూసిన పుస్తకం ఏ ప్రచురణ?', files: [], createdAt: { __ts: now - 2 * 3600e3 } });
+    fb.seed('feedback/conv-1/messages/m-1790000000002-bbbbbb', { from: 'user', uid: 'reader-1', text: 'గీతా ప్రెస్ వారి పుస్తకం.', files: [], createdAt: { __ts: now - 90 * 60e3 } });
+    fb.seed('feedback/conv-1/messages/m-1790000000003-cccccc', { from: 'admin', uid: admin, text: 'సరిచేశాం. ఇప్పుడు సరిగ్గా కనిపిస్తుంది. 🙏', files: [], createdAt: { __ts: now - 20 * 60e3 } });
+    fb.seed('feedback/conv-2', base({ type: 'suggestion', stotram: '', stotramTitle: '', screen: 'home', message: 'జపమాలలో ధ్వని తగ్గించే ఎంపిక కావాలి.', createdAt: { __ts: now - 6 * 864e5 }, status: 'closed', handled: true, reply: 'కొత్త సంస్కరణలో చేర్చాం.', repliedAt: { __ts: now - 5 * 864e5 } }));
+    localStorage.setItem('stotramThreadSeen', JSON.stringify({ 'conv-2': new Date(now).toISOString() }));
+    fb.signIn('reader-1', { email: 'lakshmi@example.com', displayName: 'Lakshmi' });
+  }, [png, await page.evaluate(() => window.ADMIN_UID)]);
+  await page.waitForTimeout(400);
+}
+async function openConv(page, fbid) {
+  await page.evaluate(() => openMessages());
+  await page.locator('#messagesList .message-item[data-fbid="' + fbid + '"] .message-open').click();
+  await page.waitForFunction(() => document.querySelectorAll('#threadBody .bubble').length >= 4, null, { timeout: 10000 }).catch(() => {});
+  await page.waitForFunction(() => { const i = document.querySelector('#threadBody img.attach-thumb'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 10000 }).catch(() => {});
+  return true;
+}
+async function seedAdmin(page) {
+  const png = await drawPng(page, 720, 1280, 'పేజీ 12 — తప్పు');
+  await page.evaluate(([png]) => {
+    const fb = window.__fb, now = Date.now(), admin = window.ADMIN_UID;
+    const base = (extra) => Object.assign({ type: 'correction', name: 'రవి', contact: '98765 43210', message: '', screen: 'reader:vishnu', stotram: 'vishnu', stotramTitle: 'శ్రీ విష్ణు సహస్రనామ స్తోత్రం', lang: 'te', device: 'Android Chrome', sentAt: new Date(now).toISOString(), uid: null, email: null, handled: false }, extra);
+    const size = atob(png).length;
+    fb.seed('feedback/c1', base({ message: '27వ శ్లోకంలో ఒక అక్షరం తప్పుగా ఉంది. ఫొటో జత చేశాను.', claimKey: '0123456789abcdef0123456789abcdef', createdAt: { __ts: now - 2 * 3600e3 }, lastAt: { __ts: now - 15 * 60e3 }, lastFrom: 'user',
+      files: [{ id: 'first-0', name: 'photo.webp', type: 'image/png', size: size }] }));
+    fb.seed('feedback/c1/files/first-0', { mid: 'first', n: 0, name: 'photo.webp', type: 'image/png', size: size, data: { __b64: png }, from: 'user', createdAt: { __ts: now - 2 * 3600e3 } });
+    fb.seed('feedback/c1/messages/m-1790000000001-aaaaaa', { from: 'admin', uid: admin, text: 'ధన్యవాదాలు రవి గారు. పుస్తకం పేరు చెప్పగలరా?', files: [], createdAt: { __ts: now - 60 * 60e3 } });
+    fb.seed('feedback/c1/messages/m-1790000000002-bbbbbb', { from: 'user', uid: null, text: 'TTD ప్రచురణ.', files: [], createdAt: { __ts: now - 15 * 60e3 } });
+    fb.seed('feedback/c2', base({ type: 'problem', name: 'సుధ', contact: '', uid: 'reader-2', email: 'sudha@example.com', stotram: '', stotramTitle: '', screen: 'home', message: 'జపమాల లెక్క రీసెట్ అవుతోంది.', status: 'in_progress', createdAt: { __ts: now - 864e5 }, lastAt: { __ts: now - 864e5 }, lastFrom: 'user' }));
+    fb.seed('feedback/c3', base({ type: 'suggestion', name: 'గోపాల్', contact: 'gopal@example.com', stotram: '', stotramTitle: '', screen: 'home', message: 'అక్షరాలు ఇంకా పెద్దగా కావాలి.', status: 'answered', handled: true, reply: 'అ+ బటన్‌తో 48 వరకు పెంచవచ్చు.', repliedAt: { __ts: now - 3 * 864e5 }, createdAt: { __ts: now - 4 * 864e5 } }));
+    fb.signIn(admin, { email: 'admin@example.com', displayName: 'Admin' });
+  }, [png]);
+  await page.waitForFunction(() => document.querySelectorAll('#feedbackList .ad-fb-item').length > 0, null, { timeout: 10000 }).catch(() => {});
+  await page.evaluate(() => { if (typeof showTab === 'function') showTab('feedback'); });
+  await page.waitForTimeout(300);
+}
 const SCENES = [
   { name: 'home', url: '/#home', views: ALL, maxScreens: 3 },
   { name: 'home-seeded', url: '/#home', views: PD, seed: true, maxScreens: 3 },
@@ -140,11 +200,61 @@ const SCENES = [
       return true;
     } },
   { name: 'motion', url: '/#home', views: PH, motion: true, settle: 1500 },
+  { name: 'convo-attach', url: '/', views: ['phone', 'small'], fake: true, run: async (page) => {
+      await page.evaluate(() => openFeedback());
+      await page.locator('#fbName').fill('లక్ష్మి');
+      await page.locator('#fbMessage').fill('45వ శ్లోకంలో అక్షర తప్పు ఉంది.');
+      const png = Buffer.from(await drawPng(page, 720, 1280, 'పేజీ 12'), 'base64');
+      await page.locator('#fbFiles').setInputFiles([{ name: 'screenshot.png', mimeType: 'image/png', buffer: png }, { name: 'book-page.pdf', mimeType: 'application/pdf', buffer: SMALL_PDF }]);
+      await page.waitForFunction(() => document.querySelectorAll('#fbAttachList .attach-item').length === 2 && !document.querySelector('#fbAttachList .attach-loading'), null, { timeout: 10000 });
+      await page.locator('#fbAttach').scrollIntoViewIfNeeded();
+      return true;
+    } },
+  { name: 'convo-list', url: '/', views: ['phone', 'small'], fake: true, run: async (page) => { await seedReader(page); await page.evaluate(() => openMessages()); await page.waitForTimeout(500); return true; } },
+  { name: 'convo-thread', url: '/', views: ['phone', 'small', 'desktop'], fake: true, run: async (page) => { await seedReader(page); return openConv(page, 'conv-1'); } },
+  { name: 'convo-composer', url: '/', views: ['phone'], fake: true, run: async (page) => {
+      await seedReader(page); await openConv(page, 'conv-1');
+      await page.locator('#threadText').fill('సరే, ధన్యవాదాలు!');
+      const png = Buffer.from(await drawPng(page, 600, 900, 'కొత్త పేజీ'), 'base64');
+      await page.locator('#threadFiles').setInputFiles([{ name: 'new.png', mimeType: 'image/png', buffer: png }]);
+      await page.waitForFunction(() => document.querySelectorAll('#threadAttachList .attach-item').length === 1, null, { timeout: 10000 });
+      await page.locator('#threadComposer').scrollIntoViewIfNeeded();
+      return true;
+    } },
+  { name: 'convo-signedout', url: '/', views: ['phone'], fake: true, storage: {
+      stotramMyMessages: JSON.stringify([{ fbid: 'fb-local-1', type: 'problem', message: 'పేజీ తెరుచుకోవడం లేదు.', stotramTitle: '', at: new Date().toISOString(), claimKey: '0123456789abcdef0123456789abcdef', claimed: false }]),
+    }, run: async (page) => {
+      await page.evaluate(() => openMessages());
+      await page.locator('#messagesList .message-open').first().click();
+      return true;
+    } },
+  { name: 'convo-viewer', url: '/', views: ['phone'], fake: true, run: async (page) => {
+      await seedReader(page); await openConv(page, 'conv-1');
+      await page.locator('#threadBody .attach-item[data-kind="image"] button').first().click();
+      await page.locator('.file-viewer:not([hidden])').waitFor({ timeout: 10000 });
+      await page.waitForTimeout(300);
+      return true;
+    } },
+  { name: 'admin-convo', url: '/admin.html', views: ['desktop', 'phone'], fake: true, maxScreens: 3, run: async (page) => {
+      await seedAdmin(page);
+      await page.locator('#fbFilters [data-fbfilter="waiting"]').click();
+      await page.locator('#feedbackList .ad-fb-item[data-id="c1"] details.ad-convo > summary').click();
+      await page.waitForFunction(() => { const i = document.querySelector('#feedbackList .ad-fb-item[data-id="c1"] img.attach-thumb'); return i && i.complete && i.naturalWidth > 0; }, null, { timeout: 10000 }).catch(() => {});
+      await page.locator('#feedbackList .ad-fb-item[data-id="c1"] textarea[data-reply]').fill('సరిచేశాం. ధన్యవాదాలు!');
+      return true;
+    } },
   { name: 'preview', url: '/__preview.html', views: ['desktop'], maxScreens: 4 },
 ];
 
-function serve(route) {
+// Scenes with fake: true get tools/fake-firebase.js in place of the Firebase SDK,
+// so conversations and the admin dashboard can be shown with seeded data.
+const FAKE_FB = path.resolve(__dirname, 'fake-firebase.js');
+function serve(route, scene) {
   const url = new URL(route.request().url());
+  if (scene && scene.fake && url.hostname === 'www.gstatic.com') {
+    if (url.pathname.endsWith('/firebase-app-compat.js')) return route.fulfill({ status: 200, contentType: 'text/javascript', body: fs.readFileSync(FAKE_FB) });
+    if (/\/firebase-(auth|firestore)-compat\.js$/.test(url.pathname)) return route.fulfill({ status: 200, contentType: 'text/javascript', body: '' });
+  }
   if (url.origin !== ORIGIN) {
     if (/googletagmanager|google-analytics/.test(url.hostname)) return route.abort();
     return route.continue();
@@ -228,7 +338,7 @@ async function probePage(page, width, kind) {
           page.on('console', (m) => {
             if (m.type() === 'error' && !/ERR_FAILED/.test(m.text())) entry.errors.push('console: ' + m.text());
           });
-          await page.route('**/*', serve);
+          await page.route('**/*', (route) => serve(route, scene));
           await page.goto(ORIGIN + scene.url, { waitUntil: 'load' });
           await page.evaluate(() => document.fonts && document.fonts.ready);
           await page.waitForTimeout(500);

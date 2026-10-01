@@ -104,6 +104,7 @@
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --z-toast: 900;
     --z-dialog: 950;
+    --z-viewer: 960;     /* attachment viewer: opens over anything, nothing opens over it */
     --z-skip: 1000;
   }
   @media (min-width: 600px) {
@@ -883,7 +884,10 @@
   .ad-rev-item { padding-top: 8px; border-top: 1px dashed var(--color-zari-300); overflow-wrap: anywhere; }
   .ad-rev-item:first-of-type { padding-top: 0; border-top: 0; }
 
-  /* ---------- Segmented filter (feedback) ---------- */
+  /* ---------- Segmented filter (feedback) ----------
+     Five segments. Phones: 2 + 2 + one full-width row ("All"). 600px+:
+     three over two on a 6-column grid, so both rows fill the width.
+     900px+: one row of five. */
   .ad-seg {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -892,8 +896,18 @@
     border-radius: 16px;
     background: var(--color-sand);
   }
+  .ad-seg > .ad-seg-btn:last-child:nth-child(odd) { grid-column: 1 / -1; }
   @media (min-width: 600px) {
-    .ad-seg { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ad-seg { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .ad-seg > .ad-seg-btn { grid-column: span 2; }
+    .ad-seg > .ad-seg-btn:nth-child(n+4) { grid-column: span 3; }
+    .ad-seg > .ad-seg-btn:last-child:nth-child(odd) { grid-column: span 3; }
+  }
+  @media (min-width: 900px) {
+    .ad-seg { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .ad-seg > .ad-seg-btn,
+    .ad-seg > .ad-seg-btn:nth-child(n+4),
+    .ad-seg > .ad-seg-btn:last-child:nth-child(odd) { grid-column: auto; }
   }
   .ad-seg-btn {
     display: inline-flex;
@@ -913,7 +927,8 @@
     transition: background-color var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   }
   .ad-seg-en { display: none; font-weight: 500; color: var(--color-ink-3); }
-  /* English gloss only where all four segments fit it on one line. */
+  /* English gloss only on wide screens (a segment may then wrap to two
+     lines; the row keeps every segment the same height). */
   @media (min-width: 1024px) {
     .ad-seg-en { display: inline; }
   }
@@ -992,16 +1007,24 @@
   .ad-meta { display: inline-flex; align-items: center; gap: 6px; min-width: 0; overflow-wrap: anywhere; }
   .ad-meta .icon-inline { width: 17px; height: 17px; color: var(--color-peacock-700); }
   .ad-meta a { font-weight: 600; }
-  .ad-fb-reply {
-    margin-top: 12px;
-    padding: 10px 14px 12px;
-    border-left: 3px solid var(--color-peacock-600);
-    border-radius: 4px 14px 14px 4px;
-    background: var(--color-peacock-50);
+  /* Who wrote last, and when. Waiting for the team = zari, the ornament
+     colour (kumkum stays for errors and the unread badge). */
+  .ad-fb-activity {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--color-ink-2);
+    overflow-wrap: anywhere;
   }
-  .ad-fb-reply b { display: block; font-size: var(--text-sm); color: var(--color-peacock-800); }
-  .ad-fb-reply p { margin-top: 2px; font-size: 16px; line-height: 1.7; color: var(--color-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
-  .ad-fb-reply small { display: block; margin-top: 4px; color: var(--color-ink-3); }
+  .ad-fb-activity .icon-inline { width: 18px; height: 18px; margin-top: 3px; color: var(--color-peacock-700); }
+  .ad-fb-activity[data-from="admin"] .icon-inline { color: var(--color-leaf-700); }
+  .ad-fb-activity[data-waiting] { color: var(--color-zari-800); }
+  .ad-fb-activity[data-waiting] .icon-inline { color: var(--color-zari-700); }
+  .ad-fb-activity time { font-weight: 500; color: var(--color-ink-3); white-space: nowrap; }
   .ad-fb-controls {
     display: grid;
     gap: 12px;
@@ -1070,8 +1093,269 @@
   .ad-chev { transition: transform var(--dur-2) var(--ease-out); }
   details[open] > summary .ad-chev { transform: rotate(180deg); }
 
+  /* ---------- Conversation (inside .ad-compose) ----------
+     The admin's own messages sit on the right, the reader's on the left. */
+  .ad-convo-count { display: inline-flex; }
+  .ad-convo-count:empty { display: none; }
+  .ad-thread-box { min-width: 0; }
+  .ad-thread {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+    padding: 4px 0 14px;
+  }
+  .bubble {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
+    max-width: min(92%, 640px);
+    padding: 10px 14px 8px;
+    border: 1px solid var(--color-line);
+    border-radius: 16px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-xs);
+  }
+  .bubble-user { justify-self: start; border-bottom-left-radius: 6px; }
+  .bubble-team {
+    justify-self: end;
+    border-color: var(--color-peacock-200);
+    border-bottom-right-radius: 6px;
+    background: var(--color-peacock-50);
+  }
+  .bubble-who {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--color-ink-2);
+    overflow-wrap: anywhere;
+  }
+  .bubble-who .icon-inline { width: 16px; height: 16px; color: var(--color-ink-3); }
+  .bubble-team .bubble-who { color: var(--color-peacock-800); }
+  .bubble-team .bubble-who .icon-inline { color: var(--color-zari-700); }
+  .bubble-text {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--color-ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .bubble-files { min-width: 0; margin-top: 2px; }
+  .bubble-time {
+    justify-self: end;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--color-ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .ad-thread-state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: var(--color-peacock-50);
+    color: var(--color-peacock-800);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+  }
+  .ad-thread-state > span { flex: 1 1 220px; min-width: 0; }
+  .ad-thread-state .icon-inline { width: 18px; height: 18px; }
+  .ad-thread-state[data-kind="error"] { background: var(--color-kumkum-100); color: var(--color-kumkum-800); }
+  .ad-guest-note { margin: 0 0 12px; }
+
+  /* Composer: the reply box, the attach row, send */
+  .ad-composer { min-width: 0; padding-top: 12px; border-top: 1px dashed var(--color-line-2); }
+  .ad-attach { display: grid; gap: 8px; margin-top: 10px; }
+  .ad-attach[hidden] { display: none; }
+  .ad-attach > .ad-btn { justify-self: start; }
+  .ad-attach-hint { font-size: var(--text-xs); line-height: 1.6; color: var(--color-ink-3); }
+  .ad-file-input { display: none; }
+
+  /* ---------- Attachments (markup from attachments.js, contract §5) ----------
+     div.attach-list > div.attach-item[data-kind] > button (thumbnail or PDF
+     chip), span.attach-name, span.attach-size, button.attach-remove. */
+  .attach-list { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; min-width: 0; }
+  .attach-list:empty { display: none; }
+  .attach-item {
+    display: inline-grid;
+    grid-template-columns: auto minmax(0, 1fr);   /* the remove button adds a third column */
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 10px;
+    max-width: 100%;
+    min-width: 0;
+    padding: 6px 8px 6px 6px;
+    border: 1px solid var(--color-line-2);
+    border-radius: 14px;
+    background: var(--color-paper);
+  }
+  .attach-item[aria-busy="true"] > button { background: linear-gradient(90deg, var(--color-sand) 0%, var(--color-paper) 50%, var(--color-sand) 100%); background-size: 200% 100%; animation: ad-shimmer 1.4s linear infinite; }
+  .attach-item > :first-child { grid-row: 1 / span 2; grid-column: 1; }
+  .attach-item > button:first-child {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 10px;
+    background: var(--color-sand);
+  }
+  .bubble-files .attach-item > button:first-child { width: 88px; height: 88px; }
+  .attach-thumb { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .attach-pdf {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    background: var(--color-kumkum-100);
+    color: var(--color-kumkum-700);
+  }
+  .attach-pdf .icon-inline, .attach-pdf svg { width: 30px; height: 30px; }
+  .attach-name {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: end;
+    min-width: 0;
+    max-width: 24ch;
+    overflow: hidden;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--color-ink);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .attach-size {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--color-ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .attach-remove {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid rgb(142 31 38 / .3);
+    border-radius: 999px;
+    background: var(--color-white);
+    color: var(--color-kumkum-700);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+  }
+  .attach-remove .icon-inline, .attach-remove svg { width: 20px; height: 20px; }
+  @media (hover: hover) {
+    .attach-remove:not(:disabled):hover { border-color: var(--color-kumkum-700); background: var(--color-kumkum-100); }
+    .attach-item > button:first-child:not(:disabled):hover { box-shadow: 0 0 0 2px var(--color-peacock-300); }
+  }
+  .attach-error {
+    flex: 1 1 100%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--color-kumkum-100);
+    color: var(--color-kumkum-800);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+  .attach-item > .attach-error { align-self: stretch; display: grid; place-items: center; max-width: 12ch; padding: 6px 8px; text-align: center; }
+  .attach-loading {
+    flex: 1 1 100%;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--color-peacock-50);
+    color: var(--color-peacock-800);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  /* Full-screen image viewer (appended to <body> by attachments.js, shown
+     and hidden with the hidden attribute). The backdrop closes it. */
+  .file-viewer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-viewer);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: calc(72px + env(safe-area-inset-top, 0px)) 12px calc(20px + var(--safe-bottom));
+    background: rgb(8 29 28 / .92);
+    animation: ad-fade var(--dur-2) var(--ease-out);
+  }
+  .file-viewer[hidden] { display: none; }
+  .file-viewer-img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-lg);
+  }
+  .file-viewer-close {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    right: 12px;
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1.5px solid rgb(226 198 124 / .6);
+    border-radius: 999px;
+    background: rgb(255 255 255 / .1);
+    color: var(--color-ivory);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out);
+  }
+  .file-viewer-close .icon-inline, .file-viewer-close svg { width: 24px; height: 24px; }
+  .file-viewer-close:focus-visible { outline-color: var(--color-zari-300); }
+  @media (hover: hover) {
+    .file-viewer-close:hover { border-color: var(--color-zari-300); background: rgb(255 255 255 / .18); }
+  }
+
+  /* Notify: one-tap buttons that open the admin's own mail / WhatsApp / SMS app */
+  .ad-notify {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 12px 14px 14px;
+    border: 1px solid var(--color-zari-200);
+    border-radius: 14px;
+    background: var(--color-zari-100);
+  }
+  .ad-notify > .ad-group-label { display: flex; align-items: center; gap: 6px; color: var(--color-zari-800); }
+  .ad-notify > .ad-group-label .icon-inline { width: 17px; height: 17px; }
+  .ad-notify .ad-hint { margin-top: 0; color: var(--color-ink-2); }
+  .ad-notify .ad-hint .icon-inline { color: var(--color-zari-800); }
+  .ad-notify-links { display: flex; flex-wrap: wrap; gap: 8px; }
+  .ad-notify-btn { background: var(--color-white); }
+  .ad-notify-btn[data-notify="email"] .icon-inline { color: var(--color-peacock-700); }
+  .ad-notify-btn[data-notify="whatsapp"] .icon-inline { color: var(--color-leaf-700); }
+  .ad-notify-btn[data-notify="sms"] .icon-inline { color: var(--color-zari-700); }
+  @media (max-width: 599px) {
+    .ad-notify-btn { flex: 1 1 auto; }
+  }
+
   .ad-fb-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .ad-fb-foot .ad-spacer { flex: 1 1 auto; }
+  .ad-fb-foot > .ad-msg-slot { flex: 0 1 auto; min-width: 0; }
   .ad-fb-device > summary {
     display: inline-flex;
     align-items: center;

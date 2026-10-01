@@ -1,15 +1,18 @@
 /* ============================================================
    Overlays (CSS-1): search, the four .sheet overlays (account hub,
-   what's new, my messages, ⓘ info), feedback, the day-sheet container,
-   the in-app confirm / prompt dialog and the cloud toast.
+   what's new, my messages with its conversation view, ⓘ info), feedback,
+   the attachment list and viewer (attachments.js), the day-sheet
+   container, the in-app confirm / prompt dialog and the cloud toast.
    Markup: contract §3 "Overlays", §4.6, 4.10, 4.14, 4.15, 4.16; look: §7.
+   Conversations and attachments: docs/conversations-contract.md §3.4-3.6, §5.
 
    Rules of this file:
    - behavior.css owns position / inset / z-index / display / overflow of
      every overlay, the .day-sheet placement (fixed, bottom, margin, height
      cap, scrolling), the .sc-overlay fade, .sc-box width, .sc-msg
-     white-space, the .cloud-toast placement / transform / fade and the
-     .listening mic state. This file adds visuals and inner layout only.
+     white-space, the .cloud-toast placement / transform / fade, the
+     .file-viewer placement (fixed, inset, z-index) and the .listening mic
+     state. This file adds visuals and inner layout only.
    - .day-sheet-overlay never gets transform, filter, backdrop-filter,
      contain or will-change (the fixed .day-sheet lives inside it).
    - Entrances animate FROM a hidden state TO the visible base state, with
@@ -580,26 +583,62 @@ details.account-advanced {
 }
 
 /* ============================================================
-   My messages (§4.15)
+   My messages: the list (§4.15, conversations §3.4). Each row is one
+   button (.message-open), so the whole row is the tap target.
 ============================================================ */
 .messages-list {
     display: grid;
     gap: var(--sp-3);
     margin-top: var(--sp-1);
 }
-.message-item {
-    padding: 14px var(--sp-4);
+.message-item { min-width: 0; }
+.message-open {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 10px;
+    row-gap: var(--sp-2);
+    align-items: start;
+    width: 100%;
+    min-height: 64px;
+    padding: 14px 12px 14px var(--sp-4);
     border: 1px solid var(--line);
     border-radius: var(--r);
     background: var(--ivory);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    font-size: var(--fs-md);
+    text-align: left;
+    transition: border-color var(--dur-2) var(--ease-out), background-color var(--dur-2) var(--ease-out),
+                transform var(--dur-1) var(--ease-out);
+}
+.message-open:hover { border-color: var(--zari-300); background: var(--paper); }
+.message-open:active { transform: scale(.99); }
+.message-open > .message-top,
+.message-open > .message-text,
+.message-open > .message-meta { grid-column: 1; min-width: 0; }
+.message-chev {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    align-self: center;
+    width: 20px;
+    height: 20px;
+    color: var(--ink-3);
+}
+/* A new team reply: zari edge + kumkum dot; the words are in a
+   visually hidden span next to the dot, and the status pill says it too. */
+.message-item[data-unread="true"] > .message-open {
+    border-color: var(--zari-500);
+    background: var(--paper);
+    box-shadow: inset 4px 0 0 var(--zari-500), var(--shadow-sm);
 }
 .message-top {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
     gap: var(--sp-2);
 }
+.message-top .status-pill { margin-left: auto; }
 .message-type {
     display: inline-flex;
     align-items: center;
@@ -611,55 +650,415 @@ details.account-advanced {
     color: var(--peacock-800);
 }
 .message-type .icon-inline { width: 18px; height: 18px; }
+.message-unread {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--kumkum-700);
+    box-shadow: 0 0 0 2px var(--paper);
+}
+/* The first message, clamped to three lines */
 .message-text {
-    margin-top: var(--sp-2);
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
     font-size: 16px;
     line-height: 1.65;
     color: var(--ink);
-    white-space: pre-line;          /* keep the line breaks the reader typed */
     overflow-wrap: anywhere;
 }
 .message-meta {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-top: var(--sp-2);
     font-size: var(--fs-xs);
     line-height: 1.45;
     color: var(--ink-3);
 }
 .message-meta .icon-inline { width: 16px; height: 16px; }
 .message-meta span { min-width: 0; overflow-wrap: anywhere; }
-/* Our reply: a peacock bubble with a 3px peacock bar on the left */
-.message-reply {
-    margin-top: var(--sp-3);
-    padding: var(--sp-3) 14px;
-    border-left: 3px solid var(--peacock-600);
-    border-radius: 4px var(--r-sm) var(--r-sm) 4px;
-    background: var(--peacock-50);
-}
-.message-reply b {
-    display: block;
-    font-size: var(--fs-sm);
-    font-weight: 650;
-    line-height: 1.4;
-    color: var(--peacock-800);
-}
-.message-reply p {
-    margin-top: var(--sp-1);
-    font-size: 16px;
-    line-height: 1.65;
-    color: var(--ink);
-    white-space: pre-line;
+.messages-list-view > .btn-block { margin-top: var(--sp-4); }
+/* A bubble or row scrolled into view keeps a margin from the sheet's edge */
+.messages-sheet { scroll-padding-block: var(--sp-4); }
+
+/* ============================================================
+   My messages: one conversation (#messagesThread)
+   Team bubbles on the left (paper, zari edge), the reader's on the right
+   (peacock-50). Every bubble names its sender and time in words, so
+   position and colour are never the only signal.
+============================================================ */
+.messages-thread { min-width: 0; }
+.thread-back { gap: 6px; padding-left: var(--sp-3); }
+.thread-back .icon-inline { width: 20px; height: 20px; }
+.thread-head { margin-top: var(--sp-3); }
+.thread-title {
+    font-family: var(--font-serif);
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--peacock-900);
     overflow-wrap: anywhere;
 }
-.message-reply small {
+.thread-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px var(--sp-3);
+    margin-top: 6px;
+}
+.thread-stotram {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    font-size: var(--fs-sm);
+    line-height: 1.45;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+}
+.thread-stotram .icon-inline { width: 18px; height: 18px; color: var(--zari-700); }
+.thread-stotram span { min-width: 0; }
+
+/* The log: a sunken ivory panel, so paper team bubbles stand out on the paper sheet */
+.thread-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-3);
+    margin-top: var(--sp-3);
+    padding: var(--sp-3) 10px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    background: var(--ivory);
+}
+.thread-body:empty { display: none; }
+.bubble {
+    max-width: 88%;
+    min-width: 0;
+    padding: 10px 14px var(--sp-2);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    color: var(--ink);
+    animation: bubble-in var(--dur-2) var(--ease-out);
+}
+.bubble-user {
+    align-self: flex-end;
+    border-color: var(--peacock-200);
+    border-bottom-right-radius: 6px;
+    background: var(--peacock-50);
+}
+.bubble-team {
+    align-self: flex-start;
+    border-color: var(--zari-200);
+    border-left: 3px solid var(--zari-500);
+    border-bottom-left-radius: 6px;
+    background: var(--paper);
+    box-shadow: var(--shadow-xs);
+}
+.bubble-from {
+    display: block;
+    font-size: var(--fs-xs);
+    font-weight: 700;
+    line-height: 1.4;
+}
+.bubble-user .bubble-from { color: var(--peacock-800); }
+.bubble-team .bubble-from { color: var(--zari-800); }
+.bubble-text {
+    margin-top: var(--sp-1);
+    font-size: var(--fs-md);
+    line-height: 1.7;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.bubble-files { margin-top: var(--sp-2); min-width: min(220px, 100%); }
+.bubble-files > .attach-list { margin-top: 0; }
+.bubble-time {
     display: block;
     margin-top: 6px;
-    line-height: 1.45;
+    font-size: var(--fs-xs);
+    line-height: 1.4;
     color: var(--ink-3);
 }
-.messages-sheet > .btn-block { margin-top: var(--sp-4); }
+.bubble-user .bubble-time { text-align: right; }
+@keyframes bubble-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Loading / could-not-load line under the log (a status region: kept in the tree when empty) */
+.thread-note {
+    font-size: var(--fs-sm);
+    line-height: 1.6;
+    color: var(--ink-3);
+}
+.thread-note:not(:empty) { margin-top: var(--sp-2); }
+
+/* Not signed in, or not on this account yet */
+.thread-signin {
+    margin-top: var(--sp-4);
+    padding: var(--sp-4);
+    border: 1px solid var(--peacock-100);
+    border-radius: var(--r-lg);
+    background: var(--peacock-50);
+}
+.thread-signin-note {
+    font-size: var(--fs-md);
+    line-height: 1.7;
+    color: var(--ink);
+}
+.thread-signin .btn { margin-top: var(--sp-3); }
+
+/* Reply composer */
+.thread-composer {
+    margin-top: var(--sp-4);
+    padding-top: var(--sp-4);
+    border-top: 1px solid var(--line);
+}
+.thread-label {
+    display: block;
+    margin-bottom: var(--sp-2);
+    font-size: 16px;
+    font-weight: 650;
+    line-height: 1.45;
+    color: var(--ink);
+}
+.thread-text { min-height: 112px; resize: vertical; }
+.thread-text[aria-invalid="true"] {
+    border-color: var(--kumkum-700);
+    box-shadow: 0 0 0 3px var(--kumkum-100);
+}
+.thread-attach { margin-top: var(--sp-3); }
+.thread-send { min-height: 54px; margin-top: var(--sp-4); }
+.thread-send[aria-disabled="true"] { opacity: .6; cursor: progress; box-shadow: none; }
+.thread-status {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+}
+.thread-status:not(:empty) { margin-top: var(--sp-3); }
+.thread-status[data-tone="ok"] { color: var(--leaf-700); }
+.thread-status[data-tone="error"]:not(:empty) {
+    padding: 10px 14px;
+    border-left: 3px solid var(--kumkum-700);
+    border-radius: 4px var(--r-sm) var(--r-sm) 4px;
+    background: var(--kumkum-100);
+    color: var(--kumkum-800);
+}
+
+/* ============================================================
+   Attachments (attachments.js §5): the picked list in the feedback form
+   and the composer, and the thumbnails inside bubbles.
+   Each item: [64px thumbnail / file tile] [name over size] [44px remove].
+============================================================ */
+.fb-attach { margin-top: var(--sp-4); }
+.fb-attach > .btn,
+.thread-attach > .btn { max-width: 100%; }
+.fb-attach-hint {
+    margin-top: var(--sp-2);
+    font-size: var(--fs-xs);
+    line-height: 1.6;
+    color: var(--ink-3);
+}
+.attach-list {
+    display: grid;
+    gap: var(--sp-2);
+    min-width: 0;
+    margin-top: var(--sp-3);
+}
+.attach-list:empty { display: none; }
+.attach-item {
+    display: grid;
+    grid-template-columns: minmax(64px, max-content) minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: var(--sp-3);
+    row-gap: 2px;
+    align-items: center;
+    min-width: 0;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--white);
+}
+.attach-item > .attach-thumb,
+.attach-item > .attach-pdf,
+.attach-item > .attach-icon,
+.attach-item > .attach-loading,
+.attach-item > button:not(.attach-remove) { grid-column: 1; grid-row: 1 / span 2; }
+.attach-item > .attach-name { grid-column: 2; grid-row: 1; align-self: end; }
+.attach-item > .attach-size { grid-column: 2; grid-row: 2; align-self: start; }
+.attach-item > .attach-remove { grid-column: 3; grid-row: 1 / span 2; }
+/* Thumbnails (tap / Enter opens the viewer) */
+.attach-thumb {
+    display: block;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    background: var(--sand);
+    object-fit: cover;
+}
+.attach-item > button:not(.attach-remove) {
+    display: block;
+    width: 64px;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: var(--sand);
+    overflow: hidden;
+    cursor: zoom-in;
+}
+.attach-item > button:not(.attach-remove) .attach-thumb { width: 100%; height: 100%; }
+.attach-item > button:not(.attach-remove):hover { box-shadow: 0 0 0 2px var(--zari-300); }
+/* A PDF chip (and the name-only tiles messages.js shows before sign-in) */
+.attach-pdf,
+.attach-icon {
+    display: inline-grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    background: var(--zari-100);
+    color: var(--zari-800);
+}
+.attach-item[data-kind="image"] .attach-icon { background: var(--peacock-50); color: var(--peacock-700); }
+.attach-pdf svg,
+.attach-icon svg { width: 28px; height: 28px; }
+.attach-name {
+    min-width: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.attach-size {
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+}
+.attach-remove {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--line-2);
+    border-radius: 50%;
+    background: var(--sand);
+    color: var(--ink-2);
+    transition: background-color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out),
+                color var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
+}
+.attach-remove svg { width: 20px; height: 20px; }
+.attach-remove:hover { border-color: var(--kumkum-700); background: var(--kumkum-100); color: var(--kumkum-800); }
+.attach-remove:active { transform: scale(.93); }
+.attach-error {
+    padding: 10px 14px;
+    border-left: 3px solid var(--kumkum-700);
+    border-radius: 4px var(--r-sm) var(--r-sm) 4px;
+    background: var(--kumkum-100);
+    color: var(--kumkum-800);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+/* A thumbnail that could not load: attachments.js puts the error in its place */
+.attach-item > .attach-error {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: stretch;
+    display: grid;
+    place-items: center;
+    min-height: 64px;
+    padding: 6px 10px;
+    border-left-width: 0;
+    border-radius: 10px;
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+    text-align: center;
+    overflow-wrap: normal;
+}
+/* Where :has() works, the name keeps the full width and the error sits under it */
+.attach-item:has(> .attach-error) { grid-template-columns: minmax(0, 1fr); padding: var(--sp-2) var(--sp-3); }
+.attach-item:has(> .attach-error) > .attach-name { grid-column: 1; grid-row: 1; }
+.attach-item:has(> .attach-error) > .attach-size { grid-column: 1; grid-row: 2; }
+.attach-item:has(> .attach-error) > .attach-error {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 0;
+    margin-top: 6px;
+    padding: var(--sp-2) var(--sp-3);
+    place-items: start;
+    text-align: left;
+}
+/* Still preparing / loading: a sand tile that breathes (still under reduced motion) */
+.attach-loading {
+    display: grid;
+    place-items: center;
+    min-width: 64px;
+    min-height: 64px;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: 10px;
+    background: var(--sand);
+    color: var(--ink-3);
+    font-size: var(--fs-xs);
+    line-height: 1.4;
+    text-align: center;
+    animation: attach-breathe 1.4s ease-in-out infinite;
+}
+@keyframes attach-breathe { 50% { opacity: .6; } }
+
+/* ============================================================
+   Attachment viewer (div.file-viewer, one per page). Placement and
+   stacking are in behavior.css; this is the look and inner layout.
+============================================================ */
+.file-viewer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(68px, env(safe-area-inset-top, 0px)) max(var(--sp-3), var(--safe-right))
+             max(var(--sp-5), var(--safe-bottom)) max(var(--sp-3), var(--safe-left));
+    background: rgb(8 29 28 / .92);
+    animation: overlay-fade var(--dur-2) var(--ease-out);
+}
+.file-viewer-img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(100vh - 100px);
+    max-height: calc(100dvh - 100px);
+    width: auto;
+    height: auto;
+    border-radius: var(--r-sm);
+    background: var(--white);
+    box-shadow: var(--shadow-lg);
+    object-fit: contain;
+}
+.file-viewer-close {
+    position: absolute;
+    top: max(var(--sp-3), env(safe-area-inset-top, 0px));
+    right: max(var(--sp-3), var(--safe-right));
+    display: inline-grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--paper);
+    color: var(--ink);
+    box-shadow: var(--shadow);
+    font-family: var(--font-ui);
+    font-size: var(--fs-xl);
+    line-height: 1;
+}
+.file-viewer-close svg { width: 24px; height: 24px; }
+.file-viewer-close:hover { background: var(--white); }
+.file-viewer-close:focus-visible { outline-color: var(--zari-300); }
 
 /* ============================================================
    ⓘ Info sheet (§4.16)
@@ -822,6 +1221,13 @@ details.account-advanced {
     line-height: 1.55;
 }
 .fb-error:empty { display: none; }
+/* "Please wait" lines (preparing a picture, sending): calm peacock, not the red error look */
+.fb-error[data-state="busy"] {
+    border-left-color: var(--peacock-600);
+    background: var(--peacock-50);
+    color: var(--peacock-900);
+    font-weight: 500;
+}
 .fb-submit {
     min-height: 54px;
     margin-top: var(--sp-5);
