@@ -105,14 +105,14 @@
             <label class="ad-label" for="edSlokams">శ్లోకాలు / Verses <span aria-hidden="true">*</span></label>
             <span id="edVerseCount" class="ad-counter" aria-live="polite"></span>
           </div>
-          <p class="ad-hint"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg><span>ఒక్కో శ్లోకం మధ్య ఒక ఖాళీ లైన్ వదలండి. శ్లోకాల సంఖ్య మారకపోతే ధ్యానం, ఫలశ్రుతి వంటి లేబుళ్ళు అలాగే ఉంటాయి. చిత్రం (ఫోటో) నుండి కూడా పాఠం తీసుకోవచ్చు.</span></p>
+          <p class="ad-hint"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-info-circle"/></svg><span>ఒక్కో శ్లోకం మధ్య ఒక ఖాళీ లైన్ వదలండి. శ్లోకానికి పేరు కావాలంటే (పల్లవి, చరణం 1, ధ్యానం, ఫలశ్రుతి…) దాని మొదటి లైన్‌లో బ్రాకెట్లలో రాయండి, ఉదా: <code>[పల్లవి]</code>. మిగతావి 1, 2, 3… అని వరుసగా లెక్కపెడతాం. ఒకే శ్లోకంలో రెండు భాగాల మధ్య ఖాళీ కావాలంటే ఆ లైన్‌లో <code>~</code> మాత్రమే రాయండి. చిత్రం (ఫోటో) నుండి కూడా పాఠం తీసుకోవచ్చు. / One blank line between verses; start a verse with <code>[label]</code> to name it; a line with only <code>~</code> is a blank line inside a verse.</span></p>
           <div class="ad-ocr-row">
             <input type="file" id="edImages" class="ad-file" accept="image/*" multiple aria-label="శ్లోకాల చిత్రాలు ఎంచుకోండి / Choose verse images">
             <button type="button" class="ad-btn ad-btn-sm" id="edOcrBtn" onclick="ocrExtract()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-upload"/></svg>చిత్రం నుండి తీసుకోండి</button>
             <span id="edOcrStatus" class="ad-msg-slot" aria-live="polite"></span>
           </div>
           <div id="edOcrReview"></div>
-          <textarea class="ad-in ad-textarea-tall" id="edSlokams" rows="10" placeholder="మొదటి శ్లోకం…&#10;&#10;రెండవ శ్లోకం…"></textarea>
+          <textarea class="ad-in ad-textarea-tall" id="edSlokams" rows="10" placeholder="మొదటి శ్లోకం…&#10;&#10;రెండవ శ్లోకం…&#10;&#10;[ఫలశ్రుతి]&#10;చివరి భాగం…"></textarea>
 
           <label class="ad-check"><input type="checkbox" id="edPub" checked>ప్రచురించు — అందరికీ కనిపిస్తుంది / Publish</label>
           <div class="ad-form-actions">
@@ -153,7 +153,7 @@
             <div>
               <span class="ad-eyebrow">చదువరుల సందేశాలు / Reader messages</span>
               <h2 id="feedbackTitle" class="ad-title">అభిప్రాయాలు / Feedback</h2>
-              <p class="ad-sub">ప్రతి సందేశానికి స్థితి ఇవ్వండి, జవాబు రాయండి. సైన్ ఇన్ చేసి పంపినవారికి మీ జవాబు సైట్‌లోని "నా సందేశాలు" లో కనిపిస్తుంది.</p>
+              <p class="ad-sub">ప్రతి సంభాషణకు స్థితి ఇవ్వండి, జవాబు రాయండి, అవసరమైతే చిత్రం లేదా PDF జోడించండి. సైన్ ఇన్ చేసినవారికి మీ జవాబు సైట్‌లోని "నా సందేశాలు" లో కనిపిస్తుంది; మిగతావారికి సంభాషణలోని "తెలియజేయండి" బటన్‌లతో చెప్పండి.</p>
             </div>
             <div class="ad-card-tools">
               <button type="button" class="ad-btn ad-btn-sm" onclick="reloadFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-reset"/></svg>మళ్ళీ తెచ్చు / Refresh</button>
@@ -162,6 +162,7 @@
           <div class="ad-list-tools">
             <div class="ad-seg" id="fbFilters" role="group" aria-label="స్థితి ప్రకారం చూపించు / Filter by status">
               <button type="button" class="ad-seg-btn" data-fbfilter="open" aria-pressed="true">తెరిచినవి <span class="ad-seg-en">Open</span><span class="ad-count" data-fbcount="open">0</span></button>
+              <button type="button" class="ad-seg-btn" data-fbfilter="waiting" aria-pressed="false">మీ జవాబు కోసం <span class="ad-seg-en">Waiting</span><span class="ad-count" data-fbcount="waiting">0</span></button>
               <button type="button" class="ad-seg-btn" data-fbfilter="answered" aria-pressed="false">జవాబిచ్చినవి <span class="ad-seg-en">Answered</span><span class="ad-count" data-fbcount="answered">0</span></button>
               <button type="button" class="ad-seg-btn" data-fbfilter="closed" aria-pressed="false">మూసినవి <span class="ad-seg-en">Closed</span><span class="ad-count" data-fbcount="closed">0</span></button>
               <button type="button" class="ad-seg-btn" data-fbfilter="all" aria-pressed="false">అన్నీ <span class="ad-seg-en">All</span><span class="ad-count" data-fbcount="all">0</span></button>
@@ -321,6 +322,8 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  <!-- Screenshots / PDFs in conversations (window.StotramFiles); before admin-dashboard.js -->
+  <script src="/assets/attachments.js"></script>
 
   <!-- Same 32 stotra datasets index.html loads, so stotramConfig exists here too -->
   <script src="/data/stotras/vishnu.js"></script>

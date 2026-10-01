@@ -1159,7 +1159,11 @@
     </div>
 </div>
 
-<!-- ============ MY MESSAGES (messages.js) ============ -->
+<!-- ============ MY MESSAGES (messages.js) ============
+     Two views in one sheet; only one shows at a time. The list
+     (#messagesListView) and one conversation (#messagesThread, hidden until
+     a .message-open row is tapped). Esc in the conversation goes back to
+     the list; Esc on the list closes the sheet. -->
 <div class="sheet-overlay" id="messagesOverlay" role="dialog" aria-modal="true" aria-labelledby="messagesTitle" onclick="if(event.target===this)closeMessages()">
     <div class="sheet messages-sheet">
         <div class="sheet-grab" aria-hidden="true"></div>
@@ -1168,9 +1172,35 @@
             <h2 id="messagesTitle">నా సందేశాలు</h2>
             <button type="button" class="sheet-close" onclick="closeMessages()" aria-label="మూసివేయి / Close"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-close"/></svg></button>
         </div>
-        <p class="sheet-sub" id="messagesIntro">మీరు పంపిన సమస్యలు, సూచనలు, వాటికి మా జవాబులు.</p>
-        <div class="messages-list" id="messagesList"></div>
-        <button type="button" class="btn btn-primary btn-block" onclick="closeMessages(); openFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>కొత్త సందేశం పంపండి</button>
+        <div class="messages-list-view" id="messagesListView">
+            <p class="sheet-sub" id="messagesIntro">మీరు పంపిన సమస్యలు, సూచనలు, వాటికి మా జవాబులు.</p>
+            <div class="messages-list" id="messagesList"></div>
+            <button type="button" class="btn btn-primary btn-block" onclick="closeMessages(); openFeedback()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-add"/></svg>కొత్త సందేశం పంపండి</button>
+        </div>
+        <div class="messages-thread" id="messagesThread" hidden>
+            <button type="button" class="btn btn-quiet btn-sm thread-back" id="threadBack"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-chevron-left"/></svg>అన్ని సందేశాలు</button>
+            <div class="thread-head">
+                <h3 class="thread-title" id="threadTitle" tabindex="-1"></h3>
+                <p class="thread-meta" id="threadMeta"></p>
+            </div>
+            <div class="thread-body" id="threadBody" role="log" aria-live="polite" aria-labelledby="threadTitle"></div>
+            <p class="thread-note" id="threadNote" role="status"></p>
+            <div class="thread-signin" id="threadSignin" hidden>
+                <p class="thread-signin-note" id="threadSigninNote">మీరు సైన్ ఇన్ చేయకుండా పంపారు. మా జవాబు చూడటానికి, సంభాషణ కొనసాగించడానికి ఈ ఫోన్‌లోనే Google తో సైన్ ఇన్ చేయండి.</p>
+                <button type="button" class="btn btn-primary btn-block" id="threadSigninBtn" onclick="closeMessages(); openAccount()"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-user"/></svg>సైన్ ఇన్ చేయండి</button>
+            </div>
+            <form class="thread-composer" id="threadComposer" novalidate hidden>
+                <label class="thread-label" for="threadText">మీ జవాబు రాయండి</label>
+                <textarea class="field-input thread-text" id="threadText" rows="3" maxlength="5000" placeholder="ఇక్కడ రాయండి…"></textarea>
+                <div class="thread-attach" id="threadAttach">
+                    <button type="button" class="btn btn-quiet" id="threadAttachBtn"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-attach"/></svg>స్క్రీన్‌షాట్ / PDF జోడించండి</button>
+                    <input type="file" id="threadFiles" accept="image/*,application/pdf" multiple hidden>
+                    <div class="attach-list" id="threadAttachList"></div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block thread-send" id="threadSend"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-send"/></svg>పంపండి</button>
+                <p class="thread-status" id="threadStatus" role="status"></p>
+            </form>
+        </div>
     </div>
 </div>
 
@@ -1363,10 +1393,19 @@
                 <button type="button" class="mic-mini" onclick="listenInto('fbMessage', this, true)" aria-label="సందేశం మాట్లాడి చెప్పండి"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-mic"/></svg></button>
             </div>
 
+            <!-- Screenshots / PDF (attachments.js picker, created by messages.js as window.feedbackPicker) -->
+            <div class="fb-attach" id="fbAttach">
+                <button type="button" class="btn btn-quiet" id="fbAttachBtn" aria-describedby="fbAttachHint"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-attach"/></svg>స్క్రీన్‌షాట్ / PDF జోడించండి</button>
+                <input type="file" id="fbFiles" accept="image/*,application/pdf" multiple hidden>
+                <p class="fb-attach-hint" id="fbAttachHint">3 వరకు. చిత్రాలు ఆటోమేటిక్‌గా చిన్నవి అవుతాయి. PDF 750 KB లోపు ఉండాలి.</p>
+                <div class="attach-list" id="fbAttachList"></div>
+            </div>
+
+            <p class="fb-error" id="fbStatus" data-state="busy" role="status"></p>
             <div class="fb-error" id="fbError" role="alert"></div>
             <input type="text" id="fbWebsite" tabindex="-1" autocomplete="off" aria-hidden="true">
             <button type="button" class="btn btn-primary btn-block fb-submit" onclick="submitFeedback()">పంపండి <svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-arrow-right"/></svg></button>
-            <p class="fb-privacy"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-lock"/></svg><span>మీరు రాసినది, మీ పేరు, (ఇస్తే) సంప్రదింపు వివరాలు మాత్రమే పంపుతాం. తప్పు ఎక్కడ ఉందో తెలియడానికి మీరు చూస్తున్న స్తోత్రం పేరు కూడా జతవుతుంది.</span></p>
+            <p class="fb-privacy"><svg class="icon-inline" aria-hidden="true"><use href="/icons.svg#icon-lock"/></svg><span>మీరు రాసినది, మీ పేరు, (ఇస్తే) సంప్రదింపు వివరాలు మాత్రమే పంపుతాం. తప్పు ఎక్కడ ఉందో తెలియడానికి మీరు చూస్తున్న స్తోత్రం పేరు కూడా జతవుతుంది. జోడించిన చిత్రాలు మీకు, మా బృందానికి మాత్రమే కనిపిస్తాయి.</span></p>
         </div>
 
         <div id="fbThanks" class="fb-thanks" style="display:none;">
@@ -1442,12 +1481,14 @@
 <script src="/assets/app.js"></script>
 <script src="/assets/japamala-3d.js"></script>
 <script src="/assets/japamala.js"></script>
+<script src="/assets/feedback.js"></script>
 
 <!-- Firebase (compat SDK via CDN — no build step) + optional cloud backup -->
 <script src="/assets/site-config.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script src="/assets/attachments.js"></script>
 <script src="/assets/cloud.js"></script>
 <script src="/assets/admin.js"></script>
 <script src="/assets/weekday.js"></script>
