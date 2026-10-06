@@ -621,6 +621,8 @@
     color: var(--color-ink-3);
   }
   .ad-hint .icon-inline { width: 18px; height: 18px; margin-top: 2px; color: var(--color-peacock-700); }
+  /* the [label] example in the verse hint */
+  .ad-hint code { padding: 0 5px; border-radius: 4px; background: var(--color-zari-100); color: var(--color-ink); font-family: inherit; font-weight: 700; white-space: nowrap; }
   .ad-file {
     max-width: 100%;
     font-size: var(--text-sm);

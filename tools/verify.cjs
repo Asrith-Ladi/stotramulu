@@ -70,6 +70,8 @@ execFileSync(process.execPath,['tools/verify-reader-theme.cjs']);
 execFileSync(process.execPath,['tools/verify-meanings.cjs']);
 execFileSync(process.execPath,['tools/verify-library.cjs']);
 execFileSync(process.execPath,['tools/verify-reader-navigation.cjs']);
+execFileSync(process.execPath,['tools/verify-verse-labels.cjs']);
+execFileSync(process.execPath,['tools/verify-build-stamp.cjs']);
 const html=fs.readFileSync('index.html','utf8').replace(/<!--[\s\S]*?-->/g,'');
 assert.ok(html.indexOf('assets/reader.js') < html.indexOf('assets/app.js'),'reader module load order');
 assert.ok(html.indexOf('assets/tracking.js') < html.indexOf('assets/app.js'),'tracking module load order');

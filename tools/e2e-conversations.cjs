@@ -412,6 +412,42 @@ async function adminTests(browser, viewport) {
   await page.waitForFunction(() => window.__fb.paths('feedback/anon1').length === 0, null, { timeout: T });
   await page.waitForFunction(() => !document.querySelector('#feedbackList .ad-fb-item[data-id="anon1"]'), null, { timeout: T });
 
+  if (viewport.width >= 1024) {
+    step('admin: editor verse labels — a song in a new category, and a built-in kept intact');
+    await page.evaluate(() => showTab('content'));
+    await page.locator('#contentTable [data-edit="vishnu"]').waitFor({ timeout: T });
+    await page.evaluate(() => openEditor());
+    await page.locator('#edTitle').fill('భజన పరీక్ష');
+    await page.locator('#edCat').selectOption('__new');
+    await page.locator('#edCatNew').fill('భక్తి పాటలు');
+    await page.locator('#edSlokams').fill('[పల్లవి]\nశ్రీ రామ జయ రామ\n~\nజయ జయ రామ\n\nమొదటి చరణం\n\nరెండో చరణం');
+    assert.match(await page.locator('#edVerseCount').textContent(), /3 శ్లోకాలు · 1 లేబుల్ \(పల్లవి\)/);
+    await page.locator('#edSaveBtn').click();
+    await page.waitForFunction(() => Object.values(window.__fb.dump('stotras/')).some((d) => d.title === 'భజన పరీక్ష'), null, { timeout: T });
+    const song = await fbj(page, () => Object.values(window.__fb.dump('stotras/')).find((d) => d.title === 'భజన పరీక్ష'));
+    assert.deepEqual(song.data.map((v) => v.number), ['పల్లవి', '1', '2']);
+    assert.equal(song.data[0].text, 'శ్రీ రామ జయ రామ\n\nజయ జయ రామ', 'a "~" line is a blank line inside the verse');
+    assert.equal(song.categoryLabel, 'భక్తి పాటలు');
+    assert.match(song.category, /^cat-/);
+
+    await page.locator('#contentTable [data-edit="vishnu"]').click();
+    await page.waitForFunction(() => /\[ధ్యానం\]/.test(document.getElementById('edSlokams').value), null, { timeout: T });
+    const vishnuText = await page.locator('#edSlokams').inputValue();
+    assert.match(vishnuText, /\n~\n/, 'two-part verses show their inner blank line as "~"');
+    await page.locator('#edSlokams').fill(vishnuText + '\n\nపరీక్ష శ్లోకం');
+    await page.locator('#edSaveBtn').click();
+    await page.waitForFunction(() => { const d = window.__fb.get('stotras/vishnu'); return d && Array.isArray(d.data); }, null, { timeout: T });
+    const saved = await fbj(page, () => {
+      const norm = (t) => String(t).replace(/\r\n?/g, '\n').trim().replace(/\n\s*\n/g, '\n\n');
+      const orig = window.STOTRAS_DATA.vishnu.data.map((v) => ({ number: String(v.number), text: norm(v.text) }));
+      const got = window.__fb.get('stotras/vishnu').data;
+      return { n: got.length, origN: orig.length, same: JSON.stringify(got.slice(0, orig.length).map((v) => ({ number: String(v.number), text: norm(v.text) }))) === JSON.stringify(orig), last: got[got.length - 1] };
+    });
+    assert.equal(saved.n, saved.origN + 1, 'one verse added');
+    assert.ok(saved.same, 'every original verse, label and two-part verse is kept');
+    assert.equal(saved.last.text, 'పరీక్ష శ్లోకం');
+    await page.evaluate(() => showTab('feedback'));
+  }
   assert.deepEqual(errors, [], 'no page errors (admin ' + viewport.width + 'px)');
   await context.close();
 }
@@ -424,7 +460,7 @@ async function adminTests(browser, viewport) {
     await readerTests(browser);
     await adminTests(browser, { width: 1280, height: 900 });
     await adminTests(browser, { width: 390, height: 844 });
-    console.log('PASS: conversations — attachments (limits, shrink, PDF checks), anonymous send + claim on sign-in, unread replies, legacy replies, follow-ups (locked composer, no double send on a slow network), refusal/offline/partial retries without duplicates, account-safe queue; admin list order, waiting filter + badge, thread, viewer, reply with picture, notify links, mail-header safety, 200-message cap, delete cascade.');
+    console.log('PASS: conversations — attachments (limits, shrink, PDF checks), anonymous send + claim on sign-in, unread replies, legacy replies, follow-ups (locked composer, no double send on a slow network), refusal/offline/partial retries without duplicates, account-safe queue; admin list order, waiting filter + badge, thread, viewer, reply with picture, notify links, mail-header safety, 200-message cap, delete cascade; editor verse labels ([పల్లవి], "~" two-part verses, a new category, a built-in edited without losing labels).');
   } catch (e) {
     console.error('FAILED at step: ' + stepName);
     throw e;

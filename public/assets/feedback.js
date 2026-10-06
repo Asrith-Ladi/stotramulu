@@ -44,6 +44,20 @@ const FB_COPY = Object.freeze({
     offline: "స్క్రీన్‌షాట్‌లు పంపడానికి ఇంటర్నెట్ కావాలి. కనెక్షన్ చూసి మళ్ళీ 'పంపండి' నొక్కండి."
 });
 
+// True while reloading the page would lose something: a report with
+// attachments still on its way, or screenshots picked for one. build-check.js
+// asks this before it reloads a page that is older than the live site.
+function feedbackBusy() {
+    if (feedbackSending) return true;
+    const picker = window.feedbackPicker || null;
+    if (!picker) return false;
+    try {
+        return !!((typeof picker.busy === 'function' && picker.busy()) ||
+            (typeof picker.count === 'function' && picker.count() > 0));
+    } catch (e) { return true; }
+}
+
+
 // openFeedback('correction' | 'problem' | 'suggestion' | 'other') preselects
 // that type; with no type, every open starts from the form's default type.
 function openFeedback(type) {

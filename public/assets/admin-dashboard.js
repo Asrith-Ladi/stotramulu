@@ -420,10 +420,46 @@
   let edReturn = null;           // the button that opened the editor
 
   function splitVerses(raw) {
-    const t = String(raw || '').trim();
+    const t = String(raw || '').replace(/\r\n?/g, '\n').trim();
     return t ? t.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean) : [];
   }
-  function joinVerses(data) { return (data || []).map((s) => String(s && s.text != null ? s.text : '')).join('\n\n').trim(); }
+  // Verse labels in the editor. A verse may start with its label on a line of
+  // its own in square brackets: [పల్లవి], [చరణం 1], [ధ్యానం], [31-40].
+  // Verses without one are numbered 1, 2, 3… in order (a labelled verse takes
+  // no number). Inside one verse, a line with only "~" stands for a blank line
+  // (a blank line on its own starts the next verse). joinVerses writes labels
+  // and "~" back the same way, so opening and saving a stotram keeps every
+  // label and every two-part verse, even when verses are added or removed.
+  const LABEL_LINE = /^\[([^\[\]\n]{1,60})\]$/;
+  const LABEL_MAX = 60;
+  const PARA_MARK = '~';
+  function parseVerses(raw) {
+    const out = [];
+    let count = 0;
+    let pending = '';          // a label typed with a blank line after it: it belongs to the next verse
+    splitVerses(raw).forEach((block) => {
+      const lines = block.split('\n');
+      const m = lines[0].trim().match(LABEL_LINE);
+      let label = m ? m[1].trim() : '';
+      const text = (m ? lines.slice(1) : lines)
+        .map((l) => (l.trim() === PARA_MARK ? '' : l)).join('\n').trim();
+      if (!text) { if (label) pending = label; return; }
+      if (!label) label = pending;
+      pending = '';
+      out.push({ number: label || String(++count), text });
+    });
+    return out;
+  }
+  function joinVerses(data) {
+    let count = 0;
+    return (data || []).map((s) => {
+      const text = String(s && s.text != null ? s.text : '').replace(/\r\n?/g, '\n').trim()
+        .replace(/\n\s*\n/g, '\n' + PARA_MARK + '\n');
+      const label = s && s.number != null ? String(s.number).trim() : '';
+      if (!label || label === String(count + 1)) { count++; return text; }
+      return '[' + label.replace(/[\[\]\r\n]+/g, ' ').trim().slice(0, LABEL_MAX) + ']\n' + text;
+    }).join('\n\n').trim();
+  }
   function sameVerses(a, b) {
     if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
@@ -431,30 +467,22 @@
     }
     return true;
   }
-  // The verses to save. Untouched text keeps the original array exactly (some
-  // built-in verses contain blank lines, which a re-split would break apart);
-  // edited text keeps the original labels when the verse count is unchanged.
+  // The verses to save. Untouched text keeps the original array exactly (to the
+  // last space); edited text is read with its [labels] and "~" lines (see
+  // parseVerses).
   function editorVerses() {
     const raw = $('edSlokams').value.trim();
     const b = editorBaseline;
     if (b && b.data.length && raw === b.joined) return { data: b.data, unchanged: true };
-    const texts = splitVerses(raw);
-    const keep = !!(b && b.data.length === texts.length);
-    return {
-      data: texts.map((text, i) => ({
-        number: keep && b.data[i] && b.data[i].number != null ? String(b.data[i].number) : String(i + 1),
-        text,
-      })),
-      unchanged: false,
-    };
+    return { data: parseVerses(raw), unchanged: false };
   }
   function updateVerseCount() {
     const v = editorVerses();
     const n = v.data.length;
-    const base = (editorBaseline && editorBaseline.data) || [];
-    const labelled = base.some((d) => d && d.number != null && !/^\d+$/.test(String(d.number)));
+    const named = v.data.filter((d) => d && d.number != null && !/^\d+$/.test(String(d.number))).map((d) => String(d.number));
     let t = n + (n === 1 ? ' శ్లోకం' : ' శ్లోకాలు');
-    if (!v.unchanged && base.length && n !== base.length && labelled) t += ' · సంఖ్య మారింది: లేబుళ్ళు 1, 2, 3… గా మారతాయి';
+    // e.g. "12 శ్లోకాలు · 2 లేబుళ్ళు (ధ్యానం, ఫలశ్రుతి)", so a mistyped label shows at once
+    if (named.length) t += ' · ' + named.length + (named.length === 1 ? ' లేబుల్' : ' లేబుళ్ళు') + ' (' + named.slice(0, 3).join(', ') + (named.length > 3 ? '…' : '') + ')';
     $('edVerseCount').textContent = t;
   }
 

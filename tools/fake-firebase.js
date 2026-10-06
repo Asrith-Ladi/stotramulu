@@ -46,10 +46,12 @@
   FBlob.fromBase64String = (b64) => { const s = atob(b64); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new FBlob(u); };
 
   const SERVER_TS = { __sentinel: 'serverTimestamp' };
+  const DELETE_FIELD = { __sentinel: 'delete' };      // FieldValue.delete(): removes the key on update / merge
   const clock = { offset: 0, now() { return Date.now() + this.offset; } };
 
   function clone(v, now) {
     if (v === SERVER_TS) return Timestamp.fromMillis(now);
+    if (v === DELETE_FIELD) return DELETE_FIELD;
     if (v instanceof Timestamp) return new Timestamp(v.seconds, v.nanoseconds);
     if (v instanceof FBlob) return new FBlob(v._bytes);
     if (v instanceof Date) return Timestamp.fromDate(v);
@@ -250,6 +252,7 @@
             } else if (w.op === 'delete') {
               op = 'delete';
             }
+            if (after) Object.keys(after).forEach((k) => { if (after[k] === DELETE_FIELD) delete after[k]; });
             checkWrite(op, p, before, after, auth, now);
             staged.set(p, after);
             result.push({ op: op, path: p });
@@ -386,7 +389,7 @@
   authFn.GoogleAuthProvider = GoogleAuthProvider;
   authFn.Auth = { Persistence: { LOCAL: 'local', SESSION: 'session', NONE: 'none' } };
   const firestoreFn = () => db;
-  firestoreFn.FieldValue = { serverTimestamp: () => SERVER_TS };
+  firestoreFn.FieldValue = { serverTimestamp: () => SERVER_TS, delete: () => DELETE_FIELD };
   firestoreFn.Timestamp = Timestamp;
   firestoreFn.Blob = FBlob;
   W.firebase = {

@@ -1178,6 +1178,15 @@
   window.closeMessages = closeMessages;
   window.recordSentMessage = recordSentMessage;
   window.syncFeedbackChips = syncFeedbackChips;
+  // True while reloading the page would lose something: a reply on its way,
+  // files waiting for "try again", or files picked for the next reply.
+  // build-check.js asks this before it reloads a page older than the live site.
+  window.messagesBusy = function () {
+    if (sends.size > 0 || pendingFiles.size > 0) return true;
+    try {
+      return !!(threadPicker && (threadPicker.busy() || threadPicker.count() > 0));
+    } catch (e) { return true; }
+  };
 
   if (typeof document === 'undefined' || !document.addEventListener) return;
 
