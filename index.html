@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0d3b3a">
+    <!-- The build id; the build writes it here and to /version.json (build-check.js). -->
+    <meta name="stotram-build" content="dev">
     <meta name="description" content="తెలుగు స్తోత్రాలు, సహస్రనామాలు, అష్టోత్తరాలు మరియు హారతులు — సులభంగా చదవడానికి ఒకే చోట.">
     <title>శ్రీ దివ్య స్తోత్రములు</title>
     <!-- Google Analytics (GA4) -->
@@ -1498,5 +1500,7 @@
 <script src="/assets/help.js"></script>
 <script src="/assets/updates.js"></script>
 <script src="/assets/messages.js"></script>
+<!-- Reloads a page left open across a deploy, when nothing would be lost -->
+<script src="/assets/build-check.js"></script>
 </body>
 </html>

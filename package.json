@@ -8,7 +8,7 @@
     "deploy": "vite build && wrangler deploy -c dist/stotramulu/wrangler.json",
     "verify": "node tools/verify.cjs",
     "shots": "vite build && node tools/screenshots.cjs",
-    "e2e": "vite build && node tools/review-devotional.cjs && node tools/e2e-conversations.cjs",
+    "e2e": "vite build && node tools/review-devotional.cjs && node tools/e2e-conversations.cjs && node tools/e2e-build-check.cjs",
     "rules:check": "node tools/rules-check/test-rules.cjs && node tools/rules-check/test-rules-round2.cjs"
   },
   "devDependencies": {
